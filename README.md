@@ -74,7 +74,7 @@ learn about quantitative analysis, and much more.
 
 
 
-### QuantstopTerminal is built with the following technologies:
+### Built With:
 * [Go](https://go.dev/)
 * [Vue.js](https://vuejs.org/)
 * [Vue.js CLI](https://cli.vuejs.org/)
