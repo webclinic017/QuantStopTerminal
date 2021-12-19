@@ -1,4 +1,4 @@
-package logger
+package qstlog
 
 import (
 	"io"
@@ -6,14 +6,16 @@ import (
 )
 
 const (
-	TimestampFormat = "02/01/2006 15:04:05"
-	Spacer          = " | "
+	timestampFormat = " 02/01/2006 15:04:05 "
+	spacer          = " | "
 	// DefaultMaxFileSize for logger rotation file
 	DefaultMaxFileSize int64 = 100
+
+	defaultCapacityForSliceOfBytes = 100
 )
 
 var (
-	logger = &Logger{}
+	logger = Logger{}
 	// FileLoggingConfiguredCorrectly flag set during config check if file logging meets requirements
 	FileLoggingConfiguredCorrectly bool
 	// GlobalLogConfig holds global configuration options for logger
@@ -23,9 +25,8 @@ var (
 
 	eventPool = &sync.Pool{
 		New: func() interface{} {
-			return &Event{
-				data: make([]byte, 0, 80),
-			}
+			sliceOBytes := make([]byte, 0, defaultCapacityForSliceOfBytes)
+			return &sliceOBytes
 		},
 	}
 
@@ -40,19 +41,19 @@ var (
 type Config struct {
 	Enabled *bool `json:"enabled"`
 	SubLoggerConfig
-	LoggerFileConfig *FileConfig       `json:"fileSettings,omitempty"`
+	LoggerFileConfig *loggerFileConfig `json:"fileSettings,omitempty"`
 	AdvancedSettings advancedSettings  `json:"advancedSettings"`
 	SubLoggers       []SubLoggerConfig `json:"subloggers,omitempty"`
 }
 
 type advancedSettings struct {
 	ShowLogSystemName *bool   `json:"showLogSystemName"`
-	Spacer            string  `json:"Spacer"`
+	Spacer            string  `json:"spacer"`
 	TimeStampFormat   string  `json:"timeStampFormat"`
-	Headers           Headers `json:"Headers"`
+	Headers           headers `json:"headers"`
 }
 
-type Headers struct {
+type headers struct {
 	Info  string `json:"info"`
 	Warn  string `json:"warn"`
 	Debug string `json:"debug"`
@@ -66,10 +67,10 @@ type SubLoggerConfig struct {
 	Output string `json:"output"`
 }
 
-type FileConfig struct {
-	FileName string
-	Rotate   *bool `json:"rotate,omitempty"`
-	MaxSize  int64 `json:"maxsize,omitempty"`
+type loggerFileConfig struct {
+	FileName string `json:"filename,omitempty"`
+	Rotate   *bool  `json:"rotate,omitempty"`
+	MaxSize  int64  `json:"maxsize,omitempty"`
 }
 
 // Logger each instance of logger settings
@@ -83,20 +84,6 @@ type Logger struct {
 // Levels flags for each sub logger type
 type Levels struct {
 	Info, Debug, Warn, Error bool
-}
-
-// SubLogger defines a sub logger can be used externally for packages wanted to
-// leverage GCT library logger features.
-type SubLogger struct {
-	name string
-	Levels
-	output io.Writer
-}
-
-// Event holds the data sent to the log and which multiwriter to send to
-type Event struct {
-	data   []byte
-	output io.Writer
 }
 
 type multiWriter struct {

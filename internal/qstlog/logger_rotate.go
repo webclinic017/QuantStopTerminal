@@ -1,11 +1,17 @@
-package logger
+package qstlog
 
 import (
+	"errors"
 	"fmt"
 	"github.com/quantstop/quantstopterminal/pkg/system/file"
 	"os"
 	"path/filepath"
 	"time"
+)
+
+var (
+	errExceedsMaxFileSize = errors.New("exceeds max file size")
+	errFileNameIsEmpty    = errors.New("filename is empty")
 )
 
 // Write implementation to satisfy io.Writer handles length check and rotation
@@ -14,10 +20,9 @@ func (r *Rotate) Write(output []byte) (n int, err error) {
 	defer r.mu.Unlock()
 
 	outputLen := int64(len(output))
-
 	if outputLen > r.maxSize() {
 		return 0, fmt.Errorf(
-			"write length %v exceeds max file size %v", outputLen, r.maxSize(),
+			"write length %v %w %v", outputLen, errExceedsMaxFileSize, r.maxSize(),
 		)
 	}
 
@@ -39,13 +44,11 @@ func (r *Rotate) Write(output []byte) (n int, err error) {
 
 	n, err = r.output.Write(output)
 	r.size += int64(n)
-
 	return n, err
 }
 
 func (r *Rotate) openOrCreateFile(n int64) error {
 	logFile := filepath.Join(LogPath, r.FileName)
-
 	info, err := os.Stat(logFile)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -60,18 +63,21 @@ func (r *Rotate) openOrCreateFile(n int64) error {
 		}
 	}
 
-	newFile, err := os.OpenFile(logFile, os.O_APPEND|os.O_WRONLY, 0600)
+	file, err := os.OpenFile(logFile, os.O_APPEND|os.O_WRONLY, 0600)
 	if err != nil {
 		return r.openNew()
 	}
 
-	r.output = newFile
+	r.output = file
 	r.size = info.Size()
 
 	return nil
 }
 
 func (r *Rotate) openNew() error {
+	if r.FileName == "" {
+		return fmt.Errorf("cannot open new file: %w", errFileNameIsEmpty)
+	}
 	name := filepath.Join(LogPath, r.FileName)
 	_, err := os.Stat(name)
 
@@ -85,14 +91,13 @@ func (r *Rotate) openNew() error {
 		}
 	}
 
-	newFile, err := os.OpenFile(name, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0600)
+	file, err := os.OpenFile(name, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0600)
 	if err != nil {
 		return fmt.Errorf("can't open new logfile: %s", err)
 	}
 
-	r.output = newFile
+	r.output = file
 	r.size = 0
-
 	return nil
 }
 
@@ -117,17 +122,12 @@ func (r *Rotate) rotateFile() (err error) {
 	if err != nil {
 		return
 	}
-
-	err = r.openNew()
-	if err != nil {
-		return
-	}
-	return nil
+	return r.openNew()
 }
 
 func (r *Rotate) maxSize() int64 {
 	if r.MaxSize == 0 {
-		return int64(defaultMaxSize * megabyte)
+		return defaultMaxSize * megabyte
 	}
-	return r.MaxSize * int64(megabyte)
+	return r.MaxSize * megabyte
 }
