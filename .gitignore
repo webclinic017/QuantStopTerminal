@@ -22,3 +22,11 @@ go.work
 
 # idea configs
 .idea/
+
+# node stuff
+/web/dist
+/web/node_modules
+/web/package-lock.json
+
+# internal go code from builds that we dont want included
+/internal/assets/appcode.go
