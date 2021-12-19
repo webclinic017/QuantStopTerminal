@@ -1,33 +1,66 @@
 ## QuantstopTerminal Development Guide - Windows
 
-This is an example of how you may give instructions on setting up your project locally.
-To get a local copy up and running follow these simple example steps.
-
 ### Prerequisites
 
-This is an example of how to list things you need to use the software and how to install them.
-* npm
-  ```sh
-  npm install npm@latest -g
-  ```
+* [Go](https://go.dev/)
+  1. Download Go 1.17.5 from https://go.dev/dl/go1.17.5.windows-amd64.msi
+  2. Open the MSI file you downloaded and follow the prompts to install Go. <br>
+     By default, the installer will install Go to Program Files or Program Files (x86). <br>
+     You can change the location as needed. After installing, you will need to close and reopen any 
+     open command prompts so that changes to the environment made by the installer are reflected at the command prompt.
+  3. Verify that you've installed Go.
+     1. In Windows, click the Start menu.
+     2. In the menu's search box, type cmd, then press the Enter key.
+     3. In the Command Prompt window that appears, type the following command:
+        ```sh 
+        go version 
+        ```
+     4. Confirm that the command prints the installed version of Go like below:
+        ```sh 
+        go version go1.17.5 windows/amd64 
+        ```
+* [NodeJS/NPM](https://nodejs.org/en/)
+  1. Download NodeJS 16.13.1 LTS from https://nodejs.org/dist/v16.13.1/node-v16.13.1-x64.msi
+  2. Open the MSI file you downloaded and follow the prompts to install NodeJS. <br>
+  3. Verify that you've installed NodeJS.
+     1. In Windows, click the Start menu.
+     2. In the menu's search box, type cmd, then press the Enter key.
+     3. In the Command Prompt window that appears, type the following command:
+        ```sh 
+        node -v 
+        ```
+     4. Confirm that the command prints the installed version of Go like below:
+        ```sh 
+        v16.13.1
+        ```
+* [make](https://www.gnu.org/software/make/)
+  1. Download and install Git Bash for windows from https://git-scm.com/download/win 
+  2. todo: list others ways to get make on windows.
 
 ### Installation
 
 _Below is an example of how you can instruct your audience on installing and setting up your app.
 This template doesn't rely on any external dependencies or services._
 
-1. Get a free API Key at [https://example.com](https://example.com)
+1. Open up a Git Bash Terminal
 2. Clone the repo
    ```sh
-   git clone https://github.com/your_username_/Project-Name.git
+   git clone https://github.com/QuantStop/QuantStopTerminal.git
    ```
-3. Install NPM packages
-   ```sh
-   npm install
-   ```
-4. Enter your API in `config.js`
-   ```js
-   const API_KEY = 'ENTER YOUR API';
-   ```
+3. Run the app directly in development mode:<br>
+   * ```sh 
+     make 
+     ```
+   Or build production executables:
+   * ```sh 
+     make build-all
+     make build-windows
+     make build-linux
+     make build-mac
+     ```
+   All executable files will be located in /builds
+    
 
-<p align="right">(<a href="#top">back to top</a>)</p>
+3. Profit.
+
+<p align="right">(<a href="https://github.com/quantstop/quantstopterminal#top">back to home</a>)</p>
