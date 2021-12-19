@@ -2,7 +2,7 @@ package engine
 
 import (
 	"fmt"
-	"github.com/quantstop/quantstopterminal/pkg/logger"
+	"github.com/quantstop/quantstopterminal/internal/qstlog"
 	"reflect"
 	"sync"
 )
@@ -36,15 +36,15 @@ func (s *ServiceRegistry) RegisterService(service iSubsystem) error {
 
 // StartAll initialized each service in order of registration.
 func (s *ServiceRegistry) StartAll(wg *sync.WaitGroup) {
-	logger.Infof(logger.SubsystemLogger, "Starting %d subsystems: %v", len(s.serviceTypes), s.serviceTypes)
+	qstlog.Infof(qstlog.SubsystemLogger, "Starting %d subsystems: %v", len(s.serviceTypes), s.serviceTypes)
 
 	// Loop through all services
 	for _, kind := range s.serviceTypes {
 		if s.services[kind].isEnabled() && s.services[kind].isInitialized() {
 			// Make sure service is enabled, and initialized, then try starting
-			logger.Debugf(logger.SubsystemLogger, "Starting subsystem type %v", kind)
+			qstlog.Debugf(qstlog.SubsystemLogger, "Starting subsystem type %v", kind)
 			if err := StartSubsystem(s.services[kind], wg); err != nil {
-				logger.Errorf(logger.SubsystemLogger, "Unable to start subsystem %v : %v", kind, err)
+				qstlog.Errorf(qstlog.SubsystemLogger, "Unable to start subsystem %v : %v", kind, err)
 			}
 		}
 
@@ -87,7 +87,7 @@ func (s *ServiceRegistry) StopAll() {
 		kind := s.serviceTypes[i]
 		service := s.services[kind]
 		if err := StopSubsystem(service); err != nil {
-			logger.Errorf(logger.SubsystemLogger, "Could not stop the following service: %v, %v", kind, err)
+			qstlog.Errorf(qstlog.SubsystemLogger, "Could not stop the following service: %v, %v", kind, err)
 		}
 	}
 }

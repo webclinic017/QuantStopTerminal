@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/quantstop/quantstopterminal/internal/config"
+	"github.com/quantstop/quantstopterminal/internal/qstlog"
 	"github.com/quantstop/quantstopterminal/internal/webserver"
-	"github.com/quantstop/quantstopterminal/pkg/logger"
 	"github.com/quantstop/quantstopterminal/pkg/system"
 	"runtime"
 	"strings"
@@ -125,12 +125,12 @@ func initWebserverSubsystem(bot *Engine) {
 	// Create and init webserver subsystem
 	bot.WebserverSubsystem = &WebserverSubsystem{Subsystem: Subsystem{}}
 	if err := InitSubsystem(bot.WebserverSubsystem, WebserverName, bot.Config); err != nil {
-		logger.Errorf(logger.Global, "Webserver subsystem unable to initialize: %v", err)
+		qstlog.Errorf(qstlog.Global, "Webserver subsystem unable to initialize: %v", err)
 	}
 
 	// Register webserver subsystem
 	if err := bot.SubsystemRegistry.RegisterService(bot.WebserverSubsystem); err != nil {
-		logger.Errorf(logger.Global, "Webserver subsystem unable to register: %v", err)
+		qstlog.Errorf(qstlog.Global, "Webserver subsystem unable to register: %v", err)
 	}
 }
 
@@ -154,8 +154,8 @@ func (bot *Engine) Run() error {
 	webserver.StartHttpServer(bot.Config)
 
 	// Print some info
-	logger.Debugf(logger.Global, "QuantStopTerminal started.\n")
-	logger.Debugf(logger.Global,
+	qstlog.Debugf(qstlog.Global, "QuantStopTerminal started.\n")
+	qstlog.Debugf(qstlog.Global,
 		"Using %d out of %d logical processors for runtime performance\n",
 		runtime.GOMAXPROCS(-1), runtime.NumCPU())
 
@@ -168,14 +168,14 @@ func (bot *Engine) Stop() {
 	engineMutex.Lock()
 	defer engineMutex.Unlock()
 
-	logger.Debugln(logger.Global, "Engine shutting down..")
+	qstlog.Debugln(qstlog.Global, "Engine shutting down..")
 
 	// Stop all subsystems
 	bot.SubsystemRegistry.StopAll()
 
 	// Wait for subsystems to gracefully shutdown
 	bot.SubsystemWG.Wait()
-	if err := logger.CloseLogger(); err != nil {
+	if err := qstlog.CloseLogger(); err != nil {
 		fmt.Printf("Failed to close logger. Error: %v\n", err)
 	}
 
@@ -203,8 +203,6 @@ func (bot *Engine) SetSubsystem(subSystemName string, enable bool) error {
 
 	var err error
 	switch strings.ToLower(subSystemName) {
-
-	// todo: enable on startup? can make that the config.subsystem.enable
 
 	case DatabaseSubsystemName:
 		if enable {

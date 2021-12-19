@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/quantstop/quantstopterminal/internal/config"
 	"github.com/quantstop/quantstopterminal/internal/ntpmonitor"
-	"github.com/quantstop/quantstopterminal/pkg/logger"
+	"github.com/quantstop/quantstopterminal/internal/qstlog"
 	"net"
 	"sync"
 	"time"
@@ -39,7 +39,7 @@ func (s *NTPCheckerSubsystem) init(config *config.Config, name string) error {
 	s.retryLimit = ntpmonitor.DefaultRetryLimit
 	s.enabled = config.NTP.Enabled
 	s.initialized = true
-	logger.Debugln(logger.NTPLogger, s.name+MsgSubsystemInitialized)
+	qstlog.Debugln(qstlog.NTPLogger, s.name+MsgSubsystemInitialized)
 	return nil
 }
 
@@ -73,7 +73,7 @@ func (s *NTPCheckerSubsystem) start(wg *sync.WaitGroup) (err error) {
 		s.started = false
 		return ntpmonitor.ErrNTPSubsystemDisabled
 	}
-	logger.Debugln(logger.NTPLogger, s.name+MsgSubsystemStarted)
+	qstlog.Debugln(qstlog.NTPLogger, s.name+MsgSubsystemStarted)
 	go s.run()
 	//logger.Debugf(logger.NTPLogger, "NTP subsystem %s", MsgSubSystemStarted)
 	return nil
@@ -88,7 +88,7 @@ func (s *NTPCheckerSubsystem) stop() error {
 	s.started = false
 
 	//logger.Debugf(logger.NTPLogger, "NTP manager %s", MsgSubSystemShuttingDown)
-	logger.Debugln(logger.NTPLogger, s.name+MsgSubsystemShutdown)
+	qstlog.Debugln(qstlog.NTPLogger, s.name+MsgSubsystemShutdown)
 	close(s.shutdown)
 	return nil
 }
@@ -107,7 +107,7 @@ func (s *NTPCheckerSubsystem) run() {
 		case <-t.C:
 			err := s.processTime()
 			if err != nil {
-				logger.Error(logger.NTPLogger, err)
+				qstlog.Error(qstlog.NTPLogger, err)
 			}
 		}
 	}
@@ -140,7 +140,7 @@ func (s *NTPCheckerSubsystem) processTime() error {
 	negDiff := s.allowedNegativeDifference
 	configNTPNegativeTime := -negDiff
 	if diff > configNTPTime || diff < configNTPNegativeTime {
-		logger.Warnf(logger.NTPLogger, "NTP manager: Time out of sync (NTP): %v | (time.Now()): %v | (Difference): %v | (Allowed): +%v / %v\n",
+		qstlog.Warnf(qstlog.NTPLogger, "NTP manager: Time out of sync (NTP): %v | (time.Now()): %v | (Difference): %v | (Allowed): +%v / %v\n",
 			NTPTime,
 			currentTime,
 			diff,
@@ -156,35 +156,35 @@ func (s *NTPCheckerSubsystem) checkTimeInPools() time.Time {
 	for i := range s.pools {
 		con, err := net.DialTimeout("udp", s.pools[i], 5*time.Second)
 		if err != nil {
-			logger.Warnf(logger.NTPLogger, "Unable to connect to hosts %v attempting next", s.pools[i])
+			qstlog.Warnf(qstlog.NTPLogger, "Unable to connect to hosts %v attempting next", s.pools[i])
 			continue
 		}
 
 		if err = con.SetDeadline(time.Now().Add(5 * time.Second)); err != nil {
-			logger.Warnf(logger.NTPLogger, "Unable to SetDeadline. Error: %s\n", err)
+			qstlog.Warnf(qstlog.NTPLogger, "Unable to SetDeadline. Error: %s\n", err)
 			err = con.Close()
 			if err != nil {
-				logger.Error(logger.NTPLogger, err)
+				qstlog.Error(qstlog.NTPLogger, err)
 			}
 			continue
 		}
 
 		req := &ntpmonitor.NTPPacket{Settings: 0x1B}
 		if err = binary.Write(con, binary.BigEndian, req); err != nil {
-			logger.Warnf(logger.NTPLogger, "Unable to write. Error: %s\n", err)
+			qstlog.Warnf(qstlog.NTPLogger, "Unable to write. Error: %s\n", err)
 			err = con.Close()
 			if err != nil {
-				logger.Error(logger.NTPLogger, err)
+				qstlog.Error(qstlog.NTPLogger, err)
 			}
 			continue
 		}
 
 		rsp := &ntpmonitor.NTPPacket{}
 		if err = binary.Read(con, binary.BigEndian, rsp); err != nil {
-			logger.Warnf(logger.NTPLogger, "Unable to read. Error: %s\n", err)
+			qstlog.Warnf(qstlog.NTPLogger, "Unable to read. Error: %s\n", err)
 			err = con.Close()
 			if err != nil {
-				logger.Error(logger.NTPLogger, err)
+				qstlog.Error(qstlog.NTPLogger, err)
 			}
 			continue
 		}
@@ -194,10 +194,10 @@ func (s *NTPCheckerSubsystem) checkTimeInPools() time.Time {
 
 		err = con.Close()
 		if err != nil {
-			logger.Error(logger.NTPLogger, err)
+			qstlog.Error(qstlog.NTPLogger, err)
 		}
 		return time.Unix(int64(secs), nanos)
 	}
-	logger.Warnln(logger.NTPLogger, "No valid NTP servers found, using current system time")
+	qstlog.Warnln(qstlog.NTPLogger, "No valid NTP servers found, using current system time")
 	return time.Now().UTC()
 }

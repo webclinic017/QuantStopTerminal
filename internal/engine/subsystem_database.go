@@ -6,7 +6,7 @@ import (
 	"github.com/quantstop/quantstopterminal/internal/database"
 	"github.com/quantstop/quantstopterminal/internal/database/drivers/mysql"
 	pgsql "github.com/quantstop/quantstopterminal/internal/database/drivers/postgres"
-	"github.com/quantstop/quantstopterminal/pkg/logger"
+	"github.com/quantstop/quantstopterminal/internal/qstlog"
 	"sync"
 	"time"
 )
@@ -28,7 +28,7 @@ func (s *DatabaseSubsystem) init(config *config.Config, name string) error {
 		return err
 	}
 	s.initialized = true
-	logger.Debugln(logger.DatabaseLogger, s.name+MsgSubsystemInitialized)
+	qstlog.Debugln(qstlog.DatabaseLogger, s.name+MsgSubsystemInitialized)
 	return nil
 }
 
@@ -41,7 +41,7 @@ func (s *DatabaseSubsystem) start(wg *sync.WaitGroup) (err error) {
 	if s.config.Database.Enabled {
 		switch s.config.Database.Driver {
 		case database.DBPostgreSQL:
-			logger.Debugf(logger.DatabaseLogger,
+			qstlog.Debugf(qstlog.DatabaseLogger,
 				"Database subsystem attempting to establish database connection to host %s/%s utilising %s driver\n",
 				s.config.Database.Host,
 				s.config.Database.Database,
@@ -55,7 +55,7 @@ func (s *DatabaseSubsystem) start(wg *sync.WaitGroup) (err error) {
 			s.config.Database.Driver)
 		s.dbConn, err = sqlite.Connect(s.config.Database.Database)*/
 		case database.DBMySQL:
-			logger.Debugf(logger.DatabaseLogger,
+			qstlog.Debugf(qstlog.DatabaseLogger,
 				"Database subsystem attempting to establish database connection to host %s/%s utilising %s driver\n",
 				s.config.Database.Host,
 				s.config.Database.Database,
@@ -67,7 +67,7 @@ func (s *DatabaseSubsystem) start(wg *sync.WaitGroup) (err error) {
 		if err != nil {
 			return fmt.Errorf("%w: %v Some features that utilise a database will be unavailable", database.ErrFailedToConnect, err)
 		}
-		logger.Debugln(logger.DatabaseLogger, s.name+MsgSubsystemStarted)
+		qstlog.Debugln(qstlog.DatabaseLogger, s.name+MsgSubsystemStarted)
 		s.started = true
 		s.dbConn.SetConnected(true)
 		wg.Add(1)
@@ -88,12 +88,12 @@ func (s *DatabaseSubsystem) stop() error {
 	s.started = false
 	err := s.dbConn.CloseConnection()
 	if err != nil {
-		logger.Errorf(logger.DatabaseLogger, "Failed to close database: %v", err)
+		qstlog.Errorf(qstlog.DatabaseLogger, "Failed to close database: %v", err)
 	}
 
 	close(s.shutdown)
 	s.wg.Wait()
-	logger.Debugln(logger.DatabaseLogger, s.name+MsgSubsystemShutdown)
+	qstlog.Debugln(qstlog.DatabaseLogger, s.name+MsgSubsystemShutdown)
 	return nil
 }
 
@@ -106,7 +106,7 @@ func (s *DatabaseSubsystem) run(wg *sync.WaitGroup) {
 		t.Stop()
 		s.wg.Done()
 		wg.Done()
-		logger.Debugln(logger.DatabaseLogger, "Database subsystem shutdown.")
+		qstlog.Debugln(qstlog.DatabaseLogger, "Database subsystem shutdown.")
 	}()
 
 	// This lets the goroutine wait on communication from the channel
@@ -118,7 +118,7 @@ func (s *DatabaseSubsystem) run(wg *sync.WaitGroup) {
 		case <-t.C: // on channel tick check the connection
 			err := s.CheckConnection()
 			if err != nil {
-				logger.Error(logger.DatabaseLogger, "Database connection error:", err)
+				qstlog.Error(qstlog.DatabaseLogger, "Database connection error:", err)
 			}
 		}
 	}
@@ -153,7 +153,7 @@ func (s *DatabaseSubsystem) CheckConnection() error {
 	}
 
 	if !s.dbConn.IsConnected() {
-		logger.Info(logger.DatabaseLogger, "Database connection reestablished")
+		qstlog.Info(qstlog.DatabaseLogger, "Database connection reestablished")
 		s.dbConn.SetConnected(true)
 	}
 	return nil

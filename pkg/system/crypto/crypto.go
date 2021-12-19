@@ -17,7 +17,7 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
-	"github.com/quantstop/quantstopterminal/pkg/logger"
+	"github.com/quantstop/quantstopterminal/internal/qstlog"
 	"github.com/quantstop/quantstopterminal/pkg/system/file"
 	"hash"
 	"io"
@@ -163,7 +163,7 @@ func CheckCerts(certDir string) error {
 	keyFile := filepath.Join(certDir, "key.pem")
 
 	if !file.Exists(certFile) || !file.Exists(keyFile) {
-		logger.Warnln(logger.Global, "gRPC certificate/key file missing, recreating...")
+		qstlog.Warnln(qstlog.Global, "gRPC certificate/key file missing, recreating...")
 		return genCert(certDir)
 	}
 
@@ -176,11 +176,11 @@ func CheckCerts(certDir string) error {
 		if err != errCertExpired {
 			return err
 		}
-		logger.Warnln(logger.Global, "gRPC certificate has expired, regenerating...")
+		qstlog.Warnln(qstlog.Global, "gRPC certificate has expired, regenerating...")
 		return genCert(certDir)
 	}
 
-	logger.Infoln(logger.Global, "gRPC TLS certificate and key files exist, will use them.")
+	qstlog.Infoln(qstlog.Global, "gRPC TLS certificate and key files exist, will use them.")
 	return nil
 }
 
@@ -255,6 +255,6 @@ func genCert(targetDir string) error {
 		return fmt.Errorf("failed to write cert.pem file %s", err)
 	}
 
-	logger.Infof(logger.Global, "gRPC TLS key.pem and cert.pem files written to %s\n", targetDir)
+	qstlog.Infof(qstlog.Global, "gRPC TLS key.pem and cert.pem files written to %s\n", targetDir)
 	return nil
 }

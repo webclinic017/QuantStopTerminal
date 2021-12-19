@@ -2,7 +2,7 @@ package connectionmonitor
 
 import "time"
 
-// ConnectionMonitorConfig defines the connection monitor variables to ensure
+// Config defines the connection monitor variables to ensure
 // that there is internet connectivity
 type Config struct {
 	Enabled          bool

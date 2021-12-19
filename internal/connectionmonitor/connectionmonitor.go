@@ -2,7 +2,7 @@ package connectionmonitor
 
 import (
 	"context"
-	"github.com/quantstop/quantstopterminal/pkg/logger"
+	"github.com/quantstop/quantstopterminal/internal/qstlog"
 	"net"
 	"strings"
 	"sync"
@@ -35,9 +35,9 @@ func New(dnsList, domainList []string, checkInterval time.Duration) (*Checker, e
 	}
 
 	if c.connected {
-		logger.Debugln(logger.Global, ConnFound)
+		qstlog.Debugln(qstlog.Global, ConnFound)
 	} else {
-		logger.Warnln(logger.Global, ConnNotFound)
+		qstlog.Warnln(qstlog.Global, ConnNotFound)
 	}
 
 	c.shutdown = make(chan struct{}, 1)
@@ -120,7 +120,7 @@ func (c *Checker) connectionTest() {
 		if err == nil {
 			c.Lock()
 			if !c.connected {
-				logger.Debugln(logger.Global, ConnRe)
+				qstlog.Debugln(qstlog.Global, ConnRe)
 				c.connected = true
 			}
 			c.Unlock()
@@ -133,7 +133,7 @@ func (c *Checker) connectionTest() {
 		if err == nil {
 			c.Lock()
 			if !c.connected {
-				logger.Debugln(logger.Global, ConnRe)
+				qstlog.Debugln(qstlog.Global, ConnRe)
 				c.connected = true
 			}
 			c.Unlock()
@@ -143,7 +143,7 @@ func (c *Checker) connectionTest() {
 
 	c.Lock()
 	if c.connected {
-		logger.Warnln(logger.Global, ConnLost)
+		qstlog.Warnln(qstlog.Global, ConnLost)
 		c.connected = false
 	}
 	c.Unlock()

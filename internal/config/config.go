@@ -7,7 +7,7 @@ import (
 	"github.com/quantstop/quantstopterminal/internal/database"
 	"github.com/quantstop/quantstopterminal/internal/database/drivers"
 	"github.com/quantstop/quantstopterminal/internal/ntpmonitor"
-	"github.com/quantstop/quantstopterminal/pkg/logger"
+	"github.com/quantstop/quantstopterminal/internal/qstlog"
 	"github.com/quantstop/quantstopterminal/pkg/system"
 	"github.com/quantstop/quantstopterminal/pkg/system/convert"
 	"io"
@@ -33,7 +33,7 @@ var (
 )
 
 type Config struct {
-	// Version flags loaded on build
+	// Version types
 	MajorVersion    string
 	MinorVersion    string
 	IsRelease       bool
@@ -50,7 +50,7 @@ type Config struct {
 	//Strategy 		strategy.Config
 	NTP      ntpmonitor.Config
 	Internet connectionmonitor.Config
-	Logger   logger.Config
+	Logger   qstlog.Config
 }
 
 // DefaultFileMode controls the default permissions on any paths created by using MakePath.
@@ -182,12 +182,12 @@ func (c *Config) SetupConfig(MajorVersion string, MinorVersion string, IsRelease
 		*c.NTP.AllowedNegativeDifference = DefaultNTPAllowedNegativeDifference
 
 		// Load default logging config
-		c.Logger = logger.GenDefaultSettings()
+		c.Logger = *qstlog.GenDefaultSettings()
 
 		// Copy default logging config to global log config
-		logger.RWM.Lock()
-		logger.GlobalLogConfig = &c.Logger
-		logger.RWM.Unlock()
+		qstlog.RWM.Lock()
+		qstlog.GlobalLogConfig = &c.Logger
+		qstlog.RWM.Unlock()
 
 		// Create the config file
 		fh, err := os.Create(configFile)
@@ -204,11 +204,6 @@ func (c *Config) SetupConfig(MajorVersion string, MinorVersion string, IsRelease
 			log.Fatal(err)
 		}
 
-		//encoder := json.NewEncoder(fh)
-		//err = encoder.Encode(&config)
-		//if err != nil {
-		//	return nil, err
-		//}
 	} else {
 		// Load the existing file.
 		fh, err := os.Open(configFile)
@@ -264,7 +259,7 @@ func (c *Config) checkLoggerConfig() error {
 	defer mutex.Unlock()
 
 	if c.Logger.Enabled == nil || c.Logger.Output == "" {
-		c.Logger = logger.GenDefaultSettings()
+		c.Logger = *qstlog.GenDefaultSettings()
 	}
 
 	if c.Logger.AdvancedSettings.ShowLogSystemName == nil {
@@ -279,21 +274,21 @@ func (c *Config) checkLoggerConfig() error {
 			c.Logger.LoggerFileConfig.Rotate = convert.BoolPtr(false)
 		}
 		if c.Logger.LoggerFileConfig.MaxSize <= 0 {
-			logger.Warnf(logger.Global, "Logger rotation size invalid, defaulting to %v", logger.DefaultMaxFileSize)
-			c.Logger.LoggerFileConfig.MaxSize = logger.DefaultMaxFileSize
+			qstlog.Warnf(qstlog.Global, "Logger rotation size invalid, defaulting to %v", qstlog.DefaultMaxFileSize)
+			c.Logger.LoggerFileConfig.MaxSize = qstlog.DefaultMaxFileSize
 		}
-		logger.FileLoggingConfiguredCorrectly = true
+		qstlog.FileLoggingConfiguredCorrectly = true
 	}
-	logger.RWM.Lock()
-	logger.GlobalLogConfig = &c.Logger
-	logger.RWM.Unlock()
+	qstlog.RWM.Lock()
+	qstlog.GlobalLogConfig = &c.Logger
+	qstlog.RWM.Unlock()
 
 	logPath := c.GetDataPath("logs")
 	err := system.CreateDir(logPath)
 	if err != nil {
 		return err
 	}
-	logger.LogPath = logPath
+	qstlog.LogPath = logPath
 
 	return nil
 }

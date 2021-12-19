@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/quantstop/quantstopterminal/internal/config"
-	"github.com/quantstop/quantstopterminal/pkg/logger"
+	"github.com/quantstop/quantstopterminal/internal/qstlog"
 	"sync"
 )
 
@@ -73,7 +73,7 @@ func (sub *Subsystem) init(config *config.Config, name string) error {
 		return fmt.Errorf("%s subsystem %w", sub.name, errNilConfig)
 	}
 
-	logger.Debugln(logger.SubsystemLogger, name+MsgSubsystemInitializing)
+	qstlog.Debugln(qstlog.SubsystemLogger, name+MsgSubsystemInitializing)
 	sub.name = name
 	sub.initialized = false
 	sub.started = false
@@ -96,7 +96,7 @@ func (sub *Subsystem) start(wg *sync.WaitGroup) error {
 		return fmt.Errorf("%s subsystem %w", sub.name, ErrSubsystemAlreadyStarted)
 	}
 	sub.started = false
-	logger.Debugln(logger.SubsystemLogger, sub.name+MsgSubsystemStarting)
+	qstlog.Debugln(qstlog.SubsystemLogger, sub.name+MsgSubsystemStarting)
 	return nil
 }
 
@@ -108,7 +108,7 @@ func (sub *Subsystem) stop() error {
 		return fmt.Errorf("%s subsystem %w", sub.name, ErrSubsystemNotStarted)
 	}
 	sub.started = false
-	logger.Debugln(logger.SubsystemLogger, sub.name+MsgSubsystemShuttingDown)
+	qstlog.Debugln(qstlog.SubsystemLogger, sub.name+MsgSubsystemShuttingDown)
 
 	return nil
 }

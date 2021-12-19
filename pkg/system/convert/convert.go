@@ -47,13 +47,13 @@ func Int64FromString(raw interface{}) (int64, error) {
 }
 
 // TimeFromUnixTimestampFloat format
-//func TimeFromUnixTimestampFloat(raw interface{}) (time.Time, error) {
-//	ts, ok := raw.(float64)
-//	if !ok {
-//		return time.Time{}, fmt.Errorf("unable to parse, value not float64: %T", raw)
-//	}
-//	return time.UnixMilli(int64(ts)), nil
-//}
+func TimeFromUnixTimestampFloat(raw interface{}) (time.Time, error) {
+	ts, ok := raw.(float64)
+	if !ok {
+		return time.Time{}, fmt.Errorf("unable to parse, value not float64: %T", raw)
+	}
+	return time.UnixMilli(int64(ts)), nil
+}
 
 // TimeFromUnixTimestampDecimal converts a unix timestamp in decimal form to
 // a time.Time

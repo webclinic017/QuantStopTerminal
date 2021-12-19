@@ -2,7 +2,7 @@ package engine
 
 import (
 	"github.com/quantstop/quantstopterminal/internal/config"
-	"github.com/quantstop/quantstopterminal/pkg/logger"
+	"github.com/quantstop/quantstopterminal/internal/qstlog"
 	//"github.com/quantstop/quantstopterminal/internal/strategy"
 	"sync"
 )
@@ -18,7 +18,7 @@ func (s *StrategySubsystem) init(config *config.Config, name string) error {
 	}
 	//s.enabled = config.Strategy.Enabled
 	s.initialized = true
-	logger.Debugln(logger.StrategyLogger, s.name+MsgSubsystemInitialized)
+	qstlog.Debugln(qstlog.StrategyLogger, s.name+MsgSubsystemInitialized)
 	return nil
 }
 
@@ -29,7 +29,7 @@ func (s *StrategySubsystem) start(wg *sync.WaitGroup) (err error) {
 
 	//strategy.RunStrats()
 	s.started = true
-	logger.Debugln(logger.StrategyLogger, s.name+MsgSubsystemStarted)
+	qstlog.Debugln(qstlog.StrategyLogger, s.name+MsgSubsystemStarted)
 	return nil
 }
 
@@ -40,6 +40,6 @@ func (s *StrategySubsystem) stop() error {
 	}
 
 	s.started = false
-	logger.Debugln(logger.StrategyLogger, s.name+MsgSubsystemShutdown)
+	qstlog.Debugln(qstlog.StrategyLogger, s.name+MsgSubsystemShutdown)
 	return nil
 }

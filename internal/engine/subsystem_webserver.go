@@ -2,8 +2,8 @@ package engine
 
 import (
 	"github.com/quantstop/quantstopterminal/internal/config"
+	"github.com/quantstop/quantstopterminal/internal/qstlog"
 	"github.com/quantstop/quantstopterminal/internal/webserver"
-	"github.com/quantstop/quantstopterminal/pkg/logger"
 	"sync"
 )
 
@@ -17,7 +17,7 @@ func (s *WebserverSubsystem) init(config *config.Config, name string) error {
 		return err
 	}
 	s.initialized = true
-	logger.Debugln(logger.WebserverLogger, s.name+MsgSubsystemInitialized)
+	qstlog.Debugln(qstlog.Webserver, s.name+MsgSubsystemInitialized)
 	return nil
 }
 
@@ -28,7 +28,7 @@ func (s *WebserverSubsystem) start(wg *sync.WaitGroup) (err error) {
 	webserver.StartHttpServer(s.config)
 	//strategy.RunStrats()
 	s.started = true
-	logger.Debugln(logger.WebserverLogger, s.name+MsgSubsystemStarted)
+	qstlog.Debugln(qstlog.Webserver, s.name+MsgSubsystemStarted)
 	return nil
 }
 
@@ -39,6 +39,6 @@ func (s *WebserverSubsystem) stop() error {
 	}
 
 	s.started = false
-	logger.Debugln(logger.WebserverLogger, s.name+MsgSubsystemShutdown)
+	qstlog.Debugln(qstlog.Webserver, s.name+MsgSubsystemShutdown)
 	return nil
 }

@@ -6,7 +6,7 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/quantstop/quantstopterminal/internal/assets"
 	"github.com/quantstop/quantstopterminal/internal/config"
-	"github.com/quantstop/quantstopterminal/pkg/logger"
+	"github.com/quantstop/quantstopterminal/internal/qstlog"
 	"net/http"
 	"os"
 	"os/exec"
@@ -22,7 +22,7 @@ func StartHttpServer(config *config.Config) {
 		nodeContextCancel context.CancelFunc
 	)
 
-	logger.Infoln(logger.WebserverLogger, "Starting web server ...")
+	qstlog.Infoln(qstlog.Webserver, "Starting web server ...")
 
 	/*
 	 * Start the Go application
@@ -40,11 +40,11 @@ func StartHttpServer(config *config.Config) {
 		err = httpServer.Start("0.0.0.0:8080")
 
 		if err != http.ErrServerClosed {
-			logger.Errorf(logger.WebserverLogger, "Error starting web server %v.\n", err)
+			qstlog.Errorf(qstlog.Webserver, "Error starting web server %v.\n", err)
 		} else {
-			logger.Infoln(logger.WebserverLogger, "Shutting down web server ...")
+			qstlog.Infoln(qstlog.Webserver, "Shutting down web server ...")
 		}
-		logger.Infoln(logger.WebserverLogger, "Starting web server ... Success.")
+		qstlog.Infoln(qstlog.Webserver, "Starting web server ... Success.")
 
 	}()
 
@@ -61,7 +61,7 @@ func StartHttpServer(config *config.Config) {
 		_, nodeContextCancel = context.WithCancel(context.Background())
 
 		go func() {
-			logger.Debugf(logger.WebserverLogger, "Starting node development server ...")
+			qstlog.Debugf(qstlog.Webserver, "Starting node development server ...")
 
 			var cmd *exec.Cmd
 			var err error
@@ -71,13 +71,13 @@ func StartHttpServer(config *config.Config) {
 			cmd.Stdout = os.Stdout
 
 			if err = cmd.Start(); err != nil {
-				logger.Errorf(logger.WebserverLogger, "Error starting node development server %v.\n", err)
+				qstlog.Errorf(qstlog.Webserver, "Error starting node development server %v.\n", err)
 			}
 
 			// Wait for command to stop running, ie. node server is stopped
 			_ = cmd.Wait()
 
-			logger.Infoln(logger.WebserverLogger, "Shutting down node development server ...")
+			qstlog.Infoln(qstlog.Webserver, "Shutting down node development server ...")
 
 		}()
 	}
@@ -95,8 +95,8 @@ func StartHttpServer(config *config.Config) {
 	defer cancel()
 
 	if err = httpServer.Shutdown(ctx); err != nil {
-		logger.Errorf(logger.WebserverLogger, "Error starting web server! %v.\n", err)
+		qstlog.Errorf(qstlog.Webserver, "Error starting web server! %v.\n", err)
 	}
 
-	logger.Infoln(logger.WebserverLogger, "Application stopped")
+	qstlog.Infoln(qstlog.Webserver, "Application stopped")
 }
