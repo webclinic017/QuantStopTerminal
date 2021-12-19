@@ -54,6 +54,7 @@
     <li><a href="#roadmap">Roadmap</a></li>
     <li><a href="#contributing">Contributing</a></li>
     <li><a href="#license">License</a></li>
+    <li><a href="#acknowledgments">Acknowledgments</a></li>
   </ol>
 </details>
 
@@ -152,6 +153,19 @@ Don't forget to give the project a star! Thanks again!
 ## License
 
 Distributed under the MIT License. See the full [LICENSE](LICENSE) for more information.
+
+<p align="right">(<a href="#top">back to top</a>)</p>
+
+
+
+<!-- ACKNOWLEDGMENTS -->
+## Acknowledgments
+
+Big shout out to these great resources!
+
+* [Choose an Open Source License](https://choosealicense.com)
+* [Best-README-Template](https://github.com/othneildrew/Best-README-Template/blob/master/README.md)
+
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
