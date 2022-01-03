@@ -1,6 +1,3 @@
-//go:build ignore
-// +build ignore
-
 package main
 
 import (
@@ -24,4 +21,5 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
 }
