@@ -80,7 +80,7 @@ learn about quantitative analysis, and much more.
 * [Vue.js](https://vuejs.org/)
 * [Vue.js CLI](https://cli.vuejs.org/)
 * [NodeJS/NPM](https://nodejs.org/en/)
-* [make](https://www.gnu.org/software/make/)
+* [Taskfile](https://taskfile.dev/#/)
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
@@ -149,10 +149,10 @@ Don't forget to give the project a star! Thanks again!
 
 
 
-<!-- LICENSE -->
+<!-- Eula_en-us.rtf -->
 ## License
 
-Distributed under the MIT License. See the full [LICENSE](LICENSE) for more information.
+Distributed under the MIT License. See the full [LICENSE](assets/licenses/Eula_en-us.rtf) for more information.
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
@@ -165,7 +165,7 @@ Big shout out to these great resources!
 
 * [Choose an Open Source License](https://choosealicense.com)
 * [Best-README-Template](https://github.com/othneildrew/Best-README-Template/blob/master/README.md)
-
+* [Makefile tutorial](https://makefiletutorial.com/)
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
