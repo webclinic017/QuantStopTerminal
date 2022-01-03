@@ -17,9 +17,9 @@ func TestNewClient(t *testing.T) {
 	//Create a client instance
 	Coinbasepro, err = NewSandboxClient(
 		&Auth{
-			Key:        "9e0699f3e3819c8a750eb68f080ae563",
-			Passphrase: "umjjjkor5jb",
-			Secret:     "52jLKk2/N4GHXWDFtcQ5nldhWfYnHo07jb5xhAJ7V/oPAYHZDsgOE6/lI4eFkQw1peWjZHdyelmtPIcUDu77hA=="},
+			Key:        "",
+			Passphrase: "",
+			Secret:     ""},
 	)
 
 	if err != nil {
