@@ -3,7 +3,7 @@ package zip
 import (
 	"archive/zip"
 	"fmt"
-	"github.com/quantstop/quantstopterminal/internal/qstlog"
+	"github.com/quantstop/quantstopterminal/internal/log"
 	"io"
 	"os"
 	"path/filepath"
@@ -37,7 +37,7 @@ func UnZip(src, dest string) (fileList []string, err error) {
 		if !strings.HasPrefix(fPath, filepath.Clean(dest)+string(os.PathSeparator)) {
 			err = z.Close()
 			if err != nil {
-				qstlog.Errorf(qstlog.Global, ErrUnableToCloseFile, z, err)
+				log.Errorf(log.Global, ErrUnableToCloseFile, z, err)
 			}
 			err = fmt.Errorf("%s: illegal file path", fPath)
 			return
@@ -67,7 +67,7 @@ func UnZip(src, dest string) (fileList []string, err error) {
 		if err != nil {
 			errCls := outFile.Close()
 			if errCls != nil {
-				qstlog.Errorf(qstlog.Global, ErrUnableToCloseFile, outFile, errCls)
+				log.Errorf(log.Global, ErrUnableToCloseFile, outFile, errCls)
 			}
 			return
 		}
@@ -76,25 +76,25 @@ func UnZip(src, dest string) (fileList []string, err error) {
 		if errIOCopy != nil {
 			err = z.Close()
 			if err != nil {
-				qstlog.Errorf(qstlog.Global, ErrUnableToCloseFile, z, err)
+				log.Errorf(log.Global, ErrUnableToCloseFile, z, err)
 			}
 			err = outFile.Close()
 			if err != nil {
-				qstlog.Errorf(qstlog.Global, ErrUnableToCloseFile, outFile, err)
+				log.Errorf(log.Global, ErrUnableToCloseFile, outFile, err)
 			}
 			err = eFile.Close()
 			if err != nil {
-				qstlog.Errorf(qstlog.Global, ErrUnableToCloseFile, eFile, err)
+				log.Errorf(log.Global, ErrUnableToCloseFile, eFile, err)
 			}
 			return fileList, errIOCopy
 		}
 		err = outFile.Close()
 		if err != nil {
-			qstlog.Errorf(qstlog.Global, ErrUnableToCloseFile, outFile, err)
+			log.Errorf(log.Global, ErrUnableToCloseFile, outFile, err)
 		}
 		err = eFile.Close()
 		if err != nil {
-			qstlog.Errorf(qstlog.Global, ErrUnableToCloseFile, eFile, err)
+			log.Errorf(log.Global, ErrUnableToCloseFile, eFile, err)
 		}
 		if err != nil {
 			return
@@ -124,12 +124,12 @@ func Zip(src, dest string) error {
 		z.Close()
 		errCls := f.Close()
 		if errCls != nil {
-			qstlog.Errorf(qstlog.Global, "Failed to close file handle, manual deletion required: %v", errCls)
+			log.Errorf(log.Global, "Failed to close file handle, manual deletion required: %v", errCls)
 			return err
 		}
 		errRemove := os.Remove(dest)
 		if errRemove != nil {
-			qstlog.Errorf(qstlog.Global, "Failed to remove archive, manual deletion required: %v", errRemove)
+			log.Errorf(log.Global, "Failed to remove archive, manual deletion required: %v", errRemove)
 		}
 		return err
 	}
@@ -175,7 +175,7 @@ func addFilesToZipWrapper(z *zip.Writer, src string, isDir bool) error {
 		}
 		_, err = io.Copy(w, f)
 		if err != nil {
-			qstlog.Errorf(qstlog.Global, "Failed to Copy data: %v", err)
+			log.Errorf(log.Global, "Failed to Copy data: %v", err)
 		}
 
 		return f.Close()

@@ -17,7 +17,7 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
-	"github.com/quantstop/quantstopterminal/internal/qstlog"
+	"github.com/quantstop/quantstopterminal/internal/log"
 	"github.com/quantstop/quantstopterminal/pkg/system/file"
 	"hash"
 	"io"
@@ -136,6 +136,37 @@ func GetTLSDir(dir string) string {
 	return filepath.Join(dir, "tls")
 }
 
+// CheckCerts will check to see if certificates exist in the supplied directory,
+// and then verify that the certificate is not expired. If no certificates exist,
+// or they are expired, it will create new self-signed certificates.
+func CheckCerts(certDir string) error {
+	certFile := filepath.Join(certDir, "cert.pem")
+	keyFile := filepath.Join(certDir, "key.pem")
+
+	if !file.Exists(certFile) || !file.Exists(keyFile) {
+		log.Warnln(log.Global, "gRPC certificate/key file missing, recreating...")
+		return genCert(certDir)
+	}
+
+	pemData, err := ioutil.ReadFile(certFile)
+	if err != nil {
+		return fmt.Errorf("unable to open TLS cert file: %s", err)
+	}
+
+	if err = verifyCert(pemData); err != nil {
+		if err != errCertExpired {
+			return err
+		}
+		log.Warnln(log.Global, "gRPC certificate has expired, regenerating...")
+		return genCert(certDir)
+	}
+
+	log.Infoln(log.Global, "gRPC TLS certificate and key files exist, will use them.")
+	return nil
+}
+
+// verifyCert will check to make sure a certificate is not expired.
+// If the certificate is expired, will return error.
 func verifyCert(pemData []byte) error {
 	var pemBlock *pem.Block
 	pemBlock, _ = pem.Decode(pemData)
@@ -158,32 +189,7 @@ func verifyCert(pemData []byte) error {
 	return nil
 }
 
-func CheckCerts(certDir string) error {
-	certFile := filepath.Join(certDir, "cert.pem")
-	keyFile := filepath.Join(certDir, "key.pem")
-
-	if !file.Exists(certFile) || !file.Exists(keyFile) {
-		qstlog.Warnln(qstlog.Global, "gRPC certificate/key file missing, recreating...")
-		return genCert(certDir)
-	}
-
-	pemData, err := ioutil.ReadFile(certFile)
-	if err != nil {
-		return fmt.Errorf("unable to open TLS cert file: %s", err)
-	}
-
-	if err = verifyCert(pemData); err != nil {
-		if err != errCertExpired {
-			return err
-		}
-		qstlog.Warnln(qstlog.Global, "gRPC certificate has expired, regenerating...")
-		return genCert(certDir)
-	}
-
-	qstlog.Infoln(qstlog.Global, "gRPC TLS certificate and key files exist, will use them.")
-	return nil
-}
-
+// genCert will create a new certificate pair, in the supplied directory.
 func genCert(targetDir string) error {
 	privKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	if err != nil {
@@ -255,6 +261,6 @@ func genCert(targetDir string) error {
 		return fmt.Errorf("failed to write cert.pem file %s", err)
 	}
 
-	qstlog.Infof(qstlog.Global, "gRPC TLS key.pem and cert.pem files written to %s\n", targetDir)
+	log.Infof(log.Global, "gRPC TLS key.pem and cert.pem files written to %s\n", targetDir)
 	return nil
 }

@@ -12,7 +12,7 @@ import (
 
 func TestWrite(t *testing.T) {
 	tester := func(in string) error {
-		err := Write(in, []byte("GoCryptoTrader"))
+		err := Write(in, []byte("QuantstopTerminal"))
 		if err != nil {
 			return err
 		}
@@ -26,8 +26,8 @@ func TestWrite(t *testing.T) {
 	}
 
 	var tests []testTable
-	tempDir := filepath.Join(os.TempDir(), "gct-temp")
-	testFile := filepath.Join(tempDir, "gcttest.txt")
+	tempDir := filepath.Join(os.TempDir(), "qst-temp")
+	testFile := filepath.Join(tempDir, "qsttest.txt")
 	switch runtime.GOOS {
 	case "windows":
 		tests = []testTable{
@@ -56,7 +56,7 @@ func TestWrite(t *testing.T) {
 func TestMove(t *testing.T) {
 	tester := func(in, out string, write bool) error {
 		if write {
-			if err := ioutil.WriteFile(in, []byte("GoCryptoTrader"), 0770); err != nil {
+			if err := ioutil.WriteFile(in, []byte("QuantstopTerminal"), 0770); err != nil {
 				return err
 			}
 		}
@@ -70,7 +70,7 @@ func TestMove(t *testing.T) {
 			return err
 		}
 
-		if !strings.Contains(string(contents), "GoCryptoTrader") {
+		if !strings.Contains(string(contents), "QuantstopTerminal") {
 			return fmt.Errorf("unable to find previously written data")
 		}
 
@@ -88,20 +88,20 @@ func TestMove(t *testing.T) {
 	switch runtime.GOOS {
 	case "windows":
 		tests = []testTable{
-			{InFile: "*", OutFile: "gct.txt", Write: true, ErrExpected: true},
-			{InFile: "*", OutFile: "gct.txt", Write: false, ErrExpected: true},
+			{InFile: "*", OutFile: "qst.txt", Write: true, ErrExpected: true},
+			{InFile: "*", OutFile: "qst.txt", Write: false, ErrExpected: true},
 			{InFile: "in.txt", OutFile: "*", Write: true, ErrExpected: true},
 		}
 	default:
 		tests = []testTable{
-			{InFile: "", OutFile: "gct.txt", Write: true, ErrExpected: true},
-			{InFile: "", OutFile: "gct.txt", Write: false, ErrExpected: true},
+			{InFile: "", OutFile: "qst.txt", Write: true, ErrExpected: true},
+			{InFile: "", OutFile: "qst.txt", Write: false, ErrExpected: true},
 			{InFile: "in.txt", OutFile: "", Write: true, ErrExpected: true},
 		}
 	}
 	tests = append(tests, []testTable{
-		{InFile: "in.txt", OutFile: "gct.txt", Write: true, ErrExpected: false},
-		{InFile: "in.txt", OutFile: "non-existing/gct.txt", Write: true, ErrExpected: false},
+		{InFile: "in.txt", OutFile: "qst.txt", Write: true, ErrExpected: false},
+		{InFile: "in.txt", OutFile: "non-existing/qst.txt", Write: true, ErrExpected: false},
 		{InFile: "in.txt", OutFile: "in.txt", Write: true, ErrExpected: false},
 	}...)
 
@@ -123,7 +123,7 @@ func TestExists(t *testing.T) {
 	if e := Exists("non-existent"); e {
 		t.Error("non-existent file should not exist")
 	}
-	tmpFile := filepath.Join(os.TempDir(), "gct-test.strategy.txt")
+	tmpFile := filepath.Join(os.TempDir(), "qst-test.strategy.txt")
 	if err := ioutil.WriteFile(tmpFile, []byte("hello world"), os.ModeAppend); err != nil {
 		t.Fatal(err)
 	}
@@ -162,7 +162,7 @@ func TestWriteAsCSV(t *testing.T) {
 		{"Sup", "bra"},
 	}
 
-	testFile, err := ioutil.TempFile(os.TempDir(), "gct-csv-test.strategy.*.csv")
+	testFile, err := ioutil.TempFile(os.TempDir(), "qst-csv-test.strategy.*.csv")
 	if err != nil {
 		t.Fatal(err)
 	}

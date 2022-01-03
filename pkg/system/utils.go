@@ -2,7 +2,7 @@ package system
 
 import (
 	"errors"
-	"github.com/quantstop/quantstopterminal/internal/qstlog"
+	"github.com/quantstop/quantstopterminal/internal/log"
 	"os"
 	"runtime"
 )
@@ -45,6 +45,6 @@ func CreateDir(dir string) error {
 		return nil
 	}
 
-	qstlog.Warnf(qstlog.Global, "Directory %s does not exist.. creating.\n", dir)
+	log.Warnf(log.Global, "Directory %s does not exist.. creating.\n", dir)
 	return os.MkdirAll(dir, 0770)
 }
