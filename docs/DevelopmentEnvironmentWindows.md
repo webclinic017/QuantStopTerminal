@@ -33,9 +33,10 @@
         ```sh 
         v16.13.1
         ```
-* [make](https://www.gnu.org/software/make/)
-  1. Download and install Git Bash for windows from https://git-scm.com/download/win 
-  2. todo: list others ways to get make on windows.
+* [Vue.Js]()
+  1. Todo: 
+* [Taskfile](https://taskfile.dev/#/installation)
+  1. Follow the [instructions](https://taskfile.dev/#/installation)
 
 ### Installation
 
@@ -49,14 +50,11 @@ This template doesn't rely on any external dependencies or services._
    ```
 3. Run the app directly in development mode:<br>
    * ```sh 
-     make 
+     task run
      ```
    Or build production executables:
    * ```sh 
-     make build-all
-     make build-windows
-     make build-linux
-     make build-mac
+     task build
      ```
    All executable files will be located in /builds
     
