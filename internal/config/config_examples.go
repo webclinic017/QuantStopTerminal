@@ -14,7 +14,7 @@ func Example() {
 	configPath := LocalConfig("my-app")
 	err := makePath(configPath) // Ensure it exists.
 	if err != nil {
-		//panic(err)
+		panic(err)
 	}
 
 	// Deal with a JSON configuration file in that folder.
@@ -31,7 +31,7 @@ func Example() {
 		settings = AppSettings{"MyUser", "MyPassword"}
 		fh, err := os.Create(configFile)
 		if err != nil {
-			//panic(err)
+			panic(err)
 		}
 		defer fh.Close()
 
@@ -41,7 +41,7 @@ func Example() {
 		// Load the existing file.
 		fh, err := os.Open(configFile)
 		if err != nil {
-			//panic(err)
+			panic(err)
 		}
 		defer fh.Close()
 

@@ -1,4 +1,4 @@
-package qstlog
+package log
 
 import (
 	"bytes"
@@ -330,7 +330,7 @@ func TestNewLogEvent(t *testing.T) {
 	t.Parallel()
 	w := &bytes.Buffer{}
 	RWM.Lock()
-	err := logger.newLogEvent("out", "header", "SUBLOGGER", w)
+	err := QSTLogger.newLogEvent("out", "header", "SUBLOGGER", w)
 	RWM.Unlock()
 	if err != nil {
 		t.Fatal(err)
@@ -341,7 +341,7 @@ func TestNewLogEvent(t *testing.T) {
 	}
 
 	RWM.Lock()
-	err = logger.newLogEvent("out", "header", "SUBLOGGER", nil)
+	err = QSTLogger.newLogEvent("out", "header", "SUBLOGGER", nil)
 	RWM.Unlock()
 	if err == nil {
 		t.Error("Error expected with output is set to nil")
@@ -541,7 +541,7 @@ func TestSubLoggerName(t *testing.T) {
 	w := &bytes.Buffer{}
 	registerNewSubLogger("sublogger")
 	RWM.Lock()
-	err := logger.newLogEvent("out", "header", "SUBLOGGER", w)
+	err := QSTLogger.newLogEvent("out", "header", "SUBLOGGER", w)
 	RWM.Unlock()
 	if err != nil {
 		t.Fatal(err)
@@ -551,11 +551,11 @@ func TestSubLoggerName(t *testing.T) {
 	}
 
 	RWM.Lock()
-	logger.ShowLogSystemName = false
+	QSTLogger.ShowLogSystemName = false
 	RWM.Unlock()
 	w.Reset()
 	RWM.Lock()
-	err = logger.newLogEvent("out", "header", "SUBLOGGER", w)
+	err = QSTLogger.newLogEvent("out", "header", "SUBLOGGER", w)
 	RWM.Unlock()
 	if err != nil {
 		t.Fatal(err)

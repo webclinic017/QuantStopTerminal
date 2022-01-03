@@ -1,12 +1,13 @@
-package qstlog
+package log
 
 import (
 	"io"
+	"log"
 	"sync"
 )
 
 const (
-	timestampFormat = " 02/01/2006 15:04:05 "
+	timestampFormat = "02/01/2006 15:04:05"
 	spacer          = " | "
 	// DefaultMaxFileSize for logger rotation file
 	DefaultMaxFileSize int64 = 100
@@ -15,7 +16,7 @@ const (
 )
 
 var (
-	logger = Logger{}
+	QSTLogger = Logger{}
 	// FileLoggingConfiguredCorrectly flag set during config check if file logging meets requirements
 	FileLoggingConfiguredCorrectly bool
 	// GlobalLogConfig holds global configuration options for logger
@@ -75,6 +76,7 @@ type loggerFileConfig struct {
 
 // Logger each instance of logger settings
 type Logger struct {
+	log.Logger
 	ShowLogSystemName                                bool
 	Timestamp                                        string
 	InfoHeader, ErrorHeader, DebugHeader, WarnHeader string

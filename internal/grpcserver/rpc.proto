@@ -1,0 +1,59 @@
+syntax = "proto3";
+//import "google/api/annotations.proto";
+//import "google/protobuf/timestamp.proto";
+
+package grpcserver;
+option go_package = "github.com/quantstop/quantstopterminal/internal/grpcserver";
+
+message GetInfoRequest {}
+
+message GetInfoResponse {
+  string uptime = 1;
+  map<string, bool> subsystem_status = 2;
+  string version = 4;
+}
+
+message GenericSubsystemRequest {
+  string subsystem = 1;
+}
+
+message GenericResponse {
+  string status = 1;
+  string data = 2;
+}
+
+message GetSubsystemsRequest {}
+
+message GetSusbsytemsResponse {
+  map<string, bool> subsystems_status = 1;
+}
+
+
+
+
+service GRPCServer {
+  rpc GetInfo (GetInfoRequest) returns (GetInfoResponse) {
+    /*option (google.api.http) = {
+      get :"/v1/getinfo"
+    };*/
+  }
+
+  rpc GetSubsystems (GetSubsystemsRequest) returns (GetSusbsytemsResponse) {
+    /*option (google.api.http) = {
+      get: "/v1/getsubsystems"
+    };*/
+  }
+
+  rpc EnableSubsystem (GenericSubsystemRequest) returns (GenericResponse) {
+    /*option (google.api.http) = {
+      get: "/v1/enablesubsystem"
+    };*/
+  }
+
+  rpc DisableSubsystem (GenericSubsystemRequest) returns (GenericResponse) {
+    /*option (google.api.http) = {
+      get: "/v1/disablesubsystem"
+    };*/
+  }
+
+}

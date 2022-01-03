@@ -1,4 +1,4 @@
-package qstlog
+package log
 
 import (
 	"io"
@@ -61,6 +61,6 @@ func (sl *SubLogger) getFields() *logFields {
 		error:  sl.levels.Error,
 		name:   sl.name,
 		output: sl.output,
-		logger: logger,
+		logger: QSTLogger,
 	}
 }

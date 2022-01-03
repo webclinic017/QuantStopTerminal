@@ -7,6 +7,7 @@ import (
 )
 
 type Engine struct {
+	*Version
 	Config              *config.Config
 	SubsystemRegistry   *ServiceRegistry
 	DatabaseSubsystem   *DatabaseSubsystem

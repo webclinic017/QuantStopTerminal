@@ -22,7 +22,7 @@ var skipFunc = func(path string, fi os.FileInfo) bool {
 		extension == ".DS_Store" ||
 		extension == ".md" ||
 		extension == ".svg" ||
-		fname == "LICENSE"
+		fname == "Eula_en-us.rtf"
 }
 
 var Assets = filter.Skip(http.Dir("./web/dist/"), skipFunc)

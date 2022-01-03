@@ -3,9 +3,8 @@ package engine
 import (
 	"encoding/binary"
 	"fmt"
-	"github.com/quantstop/quantstopterminal/internal/config"
+	"github.com/quantstop/quantstopterminal/internal/log"
 	"github.com/quantstop/quantstopterminal/internal/ntpmonitor"
-	"github.com/quantstop/quantstopterminal/internal/qstlog"
 	"net"
 	"sync"
 	"time"
@@ -21,25 +20,25 @@ type NTPCheckerSubsystem struct {
 	retryLimit                int
 }
 
-func (s *NTPCheckerSubsystem) init(config *config.Config, name string) error {
-	if err := s.Subsystem.init(config, name); err != nil {
+func (s *NTPCheckerSubsystem) init(bot *Engine, name string) error {
+	if err := s.Subsystem.init(bot, name); err != nil {
 		return err
 	}
 
-	if s.config.NTP.AllowedNegativeDifference == nil ||
-		s.config.NTP.AllowedDifference == nil {
+	if s.bot.Config.NTP.AllowedNegativeDifference == nil ||
+		s.bot.Config.NTP.AllowedDifference == nil {
 		return ntpmonitor.ErrNilNTPConfigValues
 	}
 
-	s.level = int64(s.config.NTP.Level)
-	s.allowedDifference = *s.config.NTP.AllowedDifference
-	s.allowedNegativeDifference = *s.config.NTP.AllowedNegativeDifference
-	s.pools = s.config.NTP.Pool
+	s.level = int64(s.bot.Config.NTP.Level)
+	s.allowedDifference = *s.bot.Config.NTP.AllowedDifference
+	s.allowedNegativeDifference = *s.bot.Config.NTP.AllowedNegativeDifference
+	s.pools = s.bot.Config.NTP.Pool
 	s.checkInterval = ntpmonitor.DefaultNTPCheckInterval
 	s.retryLimit = ntpmonitor.DefaultRetryLimit
-	s.enabled = config.NTP.Enabled
+	s.enabled = bot.Config.NTP.Enabled
 	s.initialized = true
-	qstlog.Debugln(qstlog.NTPLogger, s.name+MsgSubsystemInitialized)
+	log.Debugln(log.NTPLogger, s.name+MsgSubsystemInitialized)
 	return nil
 }
 
@@ -73,7 +72,7 @@ func (s *NTPCheckerSubsystem) start(wg *sync.WaitGroup) (err error) {
 		s.started = false
 		return ntpmonitor.ErrNTPSubsystemDisabled
 	}
-	qstlog.Debugln(qstlog.NTPLogger, s.name+MsgSubsystemStarted)
+	log.Debugln(log.NTPLogger, s.name+MsgSubsystemStarted)
 	go s.run()
 	//logger.Debugf(logger.NTPLogger, "NTP subsystem %s", MsgSubSystemStarted)
 	return nil
@@ -88,7 +87,7 @@ func (s *NTPCheckerSubsystem) stop() error {
 	s.started = false
 
 	//logger.Debugf(logger.NTPLogger, "NTP manager %s", MsgSubSystemShuttingDown)
-	qstlog.Debugln(qstlog.NTPLogger, s.name+MsgSubsystemShutdown)
+	log.Debugln(log.NTPLogger, s.name+MsgSubsystemShutdown)
 	close(s.shutdown)
 	return nil
 }
@@ -107,7 +106,7 @@ func (s *NTPCheckerSubsystem) run() {
 		case <-t.C:
 			err := s.processTime()
 			if err != nil {
-				qstlog.Error(qstlog.NTPLogger, err)
+				log.Error(log.NTPLogger, err)
 			}
 		}
 	}
@@ -140,7 +139,7 @@ func (s *NTPCheckerSubsystem) processTime() error {
 	negDiff := s.allowedNegativeDifference
 	configNTPNegativeTime := -negDiff
 	if diff > configNTPTime || diff < configNTPNegativeTime {
-		qstlog.Warnf(qstlog.NTPLogger, "NTP manager: Time out of sync (NTP): %v | (time.Now()): %v | (Difference): %v | (Allowed): +%v / %v\n",
+		log.Warnf(log.NTPLogger, "NTP manager: Time out of sync (NTP): %v | (time.Now()): %v | (Difference): %v | (Allowed): +%v / %v\n",
 			NTPTime,
 			currentTime,
 			diff,
@@ -156,35 +155,35 @@ func (s *NTPCheckerSubsystem) checkTimeInPools() time.Time {
 	for i := range s.pools {
 		con, err := net.DialTimeout("udp", s.pools[i], 5*time.Second)
 		if err != nil {
-			qstlog.Warnf(qstlog.NTPLogger, "Unable to connect to hosts %v attempting next", s.pools[i])
+			log.Warnf(log.NTPLogger, "Unable to connect to hosts %v attempting next", s.pools[i])
 			continue
 		}
 
 		if err = con.SetDeadline(time.Now().Add(5 * time.Second)); err != nil {
-			qstlog.Warnf(qstlog.NTPLogger, "Unable to SetDeadline. Error: %s\n", err)
+			log.Warnf(log.NTPLogger, "Unable to SetDeadline. Error: %s\n", err)
 			err = con.Close()
 			if err != nil {
-				qstlog.Error(qstlog.NTPLogger, err)
+				log.Error(log.NTPLogger, err)
 			}
 			continue
 		}
 
 		req := &ntpmonitor.NTPPacket{Settings: 0x1B}
 		if err = binary.Write(con, binary.BigEndian, req); err != nil {
-			qstlog.Warnf(qstlog.NTPLogger, "Unable to write. Error: %s\n", err)
+			log.Warnf(log.NTPLogger, "Unable to write. Error: %s\n", err)
 			err = con.Close()
 			if err != nil {
-				qstlog.Error(qstlog.NTPLogger, err)
+				log.Error(log.NTPLogger, err)
 			}
 			continue
 		}
 
 		rsp := &ntpmonitor.NTPPacket{}
 		if err = binary.Read(con, binary.BigEndian, rsp); err != nil {
-			qstlog.Warnf(qstlog.NTPLogger, "Unable to read. Error: %s\n", err)
+			log.Warnf(log.NTPLogger, "Unable to read. Error: %s\n", err)
 			err = con.Close()
 			if err != nil {
-				qstlog.Error(qstlog.NTPLogger, err)
+				log.Error(log.NTPLogger, err)
 			}
 			continue
 		}
@@ -194,10 +193,10 @@ func (s *NTPCheckerSubsystem) checkTimeInPools() time.Time {
 
 		err = con.Close()
 		if err != nil {
-			qstlog.Error(qstlog.NTPLogger, err)
+			log.Error(log.NTPLogger, err)
 		}
 		return time.Unix(int64(secs), nanos)
 	}
-	qstlog.Warnln(qstlog.NTPLogger, "No valid NTP servers found, using current system time")
+	log.Warnln(log.NTPLogger, "No valid NTP servers found, using current system time")
 	return time.Now().UTC()
 }

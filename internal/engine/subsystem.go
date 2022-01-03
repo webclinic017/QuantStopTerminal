@@ -3,8 +3,7 @@ package engine
 import (
 	"errors"
 	"fmt"
-	"github.com/quantstop/quantstopterminal/internal/config"
-	"github.com/quantstop/quantstopterminal/internal/qstlog"
+	"github.com/quantstop/quantstopterminal/internal/log"
 	"sync"
 )
 
@@ -51,8 +50,8 @@ var (
 	// ErrNilWaitGroup is returned when a subsystem has nil wait group
 	ErrNilWaitGroup = errors.New("subsystem nil wait group received")
 
-	// errNilConfig is returned when a subsystem has no config to initialize with
-	errNilConfig = errors.New("subsystem received nil config")
+	// errNilEngine is returned when a subsystem has no bot to initialize with
+	errNilEngine = errors.New("subsystem received nil engine")
 )
 
 // Subsystem The Subsystem struct is meant to be used as an abstract type
@@ -62,23 +61,23 @@ type Subsystem struct {
 	initialized bool
 	started     bool
 	shutdown    chan struct{}
-	config      *config.Config
+	bot         *Engine
 }
 
-func (sub *Subsystem) init(config *config.Config, name string) error {
+func (sub *Subsystem) init(bot *Engine, name string) error {
 	if sub == nil {
 		return fmt.Errorf("%s subsystem %w", sub.name, ErrNilSubsystem)
 	}
-	if config == nil {
-		return fmt.Errorf("%s subsystem %w", sub.name, errNilConfig)
+	if bot == nil {
+		return fmt.Errorf("%s subsystem %w", sub.name, errNilEngine)
 	}
 
-	qstlog.Debugln(qstlog.SubsystemLogger, name+MsgSubsystemInitializing)
+	log.Debugln(log.SubsystemLogger, name+MsgSubsystemInitializing)
 	sub.name = name
 	sub.initialized = false
 	sub.started = false
 	sub.shutdown = make(chan struct{})
-	sub.config = config
+	sub.bot = bot
 	return nil
 }
 
@@ -96,7 +95,7 @@ func (sub *Subsystem) start(wg *sync.WaitGroup) error {
 		return fmt.Errorf("%s subsystem %w", sub.name, ErrSubsystemAlreadyStarted)
 	}
 	sub.started = false
-	qstlog.Debugln(qstlog.SubsystemLogger, sub.name+MsgSubsystemStarting)
+	log.Debugln(log.SubsystemLogger, sub.name+MsgSubsystemStarting)
 	return nil
 }
 
@@ -108,7 +107,7 @@ func (sub *Subsystem) stop() error {
 		return fmt.Errorf("%s subsystem %w", sub.name, ErrSubsystemNotStarted)
 	}
 	sub.started = false
-	qstlog.Debugln(qstlog.SubsystemLogger, sub.name+MsgSubsystemShuttingDown)
+	log.Debugln(log.SubsystemLogger, sub.name+MsgSubsystemShuttingDown)
 
 	return nil
 }

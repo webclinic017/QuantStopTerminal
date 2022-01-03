@@ -1,4 +1,4 @@
-package qstlog
+package log
 
 import (
 	"io"
@@ -7,14 +7,16 @@ import (
 
 // Global vars related to the logger package
 var (
-	SubLoggers      = map[string]*SubLogger{}
+	SubLoggers = map[string]*SubLogger{}
+
 	Global          *SubLogger
 	SubsystemLogger *SubLogger
-	Webserver       *SubLogger
-	DatabaseLogger  *SubLogger
 	ConnMonitor     *SubLogger
+	DatabaseLogger  *SubLogger
 	NTPLogger       *SubLogger
 	StrategyLogger  *SubLogger
+	Webserver       *SubLogger
+	GRPClog         *SubLogger
 )
 
 // SubLogger defines a sub logger can be used externally for packages wanted to

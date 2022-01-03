@@ -2,19 +2,18 @@ package config
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/quantstop/quantstopterminal/internal/connectionmonitor"
 	"github.com/quantstop/quantstopterminal/internal/database"
 	"github.com/quantstop/quantstopterminal/internal/database/drivers"
+	"github.com/quantstop/quantstopterminal/internal/grpcserver"
+	"github.com/quantstop/quantstopterminal/internal/log"
 	"github.com/quantstop/quantstopterminal/internal/ntpmonitor"
-	"github.com/quantstop/quantstopterminal/internal/qstlog"
+	"github.com/quantstop/quantstopterminal/internal/webserver"
 	"github.com/quantstop/quantstopterminal/pkg/system"
 	"github.com/quantstop/quantstopterminal/pkg/system/convert"
-	"io"
-	"log"
+	jsonUtils "github.com/quantstop/quantstopterminal/pkg/system/file/json"
 	"os"
 	"path/filepath"
-	"runtime"
 	"sync"
 	"time"
 )
@@ -26,31 +25,38 @@ const (
 )
 
 var (
-	PreReleaseBlurb = "This version is pre-release and is not intended to be used as a production ready trading framework or bot - use at your own risk."
-	Github          = "GitHub: https://github.com/QuantStop/QuantStopTerminal"
-	Copyright       = fmt.Sprintf("Copyright (c) 2021-%d QuantStop.com", time.Now().Year())
-	mutex           sync.Mutex
+	mutex sync.Mutex
+	/*MajorVersion 	= "0"
+	MinorVersion 	= "1"
+	Copyright 		= fmt.Sprintf("Copyright (c) 2021-%d QuantStop.com", time.Now().Year())
+	PrereleaseBlurb = "This version is pre-release and is not intended to be used as a production ready trading framework or bot - use at your own risk."
+	GitHub          = "GitHub: https://github.com/QuantStop/QuantStopTerminal"
+	Issues          = "Issues: https://github.com/QuantStop/QuantStopTerminal/issues"*/
 )
 
-type Config struct {
-	// Version types
+/*type Version struct {
 	MajorVersion    string
 	MinorVersion    string
-	IsRelease       bool
-	IsDevelopment   bool
+	Copyright       string
 	PrereleaseBlurb string
 	GitHub          string
-	Copyright       string
+	Issues			string
+	IsDaemon 		bool
+	IsRelease       bool
+	IsDevelopment   bool
+}*/
 
-	// Config types
+type Config struct {
+	//Version
 	ConfigDir       string
-	WebServerPort   int
 	GoMaxProcessors int
 	Database        database.Config
+	Webserver       *webserver.Config
+	GRPC            *grpcserver.Config
 	//Strategy 		strategy.Config
 	NTP      ntpmonitor.Config
 	Internet connectionmonitor.Config
-	Logger   qstlog.Config
+	Logger   log.Config
 }
 
 // DefaultFileMode controls the default permissions on any paths created by using MakePath.
@@ -106,7 +112,7 @@ func LocalCache(folder ...string) string {
 	return filepath.Join(localCache, filepath.Join(folder...))
 }
 
-// MakePath ensures that the full path you wanted, including vendor or
+// makePath ensures that the full path you wanted, including vendor or
 // application-specific components, exists. You can give this the output of
 // any of the config path functions (SystemConfig, LocalConfig or LocalCache).
 //
@@ -126,11 +132,11 @@ func makePath(paths ...string) error {
 }
 
 // SetupConfig will create the Config object and set the default data paths for the application.
-func (c *Config) SetupConfig(MajorVersion string, MinorVersion string, IsRelease bool, IsDevelopment bool) error {
+func (c *Config) SetupConfig() error {
 
 	// A common use case is to get a private config folder for your app to
 	// place its settings files into, that are specific to the local user.
-	configPath := LocalConfig("QuantStopTerminal")
+	configPath := LocalConfig("QuantstopTerminal")
 	err := makePath(configPath) // Ensure it exists.
 	if err != nil {
 		return err
@@ -143,8 +149,17 @@ func (c *Config) SetupConfig(MajorVersion string, MinorVersion string, IsRelease
 	if _, err = os.Stat(configFile); os.IsNotExist(err) {
 
 		// Setup default config
+		/*c.MajorVersion = MajorVersion
+		c.MinorVersion = MinorVersion
+		c.Copyright = Copyright
+		c.PrereleaseBlurb = PrereleaseBlurb
+		c.GitHub = GitHub
+		c.Issues = Issues
+		c.IsDaemon = false
+		c.IsRelease = false
+		c.IsDevelopment = true*/
+
 		c.ConfigDir = configPath
-		c.WebServerPort = 8080
 		c.GoMaxProcessors = -1
 		c.Database = database.Config{
 			Enabled: false,
@@ -158,6 +173,20 @@ func (c *Config) SetupConfig(MajorVersion string, MinorVersion string, IsRelease
 				Database: "docker",
 				SSLMode:  "false",
 			},
+		}
+		c.Webserver = &webserver.Config{
+			Enabled:             true,
+			HttpListenAddr:      ":8080",
+			WebsocketListenAddr: ":8090",
+		}
+		c.GRPC = &grpcserver.Config{
+			Enabled:                true,
+			ListenAddress:          "localhost:9052",
+			GRPCProxyEnabled:       false,
+			GRPCProxyListenAddress: "localhost:9053",
+			TimeInNanoSeconds:      false,
+			Username:               "admin",
+			Password:               "admin",
 		}
 		c.NTP = ntpmonitor.Config{
 			Enabled: true,
@@ -182,12 +211,12 @@ func (c *Config) SetupConfig(MajorVersion string, MinorVersion string, IsRelease
 		*c.NTP.AllowedNegativeDifference = DefaultNTPAllowedNegativeDifference
 
 		// Load default logging config
-		c.Logger = *qstlog.GenDefaultSettings()
+		c.Logger = *log.GenDefaultSettings()
 
 		// Copy default logging config to global log config
-		qstlog.RWM.Lock()
-		qstlog.GlobalLogConfig = &c.Logger
-		qstlog.RWM.Unlock()
+		log.RWM.Lock()
+		log.GlobalLogConfig = &c.Logger
+		log.RWM.Unlock()
 
 		// Create the config file
 		fh, err := os.Create(configFile)
@@ -199,9 +228,10 @@ func (c *Config) SetupConfig(MajorVersion string, MinorVersion string, IsRelease
 		}(fh)
 
 		// Write config to file in json format
-		err = PrettyEncode(&c, fh)
+		err = jsonUtils.PrettyEncodeJson(&c, fh)
 		if err != nil {
-			log.Fatal(err)
+			//log.Fatal(err)
+			log.Error(log.Global, err)
 		}
 
 	} else {
@@ -221,24 +251,6 @@ func (c *Config) SetupConfig(MajorVersion string, MinorVersion string, IsRelease
 		}
 	}
 
-	// Set flags
-	c.MajorVersion = MajorVersion
-	c.MinorVersion = MinorVersion
-	c.IsRelease = IsRelease
-	c.IsDevelopment = IsDevelopment
-	c.PrereleaseBlurb = PreReleaseBlurb
-	c.Copyright = Copyright
-	c.GitHub = Github
-
-	return nil
-}
-
-func PrettyEncode(data interface{}, out io.Writer) error {
-	enc := json.NewEncoder(out)
-	enc.SetIndent("", "    ")
-	if err := enc.Encode(data); err != nil {
-		return err
-	}
 	return nil
 }
 
@@ -259,7 +271,7 @@ func (c *Config) checkLoggerConfig() error {
 	defer mutex.Unlock()
 
 	if c.Logger.Enabled == nil || c.Logger.Output == "" {
-		c.Logger = *qstlog.GenDefaultSettings()
+		c.Logger = *log.GenDefaultSettings()
 	}
 
 	if c.Logger.AdvancedSettings.ShowLogSystemName == nil {
@@ -274,21 +286,21 @@ func (c *Config) checkLoggerConfig() error {
 			c.Logger.LoggerFileConfig.Rotate = convert.BoolPtr(false)
 		}
 		if c.Logger.LoggerFileConfig.MaxSize <= 0 {
-			qstlog.Warnf(qstlog.Global, "Logger rotation size invalid, defaulting to %v", qstlog.DefaultMaxFileSize)
-			c.Logger.LoggerFileConfig.MaxSize = qstlog.DefaultMaxFileSize
+			log.Warnf(log.Global, "Logger rotation size invalid, defaulting to %v", log.DefaultMaxFileSize)
+			c.Logger.LoggerFileConfig.MaxSize = log.DefaultMaxFileSize
 		}
-		qstlog.FileLoggingConfiguredCorrectly = true
+		log.FileLoggingConfiguredCorrectly = true
 	}
-	qstlog.RWM.Lock()
-	qstlog.GlobalLogConfig = &c.Logger
-	qstlog.RWM.Unlock()
+	log.RWM.Lock()
+	log.GlobalLogConfig = &c.Logger
+	log.RWM.Unlock()
 
 	logPath := c.GetDataPath("logs")
 	err := system.CreateDir(logPath)
 	if err != nil {
 		return err
 	}
-	qstlog.LogPath = logPath
+	log.LogPath = logPath
 
 	return nil
 }
@@ -298,7 +310,7 @@ func (c *Config) GetDataPath(elem ...string) string {
 	return filepath.Join(append([]string{c.ConfigDir}, elem...)...)
 }
 
-// GetVersion returns the version string
+/*// GetVersion returns the version string
 func (c *Config) GetVersion(short bool) string {
 	versionStr := fmt.Sprintf("QuantstopTerminal v%s.%s %s %s",
 		c.MajorVersion, c.MinorVersion, runtime.GOARCH, runtime.Version())
@@ -321,10 +333,10 @@ func (c *Config) GetVersion(short bool) string {
 	if short {
 		return versionStr
 	}
-	versionStr += c.Copyright + "\n\n"
-	versionStr += c.GitHub + "\n"
+	versionStr += c.Copyright + "\n"
+	versionStr += c.GitHub + "\n\n"
 	//versionStr += c.Trello + "\n"
 	//versionStr += c.Slack + "\n"
 	//versionStr += c.Issues + "\n"
 	return versionStr
-}
+}*/

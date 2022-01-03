@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/quantstop/quantstopterminal/internal/config"
-	"github.com/quantstop/quantstopterminal/internal/qstlog"
-	"github.com/quantstop/quantstopterminal/internal/webserver"
+	"github.com/quantstop/quantstopterminal/internal/grpcserver"
+	"github.com/quantstop/quantstopterminal/internal/log"
 	"github.com/quantstop/quantstopterminal/pkg/system"
 	"runtime"
 	"strings"
@@ -13,7 +13,7 @@ import (
 )
 
 // Create creates a new instance of the engine
-func Create(config *config.Config) (*Engine, error) {
+func Create(config *config.Config, version *Version) (*Engine, error) {
 
 	engineMutex.Lock()
 	defer engineMutex.Unlock()
@@ -28,6 +28,9 @@ func Create(config *config.Config) (*Engine, error) {
 	// Set the bot config
 	bot.Config = config
 
+	// Set the bot version
+	bot.Version = version
+
 	// Set the max processors for go
 	err = system.AdjustGoMaxProcs(bot.Config.GoMaxProcessors)
 	if err != nil {
@@ -37,6 +40,7 @@ func Create(config *config.Config) (*Engine, error) {
 	return &bot, nil
 }
 
+// Initialize sets up the engine, creating the subsystems, and the subsystem registry.
 func (bot *Engine) Initialize() error {
 
 	if bot == nil {
@@ -46,95 +50,136 @@ func (bot *Engine) Initialize() error {
 	engineMutex.Lock()
 	defer engineMutex.Unlock()
 
-	//var err error
-
 	// Create new subsystem registry
 	bot.SubsystemRegistry = NewServiceRegistry()
 
 	// Initialize database subsystem
-	/*if bot.Config.Database.Enabled {
-
-		// Create and init database subsystem
-		bot.DatabaseSubsystem = &DatabaseSubsystem{Subsystem: Subsystem{}}
-		if err = InitSubsystem(bot.DatabaseSubsystem, DatabaseSubsystemName, bot.Config); err != nil {
-			logger.Errorf(logger.Global, "Database subsystem unable to initialize: %v", err)
-		}
-
-		// Register database subsystem
-		if err = bot.SubsystemRegistry.RegisterService(bot.DatabaseSubsystem); err != nil {
-			logger.Errorf(logger.Global, "Database subsystem unable to register: %v", err)
-		}
-
-	}*/
+	if err := bot.initDatabaseSubsystem(); err != nil {
+		return err
+	}
 
 	// Initialize webserver subsystem
-	//initWebserverSubsystem(bot)
+	if err := bot.initWebserverSubsystem(); err != nil {
+		return err
+	}
 
 	// Initialize ntp checker subsystem
-	/*if bot.Config.NTP.Enabled {
-
-		// Create and init ntp checker subsystem
-		bot.NTPCheckerSubsystem = &NTPCheckerSubsystem{Subsystem: Subsystem{}}
-		if err = InitSubsystem(bot.NTPCheckerSubsystem, NTPSubsystemName, bot.Config); err != nil {
-			logger.Errorf(logger.Global, "NTP subsystem unable to initialize: %v", err)
-		}
-
-		// Register ntp checker subsystem
-		if err = bot.SubsystemRegistry.RegisterService(bot.NTPCheckerSubsystem); err != nil {
-			logger.Errorf(logger.Global, "NTP subsystem unable to register: %v", err)
-		}
-
-	}*/
+	if err := bot.initNtpMonitorSubsystem(); err != nil {
+		return err
+	}
 
 	// Initialize strategy subsystem
-	/*if bot.Config.Strategy.Enabled {
-
-		// Create and init strategy subsystem
-		bot.StrategySubsystem = &StrategySubsystem{Subsystem: Subsystem{}}
-		if err = InitSubsystem(bot.StrategySubsystem, StrategySubsystemName, bot.Config); err != nil {
-			logger.Errorf(logger.Global, "Strategy subsystem unable to initialize: %v", err)
-		}
-
-		// Register strategy subsystem
-		if err = bot.SubsystemRegistry.RegisterService(bot.StrategySubsystem); err != nil {
-			logger.Errorf(logger.Global, "Strategy subsystem unable to register: %v", err)
-		}
-
-	}*/
+	if err := bot.initStrategySubsystem(); err != nil {
+		return err
+	}
 
 	// Initialize internet checker subsystem
-	/*if bot.Config.Internet.Enabled {
-
-		// Create and init internet checker subsystem
-		bot.InternetSubsystem = &ConnectionMonitor{Subsystem: Subsystem{}}
-		if err = InitSubsystem(bot.InternetSubsystem, InternetCheckerName, bot.Config); err != nil {
-			logger.Errorf(logger.Global, "Internet checker subsystem unable to initialize: %v", err)
-		}
-
-		// Register internet checker subsystem
-		if err = bot.SubsystemRegistry.RegisterService(bot.InternetSubsystem); err != nil {
-			logger.Errorf(logger.Global, "Internet checker subsystem unable to register: %v", err)
-		}
-
-	}*/
+	if err := bot.initInternetMonitorSubsystem(); err != nil {
+		return err
+	}
 
 	return nil
 }
 
-func initWebserverSubsystem(bot *Engine) {
-	// Create and init webserver subsystem
-	bot.WebserverSubsystem = &WebserverSubsystem{Subsystem: Subsystem{}}
-	if err := InitSubsystem(bot.WebserverSubsystem, WebserverName, bot.Config); err != nil {
-		qstlog.Errorf(qstlog.Global, "Webserver subsystem unable to initialize: %v", err)
-	}
+func (bot *Engine) initDatabaseSubsystem() error {
+	if bot.Config.Database.Enabled {
 
-	// Register webserver subsystem
-	if err := bot.SubsystemRegistry.RegisterService(bot.WebserverSubsystem); err != nil {
-		qstlog.Errorf(qstlog.Global, "Webserver subsystem unable to register: %v", err)
+		// Create and init database subsystem
+		bot.DatabaseSubsystem = &DatabaseSubsystem{Subsystem: Subsystem{}}
+		if err := bot.DatabaseSubsystem.init(bot, DatabaseSubsystemName); err != nil {
+			log.Errorf(log.Global, "Database subsystem unable to initialize: %v", err)
+			return err
+		}
+
+		// Register database subsystem
+		if err := bot.SubsystemRegistry.RegisterService(bot.DatabaseSubsystem); err != nil {
+			log.Errorf(log.Global, "Database subsystem unable to register: %v", err)
+			return err
+		}
+
 	}
+	return nil
 }
 
-// Run start the newly created instance of the engine
+func (bot *Engine) initWebserverSubsystem() error {
+	if bot.Config.Webserver.Enabled {
+		// Create and init webserver subsystem
+		bot.WebserverSubsystem = &WebserverSubsystem{Subsystem: Subsystem{}}
+		if err := bot.WebserverSubsystem.init(bot, WebserverName); err != nil {
+			log.Errorf(log.Global, "Webserver subsystem unable to initialize: %v", err)
+			return err
+		}
+
+		// Register webserver subsystem
+		if err := bot.SubsystemRegistry.RegisterService(bot.WebserverSubsystem); err != nil {
+			log.Errorf(log.Global, "Webserver subsystem unable to register: %v", err)
+			return err
+		}
+	}
+	return nil
+}
+
+func (bot *Engine) initNtpMonitorSubsystem() error {
+	if bot.Config.NTP.Enabled {
+
+		// Create and init ntp checker subsystem
+		bot.NTPCheckerSubsystem = &NTPCheckerSubsystem{Subsystem: Subsystem{}}
+		if err := bot.NTPCheckerSubsystem.init(bot, NTPSubsystemName); err != nil {
+			log.Errorf(log.Global, "NTP subsystem unable to initialize: %v", err)
+			return err
+		}
+
+		// Register ntp checker subsystem
+		if err := bot.SubsystemRegistry.RegisterService(bot.NTPCheckerSubsystem); err != nil {
+			log.Errorf(log.Global, "NTP subsystem unable to register: %v", err)
+			return err
+		}
+
+	}
+	return nil
+}
+
+func (bot *Engine) initStrategySubsystem() error {
+	/*if bot.Config.Strategy.Enabled {
+
+		// Create and init strategy subsystem
+		bot.StrategySubsystem = &StrategySubsystem{Subsystem: Subsystem{}}
+		if err := bot.StrategySubsystem.init(bot, StrategySubsystemName); err != nil {
+			log.Errorf(log.Global, "Strategy subsystem unable to initialize: %v", err)
+			return err
+		}
+
+		// Register strategy subsystem
+		if err := bot.SubsystemRegistry.RegisterService(bot.StrategySubsystem); err != nil {
+			log.Errorf(log.Global, "Strategy subsystem unable to register: %v", err)
+			return err
+		}
+
+	}*/
+	return nil
+}
+
+func (bot *Engine) initInternetMonitorSubsystem() error {
+	if bot.Config.Internet.Enabled {
+
+		// Create and init internet checker subsystem
+		bot.InternetSubsystem = &ConnectionMonitor{Subsystem: Subsystem{}}
+		if err := bot.InternetSubsystem.init(bot, InternetCheckerName); err != nil {
+			log.Errorf(log.Global, "Internet checker subsystem unable to initialize: %v", err)
+			return err
+		}
+
+		// Register internet checker subsystem
+		if err := bot.SubsystemRegistry.RegisterService(bot.InternetSubsystem); err != nil {
+			log.Errorf(log.Global, "Internet checker subsystem unable to register: %v", err)
+			return err
+		}
+
+	}
+	return nil
+}
+
+// Run starts the newly created instance of the engine
 func (bot *Engine) Run() error {
 
 	if bot == nil {
@@ -150,12 +195,14 @@ func (bot *Engine) Run() error {
 	// Start all subsystems
 	bot.SubsystemRegistry.StartAll(&bot.SubsystemWG)
 
-	// start web server
-	webserver.StartHttpServer(bot.Config)
+	// start gRPC GRPCServer
+	if bot.Config.GRPC.Enabled {
+		go grpcserver.StartRPCServerTLS(bot, bot.Config.GRPC, bot.Config.ConfigDir)
+	}
 
 	// Print some info
-	qstlog.Debugf(qstlog.Global, "QuantStopTerminal started.\n")
-	qstlog.Debugf(qstlog.Global,
+	log.Infof(log.Global, "QuantstopTerminal started.\n")
+	log.Infof(log.Global,
 		"Using %d out of %d logical processors for runtime performance\n",
 		runtime.GOMAXPROCS(-1), runtime.NumCPU())
 
@@ -168,27 +215,59 @@ func (bot *Engine) Stop() {
 	engineMutex.Lock()
 	defer engineMutex.Unlock()
 
-	qstlog.Debugln(qstlog.Global, "Engine shutting down..")
+	log.Debugln(log.Global, "Engine shutting down..")
 
 	// Stop all subsystems
 	bot.SubsystemRegistry.StopAll()
 
 	// Wait for subsystems to gracefully shutdown
 	bot.SubsystemWG.Wait()
-	if err := qstlog.CloseLogger(); err != nil {
+	if err := log.CloseLogger(); err != nil {
 		fmt.Printf("Failed to close logger. Error: %v\n", err)
 	}
 
 }
 
+func (bot *Engine) GetUptime() string {
+	return time.Since(bot.Uptime).String()
+}
+
 // GetSubsystemsStatus returns the status of all engine subsystems
 func (bot *Engine) GetSubsystemsStatus() map[string]bool {
-	return map[string]bool{
-		DatabaseSubsystemName: bot.DatabaseSubsystem.isRunning(),
-		NTPSubsystemName:      bot.NTPCheckerSubsystem.isRunning(),
-		StrategySubsystemName: bot.StrategySubsystem.isRunning(),
-		InternetCheckerName:   bot.InternetSubsystem.isRunning(),
+
+	status := make(map[string]bool)
+
+	if bot.DatabaseSubsystem == nil {
+		status[DatabaseSubsystemName] = false
+	} else {
+		status[DatabaseSubsystemName] = bot.DatabaseSubsystem.isRunning()
 	}
+
+	if bot.NTPCheckerSubsystem == nil {
+		status[NTPSubsystemName] = false
+	} else {
+		status[NTPSubsystemName] = bot.NTPCheckerSubsystem.isRunning()
+	}
+
+	if bot.StrategySubsystem == nil {
+		status[StrategySubsystemName] = false
+	} else {
+		status[StrategySubsystemName] = bot.StrategySubsystem.isRunning()
+	}
+
+	if bot.InternetSubsystem == nil {
+		status[InternetCheckerName] = false
+	} else {
+		status[InternetCheckerName] = bot.InternetSubsystem.isRunning()
+	}
+
+	if bot.DatabaseSubsystem == nil {
+		status[DatabaseSubsystemName] = false
+	} else {
+		status[DatabaseSubsystemName] = bot.DatabaseSubsystem.isRunning()
+	}
+
+	return status
 }
 
 // SetSubsystem enables or disables an engine subsystem
@@ -198,7 +277,7 @@ func (bot *Engine) SetSubsystem(subSystemName string, enable bool) error {
 	}
 
 	if bot.Config == nil {
-		return errNilConfig
+		return errNilEngine
 	}
 
 	var err error
@@ -207,55 +286,59 @@ func (bot *Engine) SetSubsystem(subSystemName string, enable bool) error {
 	case DatabaseSubsystemName:
 		if enable {
 			if bot.DatabaseSubsystem == nil {
-				err = InitSubsystem(bot.DatabaseSubsystem, DatabaseSubsystemName, bot.Config)
+				err = bot.DatabaseSubsystem.init(bot, DatabaseSubsystemName)
 				if err != nil {
 					return err
 				}
 			}
-			return StartSubsystem(bot.DatabaseSubsystem, &bot.SubsystemWG)
+			return bot.DatabaseSubsystem.start(&bot.SubsystemWG)
 		} else {
-			return StopSubsystem(bot.DatabaseSubsystem)
+			return bot.DatabaseSubsystem.stop()
 		}
 
 	case NTPSubsystemName:
 		if enable {
 			if bot.NTPCheckerSubsystem == nil {
-				err = InitSubsystem(bot.NTPCheckerSubsystem, NTPSubsystemName, bot.Config)
+				err = bot.NTPCheckerSubsystem.init(bot, NTPSubsystemName)
 				if err != nil {
 					return err
 				}
 			}
-			return StartSubsystem(bot.NTPCheckerSubsystem, &bot.SubsystemWG)
+			return bot.NTPCheckerSubsystem.start(&bot.SubsystemWG)
 		} else {
-			return StopSubsystem(bot.NTPCheckerSubsystem)
+			return bot.NTPCheckerSubsystem.stop()
 		}
 
 	case StrategySubsystemName:
 		if enable {
 			if bot.StrategySubsystem == nil {
-				err = InitSubsystem(bot.StrategySubsystem, StrategySubsystemName, bot.Config)
+				err = bot.StrategySubsystem.init(bot, StrategySubsystemName)
 				if err != nil {
 					return err
 				}
 			}
-			return StartSubsystem(bot.StrategySubsystem, &bot.SubsystemWG)
+			return bot.StrategySubsystem.start(&bot.SubsystemWG)
 		} else {
-			return StopSubsystem(bot.StrategySubsystem)
+			return bot.StrategySubsystem.stop()
 		}
 
 	case InternetCheckerName:
 		if enable {
 			if bot.InternetSubsystem == nil {
-				err = InitSubsystem(bot.InternetSubsystem, InternetCheckerName, bot.Config)
+				err = bot.InternetSubsystem.init(bot, InternetCheckerName)
 				if err != nil {
 					return err
 				}
 			}
-			return StartSubsystem(bot.InternetSubsystem, &bot.SubsystemWG)
+			return bot.InternetSubsystem.start(&bot.SubsystemWG)
 		} else {
-			return StopSubsystem(bot.InternetSubsystem)
+			return bot.InternetSubsystem.stop()
 		}
 
 	}
 	return fmt.Errorf("%s: %w", subSystemName, ErrSubsystemNotFound)
+}
+
+func (bot *Engine) GetVersionString(short bool) string {
+	return bot.Version.GetVersionString(short)
 }

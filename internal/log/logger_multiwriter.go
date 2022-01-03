@@ -1,4 +1,4 @@
-package qstlog
+package log
 
 import (
 	"errors"

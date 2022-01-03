@@ -2,7 +2,7 @@ package engine
 
 import (
 	"fmt"
-	"github.com/quantstop/quantstopterminal/internal/qstlog"
+	"github.com/quantstop/quantstopterminal/internal/log"
 	"reflect"
 	"sync"
 )
@@ -36,15 +36,16 @@ func (s *ServiceRegistry) RegisterService(service iSubsystem) error {
 
 // StartAll initialized each service in order of registration.
 func (s *ServiceRegistry) StartAll(wg *sync.WaitGroup) {
-	qstlog.Infof(qstlog.SubsystemLogger, "Starting %d subsystems: %v", len(s.serviceTypes), s.serviceTypes)
+	log.Debugf(log.SubsystemLogger, "Starting %d subsystems: %v", len(s.serviceTypes), s.serviceTypes)
 
 	// Loop through all services
 	for _, kind := range s.serviceTypes {
 		if s.services[kind].isEnabled() && s.services[kind].isInitialized() {
 			// Make sure service is enabled, and initialized, then try starting
-			qstlog.Debugf(qstlog.SubsystemLogger, "Starting subsystem type %v", kind)
-			if err := StartSubsystem(s.services[kind], wg); err != nil {
-				qstlog.Errorf(qstlog.SubsystemLogger, "Unable to start subsystem %v : %v", kind, err)
+			log.Debugf(log.SubsystemLogger, "Starting subsystem type %v", kind)
+			//if err := StartSubsystem(s.services[kind], wg); err != nil {
+			if err := s.services[kind].start(wg); err != nil {
+				log.Errorf(log.SubsystemLogger, "Unable to start subsystem %v : %v", kind, err)
 			}
 		}
 
@@ -65,7 +66,8 @@ func (s *ServiceRegistry) Start(name string, wg *sync.WaitGroup) error {
 			if !s.services[kind].isInitialized() {
 				return ErrSubsystemNotInitialized
 			}
-			if err := StartSubsystem(s.services[kind], wg); err != nil {
+			//if err := StartSubsystem(s.services[kind], wg); err != nil {
+			if err := s.services[kind].start(wg); err != nil {
 				return err
 			}
 
@@ -86,8 +88,9 @@ func (s *ServiceRegistry) StopAll() {
 	for i := len(s.serviceTypes) - 1; i >= 0; i-- {
 		kind := s.serviceTypes[i]
 		service := s.services[kind]
-		if err := StopSubsystem(service); err != nil {
-			qstlog.Errorf(qstlog.SubsystemLogger, "Could not stop the following service: %v, %v", kind, err)
+		//if err := StopSubsystem(service); err != nil {
+		if err := service.stop(); err != nil {
+			log.Errorf(log.SubsystemLogger, "Could not stop the following service: %v, %v", kind, err)
 		}
 	}
 }

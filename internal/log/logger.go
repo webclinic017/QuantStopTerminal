@@ -1,4 +1,4 @@
-package qstlog
+package log
 
 import (
 	"errors"
@@ -34,20 +34,33 @@ func (l *Logger) newLogEvent(data, header, slName string, w io.Writer) error {
 		return errors.New("unable to type assert slice of bytes pointer")
 	}
 
+	// append header
 	*pool = append(*pool, header...)
+
+	// append spacer
+	*pool = append(*pool, l.Spacer...)
+
+	// append timestamp
+	if l.Timestamp != "" {
+		*pool = time.Now().AppendFormat(*pool, l.Timestamp)
+	}
+
+	// append log system name (sublogger name)
 	if l.ShowLogSystemName {
 		*pool = append(*pool, l.Spacer...)
 		*pool = append(*pool, slName...)
 	}
+
+	// append spacer
 	*pool = append(*pool, l.Spacer...)
-	if l.Timestamp != "" {
-		*pool = time.Now().AppendFormat(*pool, l.Timestamp)
-	}
-	*pool = append(*pool, l.Spacer...)
+
+	// append log data
 	*pool = append(*pool, data...)
 	if data == "" || data[len(data)-1] != '\n' {
 		*pool = append(*pool, '\n')
 	}
+
+	// write to the pool
 	_, err := w.Write(*pool)
 	*pool = (*pool)[:0]
 	eventPool.Put(pool)

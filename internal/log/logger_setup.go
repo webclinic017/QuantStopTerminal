@@ -1,4 +1,4 @@
-package qstlog
+package log
 
 import (
 	"errors"
@@ -47,15 +47,15 @@ func GenDefaultSettings() *Config {
 		Enabled: convert.BoolPtr(true),
 		SubLoggerConfig: SubLoggerConfig{
 			Level:  "INFO|DEBUG|WARN|ERROR",
-			Output: "console",
+			Output: "console|file",
 		},
 		LoggerFileConfig: &loggerFileConfig{
 			FileName: "log.txt",
-			Rotate:   convert.BoolPtr(false),
-			MaxSize:  0,
+			Rotate:   convert.BoolPtr(true),
+			MaxSize:  100,
 		},
 		AdvancedSettings: advancedSettings{
-			ShowLogSystemName: convert.BoolPtr(false),
+			ShowLogSystemName: convert.BoolPtr(true),
 			Spacer:            spacer,
 			TimeStampFormat:   timestampFormat,
 			Headers: headers{
@@ -118,7 +118,7 @@ func SetupGlobalLogger() error {
 		}
 		SubLoggers[x].SetOutput(writers)
 	}
-	logger = newLogger(GlobalLogConfig)
+	QSTLogger = newLogger(GlobalLogConfig)
 	return nil
 }
 
@@ -155,9 +155,10 @@ func registerNewSubLogger(subLogger string) *SubLogger {
 func init() {
 	Global = registerNewSubLogger("LOG")
 	SubsystemLogger = registerNewSubLogger("SUBSYSTEM")
-	Webserver = registerNewSubLogger("WEBSERVER")
-	DatabaseLogger = registerNewSubLogger("DATABASE")
 	ConnMonitor = registerNewSubLogger("CONNECTION")
+	DatabaseLogger = registerNewSubLogger("DATABASE")
 	NTPLogger = registerNewSubLogger("TIMEKEEPER")
 	StrategyLogger = registerNewSubLogger("STRATEGY")
+	Webserver = registerNewSubLogger("WEBSERVER")
+	GRPClog = registerNewSubLogger("GRPC")
 }

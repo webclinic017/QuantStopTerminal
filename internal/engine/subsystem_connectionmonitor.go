@@ -1,9 +1,9 @@
 package engine
 
 import (
-	"github.com/quantstop/quantstopterminal/internal/config"
+	"fmt"
 	"github.com/quantstop/quantstopterminal/internal/connectionmonitor"
-	"github.com/quantstop/quantstopterminal/internal/qstlog"
+	"github.com/quantstop/quantstopterminal/internal/log"
 	"sync"
 )
 
@@ -12,24 +12,24 @@ type ConnectionMonitor struct {
 	conn *connectionmonitor.Checker
 }
 
-func (s *ConnectionMonitor) init(config *config.Config, name string) error {
+func (s *ConnectionMonitor) init(bot *Engine, name string) error {
 
-	if err := s.Subsystem.init(config, name); err != nil {
+	if err := s.Subsystem.init(bot, name); err != nil {
 		return err
 	}
 
-	if s.config.Internet.DNSList == nil {
-		s.config.Internet.DNSList = connectionmonitor.DefaultDNSList
+	if s.bot.Config.Internet.DNSList == nil {
+		s.bot.Config.Internet.DNSList = connectionmonitor.DefaultDNSList
 	}
-	if s.config.Internet.PublicDomainList == nil {
-		s.config.Internet.PublicDomainList = connectionmonitor.DefaultDomainList
+	if s.bot.Config.Internet.PublicDomainList == nil {
+		s.bot.Config.Internet.PublicDomainList = connectionmonitor.DefaultDomainList
 	}
-	if s.config.Internet.CheckInterval == 0 {
-		s.config.Internet.CheckInterval = connectionmonitor.DefaultCheckInterval
+	if s.bot.Config.Internet.CheckInterval == 0 {
+		s.bot.Config.Internet.CheckInterval = connectionmonitor.DefaultCheckInterval
 	}
-	s.enabled = config.Internet.Enabled
+	s.enabled = bot.Config.Internet.Enabled
 	s.initialized = true
-	qstlog.Debugln(qstlog.ConnMonitor, s.name+MsgSubsystemInitialized)
+	log.Debugln(log.ConnMonitor, s.name+MsgSubsystemInitialized)
 	return nil
 }
 
@@ -39,16 +39,16 @@ func (s *ConnectionMonitor) start(wg *sync.WaitGroup) (err error) {
 		return err
 	}
 
-	s.conn, err = connectionmonitor.New(s.config.Internet.DNSList,
-		s.config.Internet.PublicDomainList,
-		s.config.Internet.CheckInterval)
+	s.conn, err = connectionmonitor.New(s.bot.Config.Internet.DNSList,
+		s.bot.Config.Internet.PublicDomainList,
+		s.bot.Config.Internet.CheckInterval)
 	if err != nil {
 		s.started = false
 		return err
 	}
 
 	s.started = true
-	qstlog.Debugln(qstlog.ConnMonitor, s.name+MsgSubsystemStarted)
+	log.Debugln(log.ConnMonitor, s.name+MsgSubsystemStarted)
 	return nil
 }
 
@@ -58,11 +58,11 @@ func (s *ConnectionMonitor) stop() error {
 	}
 
 	if s.conn == nil {
-		//return fmt.Errorf("connection manager: %w", errConnectionCheckerIsNil)
+		return fmt.Errorf("connection manager: %w", ErrNilSubsystem)
 	}
 	s.conn.Shutdown()
 
 	s.started = false
-	qstlog.Debugln(qstlog.ConnMonitor, s.name+MsgSubsystemShutdown)
+	log.Debugln(log.ConnMonitor, s.name+MsgSubsystemShutdown)
 	return nil
 }

@@ -1,13 +1,12 @@
 package sqlite
 
-/*import (
+import (
 	"database/sql"
-	_ "github.com/mattn/go-sqlite3"
 	"github.com/quantstop/quantstopterminal/internal/database"
+	//_ "github.com/mattn/go-sqlite3"
+	_ "modernc.org/sqlite"
 	"path/filepath"
 )
-
-
 
 // Connect opens a connection to sqlite database and returns a pointer to database.DB
 func Connect(db string) (*database.Instance, error) {
@@ -28,4 +27,3 @@ func Connect(db string) (*database.Instance, error) {
 
 	return database.DB, nil
 }
-*/
