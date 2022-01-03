@@ -1,0 +1,59 @@
+version: '3'
+
+includes:
+  docker: ./scripts/taskfiles/DockerTasks.yml
+  windows: ./scripts/taskfiles/WindowsTasks.yml
+  linux: ./scripts/taskfiles/LinuxTasks.yml
+  frontend: ./scripts/taskfiles/FrontendTasks.yml
+
+vars:
+  VERSION: 0.0.1
+  PROJECT_DIR:
+    sh: pwd | sed 's/\\/\//g'
+  ISRELEASE: false
+
+tasks:
+
+  default:
+    desc: Show available tasks for this project
+    cmds:
+      - task -l
+
+  run:
+    desc: Run the project
+    deps: [ frontend:npm-install ]
+    dir: ./cmd/qst
+    cmds:
+      - go run -tags=dev . -daemon=false -development=true
+
+  release: # Todo: implement this
+    desc: Release the project
+    deps: [ build ]
+    summary: |
+      Release your project to github
+
+      It will build your project before starting the release.
+      Please make sure that you have set GITHUB_TOKEN before starting.
+    cmds:
+      - your-release-tool
+
+  build:
+    desc: Build the project
+    cmds:
+      - task: windows:build-win-amd64
+      - task: windows:build-win-386
+
+  clean:
+    desc: Build the project
+    cmds:
+      - task: windows:clean-win-amd64
+      - task: windows:clean-win-386
+
+  gen-proto:
+    desc: Generate the gRPC code using protoc
+    dir: ./internal/grpcserver
+    cmds:
+      - protoc --go_out=paths=source_relative:. rpc.proto
+      - protoc --go-grpc_out=paths=source_relative:. rpc.proto
+      #- protoc --grpc-gateway_out=paths=source_relative,logtostderr=true:. rpc.proto
+      #- protoc --go_opt=paths=source_relative --go_out=plugins=grpc:./ rpc.proto
