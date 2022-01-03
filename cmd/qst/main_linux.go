@@ -1,10 +1,12 @@
 package main
 
 import (
+	_ "embed"
+	"flag"
 	"fmt"
 	"github.com/quantstop/quantstopterminal/internal/config"
 	"github.com/quantstop/quantstopterminal/internal/engine"
-	"github.com/quantstop/quantstopterminal/internal/qstlog"
+	qstlog "github.com/quantstop/quantstopterminal/internal/log"
 	"github.com/quantstop/quantstopterminal/pkg/system"
 	"log"
 	"path/filepath"
@@ -12,31 +14,21 @@ import (
 )
 
 var (
-	Bot           *engine.Engine // Global pointer to Engine
-	Config        *config.Config // Global pointer to Config
-	MajorVersion  string         // Flag variable for MajorVersion
-	MinorVersion  string         // Flag variable for MinorVersion
-	IsRelease     string         // Flag variable for IsRelease
-	IsDevelopment string         // Flag variable for IsDevelopment
+	BuildFlagVersion   string         // Build flag for version
+	BuildFlagIsRelease string         // Build flag for setting release blurb
+	Engine             *engine.Engine // Global pointer to Engine
+	Config             *config.Config // Global pointer to Config
 )
 
 func main() {
 
 	var err error
 
-	// Convert flag vars for IsRelease and IsDevelopment to booleans
-	isRelease := false
-	isDevelopment := false
-	if IsRelease == "true" {
-		isRelease = true
-	}
-	if IsDevelopment == "true" {
-		isDevelopment = true
-	}
+	// Create config
+	Config = &config.Config{}
 
 	// Setup config
-	Config = &config.Config{}
-	if err = Config.SetupConfig(MajorVersion, MinorVersion, isRelease, isDevelopment); err != nil {
+	if err = Config.SetupConfig(); err != nil {
 		log.Fatalf("Error settup up config: %s\n", err)
 	}
 
@@ -44,17 +36,37 @@ func main() {
 	if err = Config.CheckConfig(); err != nil {
 		log.Fatalf("Error checking config: %s\n", err)
 	}
-
-	// Setup logger
-	if err := qstlog.SetupGlobalLogger(); err != nil {
+	// Setup global logger
+	if err = qstlog.SetupGlobalLogger(); err != nil {
 		log.Fatalf("Error setting up global logger: %s\n", err)
 	}
-	if err := qstlog.SetupSubLoggers(Config.Logger.SubLoggers); err != nil {
+
+	// Setup all sub loggers
+	if err = qstlog.SetupSubLoggers(Config.Logger.SubLoggers); err != nil {
 		log.Fatalf("Error setting up subloggers: %s\n", err)
 	}
 
+	// Create default Version
+	version := engine.CreateDefaultVersion()
+
+	// Set build flags, unfortunately can only be of type string so must convert for IsRelease
+	if BuildFlagIsRelease == "true" {
+		version.IsRelease = true
+	} else {
+		version.IsRelease = false
+	}
+	version.Version = BuildFlagVersion
+
+	// Parse runtime flags into Version
+	flag.BoolVar(&version.IsDaemon, "daemon", false, "run as a background service")
+	flag.BoolVar(&version.IsDevelopment, "development", false, "set development mode")
+	flag.Parse()
+
+	// Inject the website frontend into variable for webserver
+	//webserver.Website = &WebFrontend
+
 	// Print banner and version
-	qstlog.Infof(qstlog.Global, "\n"+engine.Banner+"\n"+Config.GetVersion(false))
+	qstlog.Infof(qstlog.Global, "\n"+engine.GetRandomBanner()+"\n"+version.GetVersionString(false))
 
 	// Print logger info
 	qstlog.Debugln(qstlog.Global, "Logger initialized.")
@@ -67,17 +79,17 @@ func main() {
 	}
 
 	// Create the bot
-	if Bot, err = engine.Create(Config); err != nil {
+	if Engine, err = engine.Create(Config, version); err != nil {
 		log.Fatalf("Unable to create bot engine. Error: %s\n", err)
 	}
 
 	// Initialize the bot
-	if err = Bot.Initialize(); err != nil {
+	if err = Engine.Initialize(); err != nil {
 		log.Fatalf("Unable to initialize bot engine. Error: %s\n", err)
 	}
 
 	// Run the bot
-	if err = Bot.Run(); err != nil {
+	if err = Engine.Run(); err != nil {
 		log.Fatalf("Unable to start bot engine. Error: %s\n", err)
 	}
 
@@ -85,6 +97,7 @@ func main() {
 	interrupt := system.WaitForInterrupt()
 	s := fmt.Sprintf("Captured %v, shutdown requested.", interrupt)
 	qstlog.Infoln(qstlog.Global, s)
-	Bot.Stop()
+	Engine.Stop()
 	qstlog.Infoln(qstlog.Global, "Exiting.")
+
 }
