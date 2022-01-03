@@ -7,6 +7,8 @@
 *.dll
 *.so
 *.dylib
+*.syso
+*.msi
 
 # Test binary, built with `go test -c`
 *.test
@@ -15,7 +17,7 @@
 *.out
 
 # Dependency directories (remove the comment below to include it)
-# vendor/
+vendor/
 
 # Go workspace file
 go.work
@@ -30,3 +32,6 @@ go.work
 
 # internal go code from builds that we dont want included
 /internal/assets/appcode.go
+
+
+/.task/
