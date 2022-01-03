@@ -1,0 +1,40 @@
+version: '3'
+
+tasks:
+
+  npm-install:
+    desc: Run 'npm install'
+    dir: ./web
+    run: when_changed
+    sources:
+      - src/*
+      - public/*
+    generates:
+      - dist/*
+    cmds:
+      - npm install
+
+  npm-build:
+    desc: Run 'npm build'
+    deps: [ npm-install ]
+    dir: ./web
+    run: when_changed
+    sources:
+      - src/*
+      - public/*
+    generates:
+      - dist/*
+    cmds:
+      - npm run build
+
+  gen-assets:
+    desc: Generate static frontend
+    deps: [ npm-build ]
+    run: when_changed
+    sources:
+      - ./cmd/genassets/main.go
+    generates:
+      - ./internal/assets/appcode.go
+    cmds:
+      - go run ./cmd/genassets/main.go
+      - go generate
