@@ -8,6 +8,6 @@ type Config struct {
 	GRPCProxyEnabled       bool
 	GRPCProxyListenAddress string
 	TimeInNanoSeconds      bool
-	Username               string
-	Password               string
+	/*Username               string
+	Password               string*/
 }
