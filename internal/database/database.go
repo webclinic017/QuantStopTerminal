@@ -3,6 +3,8 @@ package database
 import (
 	"database/sql"
 	"fmt"
+	"github.com/quantstop/quantstopterminal/internal/database/models"
+	"github.com/quantstop/quantstopterminal/internal/log"
 	"time"
 )
 
@@ -145,4 +147,47 @@ func (i *Instance) GetSQL() (*sql.DB, error) {
 	defer i.m.Unlock()
 	resp := i.SQL
 	return resp, nil
+}
+
+// SeedDB will create the database tables if they do not exist, and create the default admin user.
+func (i *Instance) SeedDB() error {
+
+	// ToDo: this is only for sqlite ... can we move into individual drivers?
+
+	log.Debugln(log.DatabaseLogger, "SeedDB - Checking for users table ...")
+	row := i.SQL.QueryRow("SELECT name FROM sqlite_master WHERE type='table' AND name='users' LIMIT 1")
+	var table interface{}
+	if err := row.Scan(&table); err != nil {
+		log.Debugln(log.DatabaseLogger, "SeedDB - Checking for users table ... Not found.")
+		log.Debugln(log.DatabaseLogger, "SeedDB - Creating users table ... ")
+		usersTable := `
+create table if not exists users
+(
+    id integer primary key autoincrement,
+    username varchar(255) not null,
+    password varchar(100) not null,
+    constraint username
+        unique (username)
+);
+`
+		_, err := i.SQL.Exec(usersTable)
+		if err != nil {
+			log.Errorf(log.DatabaseLogger, "SeedDB - Creating users table ... Failed. Error: %v", err)
+		}
+		log.Debugln(log.DatabaseLogger, "SeedDB - Creating users table ... Success!")
+		log.Debugln(log.DatabaseLogger, "SeedDB - Creating default admin ... ")
+		defaultUser := models.User{
+			Username: "admin",
+			Password: "admin",
+		}
+		err = defaultUser.CreateUser(i.SQL)
+		if err != nil {
+			return err
+		}
+		log.Debugln(log.DatabaseLogger, "SeedDB - Creating default admin ... Success! Finished SeedDB.")
+		return nil
+	}
+
+	log.Debugln(log.DatabaseLogger, "SeedDB - Checking for users table ... Found! Finished SeedDB.")
+	return nil
 }

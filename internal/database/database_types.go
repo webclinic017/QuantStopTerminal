@@ -39,7 +39,7 @@ var (
 	ErrDatabaseSupportDisabled = errors.New("database support is disabled")
 
 	// SupportedDrivers slice of supported database driver types
-	//SupportedDrivers = []string{DBSQLite, DBSQLite3, DBPostgreSQL}
+	SupportedDrivers = []string{DBSQLite, DBSQLite3, DBPostgreSQL, DBMySQL}
 
 	// ErrFailedToConnect for when a database fails to connect
 	ErrFailedToConnect = errors.New("database failed to connect")
@@ -48,7 +48,7 @@ var (
 	ErrDatabaseNotConnected = errors.New("database is not connected")
 
 	// DefaultSQLiteDatabase is the default sqlite3 database name to use
-	//DefaultSQLiteDatabase = "qstrader.db"
+	DefaultSQLiteDatabase = "qst.db"
 
 	// ErrNilInstance for when a database is nil
 	ErrNilInstance = errors.New("database instance is nil")
@@ -91,4 +91,20 @@ type ISQL interface {
 	ExecContext(context.Context, string, ...interface{}) (sql.Result, error)
 	QueryContext(context.Context, string, ...interface{}) (*sql.Rows, error)
 	QueryRowContext(context.Context, string, ...interface{}) *sql.Row
+}
+
+func GenDefaultSettings() *Config {
+	return &Config{
+		Enabled: true,
+		Verbose: true,
+		Driver:  "sqlite",
+		ConnectionDetails: drivers.ConnectionDetails{
+			Host:     "127.0.0.1",
+			Port:     3306,
+			Username: "docker",
+			Password: "docker",
+			Database: "qst.db",
+			SSLMode:  "false",
+		},
+	}
 }
