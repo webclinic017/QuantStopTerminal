@@ -1,6 +1,10 @@
 package engine
 
-import "math/rand"
+import (
+	"github.com/quantstop/quantstopterminal/internal/log"
+	"math/rand"
+	"time"
+)
 
 var Banners []string
 
@@ -94,5 +98,11 @@ func GetRandomBanner() string {
 	if len(Banners) <= 0 {
 		return BannerGraffiti
 	}
-	return Banners[rand.Intn(len(Banners))]
+	log.Debugf(log.Global, "number of banners: %d", len(Banners))
+
+	rand.Seed(time.Now().UnixNano())
+	randBan := rand.Intn(len(Banners)-0) + 0
+
+	log.Debugf(log.Global, "using banner %d", randBan)
+	return Banners[randBan]
 }
