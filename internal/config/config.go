@@ -2,9 +2,9 @@ package config
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/quantstop/quantstopterminal/internal/connectionmonitor"
 	"github.com/quantstop/quantstopterminal/internal/database"
-	"github.com/quantstop/quantstopterminal/internal/database/drivers"
 	"github.com/quantstop/quantstopterminal/internal/grpcserver"
 	"github.com/quantstop/quantstopterminal/internal/log"
 	"github.com/quantstop/quantstopterminal/internal/ntpmonitor"
@@ -26,28 +26,9 @@ const (
 
 var (
 	mutex sync.Mutex
-	/*MajorVersion 	= "0"
-	MinorVersion 	= "1"
-	Copyright 		= fmt.Sprintf("Copyright (c) 2021-%d QuantStop.com", time.Now().Year())
-	PrereleaseBlurb = "This version is pre-release and is not intended to be used as a production ready trading framework or bot - use at your own risk."
-	GitHub          = "GitHub: https://github.com/QuantStop/QuantStopTerminal"
-	Issues          = "Issues: https://github.com/QuantStop/QuantStopTerminal/issues"*/
 )
 
-/*type Version struct {
-	MajorVersion    string
-	MinorVersion    string
-	Copyright       string
-	PrereleaseBlurb string
-	GitHub          string
-	Issues			string
-	IsDaemon 		bool
-	IsRelease       bool
-	IsDevelopment   bool
-}*/
-
 type Config struct {
-	//Version
 	ConfigDir       string
 	GoMaxProcessors int
 	Database        database.Config
@@ -149,31 +130,9 @@ func (c *Config) SetupConfig() error {
 	if _, err = os.Stat(configFile); os.IsNotExist(err) {
 
 		// Setup default config
-		/*c.MajorVersion = MajorVersion
-		c.MinorVersion = MinorVersion
-		c.Copyright = Copyright
-		c.PrereleaseBlurb = PrereleaseBlurb
-		c.GitHub = GitHub
-		c.Issues = Issues
-		c.IsDaemon = false
-		c.IsRelease = false
-		c.IsDevelopment = true*/
-
 		c.ConfigDir = configPath
 		c.GoMaxProcessors = -1
-		c.Database = database.Config{
-			Enabled: false,
-			Verbose: false,
-			Driver:  "mysql",
-			ConnectionDetails: drivers.ConnectionDetails{
-				Host:     "127.0.0.1",
-				Port:     3306,
-				Username: "docker",
-				Password: "docker",
-				Database: "docker",
-				SSLMode:  "false",
-			},
-		}
+		c.Database = *database.GenDefaultSettings()
 		c.Webserver = &webserver.Config{
 			Enabled:             true,
 			HttpListenAddr:      ":8080",
@@ -185,8 +144,8 @@ func (c *Config) SetupConfig() error {
 			GRPCProxyEnabled:       false,
 			GRPCProxyListenAddress: "localhost:9053",
 			TimeInNanoSeconds:      false,
-			Username:               "admin",
-			Password:               "admin",
+			/*Username:               "admin",
+			Password:               "admin",*/
 		}
 		c.NTP = ntpmonitor.Config{
 			Enabled: true,
@@ -261,6 +220,11 @@ func (c *Config) CheckConfig() error {
 		return err
 	}
 
+	err = c.checkDatabaseConfig()
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -305,38 +269,37 @@ func (c *Config) checkLoggerConfig() error {
 	return nil
 }
 
+func (c *Config) checkDatabaseConfig() error {
+	mutex.Lock()
+	defer mutex.Unlock()
+
+	if (c.Database == database.Config{}) {
+		c.Database.Driver = database.DBSQLite3
+		c.Database.Database = database.DefaultSQLiteDatabase
+	}
+
+	if !c.Database.Enabled {
+		return nil
+	}
+
+	if !system.StringDataCompare(database.SupportedDrivers, c.Database.Driver) {
+		c.Database.Enabled = false
+		return fmt.Errorf("unsupported database driver %v, database disabled", c.Database.Driver)
+	}
+
+	if c.Database.Driver == database.DBSQLite || c.Database.Driver == database.DBSQLite3 {
+		databaseDir := c.GetDataPath("database")
+		err := system.CreateDir(databaseDir)
+		if err != nil {
+			return err
+		}
+		database.DB.DataPath = databaseDir
+	}
+
+	return database.DB.SetConfig(&c.Database)
+}
+
 // GetDataPath gets the data path for the given subpath
 func (c *Config) GetDataPath(elem ...string) string {
 	return filepath.Join(append([]string{c.ConfigDir}, elem...)...)
 }
-
-/*// GetVersion returns the version string
-func (c *Config) GetVersion(short bool) string {
-	versionStr := fmt.Sprintf("QuantstopTerminal v%s.%s %s %s",
-		c.MajorVersion, c.MinorVersion, runtime.GOARCH, runtime.Version())
-
-	if c.IsRelease {
-		versionStr += " release.\n"
-	} else {
-		versionStr += " pre-release.\n"
-		if !short {
-			versionStr += c.PrereleaseBlurb + "\n"
-		}
-	}
-
-	if c.IsDevelopment {
-		versionStr += "Development mode: On\n"
-	} else {
-		versionStr += "Development mode: Off\n"
-	}
-
-	if short {
-		return versionStr
-	}
-	versionStr += c.Copyright + "\n"
-	versionStr += c.GitHub + "\n\n"
-	//versionStr += c.Trello + "\n"
-	//versionStr += c.Slack + "\n"
-	//versionStr += c.Issues + "\n"
-	return versionStr
-}*/
