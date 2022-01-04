@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"database/sql"
 	"errors"
 	"fmt"
 	"github.com/quantstop/quantstopterminal/internal/config"
@@ -82,22 +83,20 @@ func (bot *Engine) Initialize() error {
 }
 
 func (bot *Engine) initDatabaseSubsystem() error {
-	if bot.Config.Database.Enabled {
 
-		// Create and init database subsystem
-		bot.DatabaseSubsystem = &DatabaseSubsystem{Subsystem: Subsystem{}}
-		if err := bot.DatabaseSubsystem.init(bot, DatabaseSubsystemName); err != nil {
-			log.Errorf(log.Global, "Database subsystem unable to initialize: %v", err)
-			return err
-		}
-
-		// Register database subsystem
-		if err := bot.SubsystemRegistry.RegisterService(bot.DatabaseSubsystem); err != nil {
-			log.Errorf(log.Global, "Database subsystem unable to register: %v", err)
-			return err
-		}
-
+	// Create and init database subsystem
+	bot.DatabaseSubsystem = &DatabaseSubsystem{Subsystem: Subsystem{}}
+	if err := bot.DatabaseSubsystem.init(bot, DatabaseSubsystemName); err != nil {
+		log.Errorf(log.Global, "Database subsystem unable to initialize: %v", err)
+		return err
 	}
+
+	// Register database subsystem
+	if err := bot.SubsystemRegistry.RegisterService(bot.DatabaseSubsystem); err != nil {
+		log.Errorf(log.Global, "Database subsystem unable to register: %v", err)
+		return err
+	}
+
 	return nil
 }
 
@@ -197,7 +196,7 @@ func (bot *Engine) Run() error {
 
 	// start gRPC GRPCServer
 	if bot.Config.GRPC.Enabled {
-		go grpcserver.StartRPCServerTLS(bot, bot.Config.GRPC, bot.Config.ConfigDir)
+		bot.GRPCServer = grpcserver.StartRPCServerTLS(bot, bot.Config.GRPC, bot.Config.ConfigDir)
 	}
 
 	// Print some info
@@ -283,17 +282,17 @@ func (bot *Engine) SetSubsystem(subSystemName string, enable bool) error {
 	var err error
 	switch strings.ToLower(subSystemName) {
 
-	case DatabaseSubsystemName:
+	case WebserverName:
 		if enable {
-			if bot.DatabaseSubsystem == nil {
-				err = bot.DatabaseSubsystem.init(bot, DatabaseSubsystemName)
+			if bot.WebserverSubsystem == nil {
+				err = bot.WebserverSubsystem.init(bot, WebserverName)
 				if err != nil {
 					return err
 				}
 			}
-			return bot.DatabaseSubsystem.start(&bot.SubsystemWG)
+			return bot.WebserverSubsystem.start(&bot.SubsystemWG)
 		} else {
-			return bot.DatabaseSubsystem.stop()
+			return bot.WebserverSubsystem.stop()
 		}
 
 	case NTPSubsystemName:
@@ -339,6 +338,34 @@ func (bot *Engine) SetSubsystem(subSystemName string, enable bool) error {
 	return fmt.Errorf("%s: %w", subSystemName, ErrSubsystemNotFound)
 }
 
-func (bot *Engine) GetVersionString(short bool) string {
-	return bot.Version.GetVersionString(short)
+func (bot *Engine) GetVersion() map[string]string {
+	version := make(map[string]string)
+
+	version["version"] = bot.Version.Version
+	version["copyright"] = bot.Version.Copyright
+	version["prereleaseblurb"] = bot.Version.PrereleaseBlurb
+	version["github"] = bot.Version.GitHub
+	version["issues"] = bot.Version.Issues
+	if bot.Version.IsDaemon {
+		version["isdaemon"] = "true"
+	} else {
+		version["isdaemon"] = "false"
+	}
+	if bot.Version.IsRelease {
+		version["isrelease"] = "true"
+	} else {
+		version["isrelease"] = "false"
+	}
+	if bot.Version.IsDevelopment {
+		version["isdevelopment"] = "true"
+	} else {
+		version["isdevelopment"] = "false"
+	}
+
+	return version
+
+}
+
+func (bot *Engine) GetSQL() *sql.DB {
+	return bot.DatabaseSubsystem.dbConn.SQL
 }
