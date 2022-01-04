@@ -15,7 +15,7 @@ func Connect(db string) (*database.Instance, error) {
 	}
 
 	databaseFullLocation := filepath.Join(database.DB.DataPath, db)
-	dbConn, err := sql.Open("sqlite3", databaseFullLocation)
+	dbConn, err := sql.Open("sqlite", databaseFullLocation)
 	if err != nil {
 		return nil, err
 	}
