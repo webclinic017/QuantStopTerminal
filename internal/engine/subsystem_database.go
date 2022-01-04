@@ -47,7 +47,6 @@ func (s *DatabaseSubsystem) start(wg *sync.WaitGroup) (err error) {
 				s.bot.Config.Database.Database,
 				s.bot.Config.Database.Driver)
 			s.dbConn, err = pgsql.Connect(&s.bot.Config.Database)
-			// ToDo: this requires gcc to be installed on your development machine, trying to avoid these type of deps
 		case database.DBSQLite, database.DBSQLite3:
 			log.Debugf(log.DatabaseLogger,
 				"Database subsystem attempting to establish database connection to %s utilising %s driver\n",
@@ -70,6 +69,10 @@ func (s *DatabaseSubsystem) start(wg *sync.WaitGroup) (err error) {
 		log.Debugln(log.DatabaseLogger, s.name+MsgSubsystemStarted)
 		s.started = true
 		s.dbConn.SetConnected(true)
+		err = s.dbConn.SeedDB()
+		if err != nil {
+			return err
+		}
 		wg.Add(1)
 		s.wg.Add(1)
 		go s.run(wg)
