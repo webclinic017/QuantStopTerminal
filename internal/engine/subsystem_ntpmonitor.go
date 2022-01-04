@@ -74,7 +74,6 @@ func (s *NTPCheckerSubsystem) start(wg *sync.WaitGroup) (err error) {
 	}
 	log.Debugln(log.NTPLogger, s.name+MsgSubsystemStarted)
 	go s.run()
-	//logger.Debugf(logger.NTPLogger, "NTP subsystem %s", MsgSubSystemStarted)
 	return nil
 }
 
@@ -86,9 +85,10 @@ func (s *NTPCheckerSubsystem) stop() error {
 
 	s.started = false
 
-	//logger.Debugf(logger.NTPLogger, "NTP manager %s", MsgSubSystemShuttingDown)
-	log.Debugln(log.NTPLogger, s.name+MsgSubsystemShutdown)
 	close(s.shutdown)
+
+	log.Debugln(log.NTPLogger, s.name+MsgSubsystemShutdown)
+
 	return nil
 }
 
