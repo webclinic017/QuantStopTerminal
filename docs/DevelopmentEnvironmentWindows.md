@@ -38,6 +38,9 @@
 * [Taskfile](https://taskfile.dev/#/installation)
   1. Follow the [instructions](https://taskfile.dev/#/installation)
 
+**Note:** If you want to build the Windows installer for QuantstopTerminal, you must also install [WixToolset.](https://wixtoolset.org/releases/)
+This toolset makes a standard .msi installer for the executables within QuantstopTerminal.
+
 ### Installation
 
 _Below is an example of how you can instruct your audience on installing and setting up your app.
