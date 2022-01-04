@@ -91,7 +91,9 @@ func main() {
 	// Print banner and version
 	fmt.Println("")
 	fmt.Println(commands.ColorPurple + engine.BannerGraffiti + commands.ColorReset)
-	fmt.Println(resp.Version)
+
+	//version := json.Unmarshal(resp.Version, &engine.Version{})
+	fmt.Println(resp.Version["version"])
 
 	fmt.Println("")
 
