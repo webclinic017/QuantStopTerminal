@@ -97,15 +97,19 @@ func main() {
 		log.Fatalf("Unable to start bot engine. Error: %s\n", err)
 	}
 
-	// If daemon mode, wait for system interrupt to shut down the bot
-	// Otherwise, run with systray to show the icon
-	if version.IsDaemon {
+	go func() {
 		interrupt := system.WaitForInterrupt()
 		s := fmt.Sprintf("Captured %v, shutdown requested.", interrupt)
 		qstlog.Infoln(qstlog.Global, s)
+
+		if !version.IsDaemon {
+			systray.Quit()
+		}
 		Engine.Stop()
 		qstlog.Infoln(qstlog.Global, "Exiting.")
-	} else {
+	}()
+
+	if !version.IsDaemon {
 		systray.Run(onReady, onExit)
 	}
 

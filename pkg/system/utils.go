@@ -48,3 +48,13 @@ func CreateDir(dir string) error {
 	log.Warnf(log.Global, "Directory %s does not exist.. creating.\n", dir)
 	return os.MkdirAll(dir, 0770)
 }
+
+// StringDataCompare data checks the substring array with an input and returns a bool
+func StringDataCompare(haystack []string, needle string) bool {
+	for x := range haystack {
+		if haystack[x] == needle {
+			return true
+		}
+	}
+	return false
+}

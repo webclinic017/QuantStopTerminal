@@ -23,10 +23,17 @@
       <li><a href="https://github.com/vuejs/awesome-vue" target="_blank" rel="noopener">awesome-vue</a></li>
     </ul>
     <p>Version: {{ version }}</p>
+    <p>{{ blurb }}</p>
+    <p>{{ copyright }}</p>
+    <p>{{ github }}</p>
+    <p>Uptime: {{ uptime }}</p>
+
   </div>
 </template>
 
 <script>
+
+
 export default {
   name: 'HelloWorld',
   props: {
@@ -35,13 +42,23 @@ export default {
 
   data() {
     return {
-      version: ''
+      version: '',
+      blurb: '',
+      copyright: '',
+      github: '',
+      uptime: ''
     };
   },
 
   async created() {
-    const response = await fetch(`http://localhost:8080/api/version`);
-    this.version = await response.text();
+    const response = await fetch(`http://localhost:9053/v1/getinfo`);
+    const data = await response.text();
+    const result = JSON.parse(data);
+    this.version = result.version.version;
+    this.blurb = result.version.prereleaseblurb;
+    this.copyright = result.version.copyright;
+    this.github = result.version.github;
+    this.uptime = result.uptime;
   }
 }
 </script>

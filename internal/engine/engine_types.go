@@ -2,6 +2,7 @@ package engine
 
 import (
 	"github.com/quantstop/quantstopterminal/internal/config"
+	"google.golang.org/grpc"
 	"sync"
 	"time"
 )
@@ -11,6 +12,7 @@ type Engine struct {
 	Config              *config.Config
 	SubsystemRegistry   *ServiceRegistry
 	DatabaseSubsystem   *DatabaseSubsystem
+	GRPCServer          *grpc.Server
 	NTPCheckerSubsystem *NTPCheckerSubsystem
 	StrategySubsystem   *StrategySubsystem
 	InternetSubsystem   *ConnectionMonitor

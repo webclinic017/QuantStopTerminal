@@ -7,10 +7,12 @@ import (
 	"github.com/quantstop/quantstopterminal/internal"
 	"github.com/quantstop/quantstopterminal/internal/assets"
 	"github.com/quantstop/quantstopterminal/internal/log"
+	"github.com/quantstop/quantstopterminal/pkg/system/crypto"
 	"io/fs"
 	"net/http"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"time"
 )
 
@@ -29,29 +31,23 @@ type Webserver struct {
 	mux             *http.ServeMux
 }
 
-func CreateWebserver(eng internal.IEngine, conf *Config, tls bool) (*Webserver, error) {
+func CreateWebserver(eng internal.IEngine, conf *Config) (*Webserver, error) {
 
 	var err error
 
-	if tls {
-		// Create https:// server
-		// return the built webserver
-		return nil, nil
+	// Create server
+	server := &Webserver{}
+	server.IEngine = eng
+	server.Config = conf
 
-	} else {
-		// Create http:// server
-		server := &Webserver{}
-		server.IEngine = eng
-		server.Config = conf
-		server.mux = http.NewServeMux()
-		server.HttpServer, err = createHttpServer(server.Config.HttpListenAddr, server.mux)
-		if err != nil {
-			return nil, err
-		}
-
-		// return the built webserver
-		return server, nil
+	server.mux = http.NewServeMux()
+	server.HttpServer, err = createHttpServer(server.Config.HttpListenAddr, server.mux)
+	if err != nil {
+		return nil, err
 	}
+
+	// return the built webserver
+	return server, nil
 
 }
 
@@ -70,61 +66,67 @@ func createHttpServer(addr string, handler http.Handler) (*http.Server, error) {
 
 func (s *Webserver) SetupRoutes(isDev bool) {
 
-	//s.HttpLogHandler = LogHandler{}
-	th := TimeHandler{Format: time.RFC1123}
-	vh := VersionHandler{Version: s.GetVersionString(false)}
-
 	if isDev {
-		log.Debugln(log.Webserver, "Development mode: On. Only serving api routes.")
+		log.Debugln(log.Webserver, "Development mode: On. Starting node server ...")
 
 	} else {
-		log.Debugln(log.Webserver, "Development mode: Off. Serving static assets.")
+		log.Debugln(log.Webserver, "Development mode: Off. Serving static frontend.")
 		s.mux.Handle("/", http.FileServer(assets.Assets))
 	}
 
-	//s.mux.Handle("/", http.FileServer(GetWebFrontend(isDev, *Website)))
-	s.mux.Handle("/api/time", th)
-	s.mux.Handle("/api/version", vh)
 }
 
-func (s *Webserver) StartWebServer(isDev bool, shutdown chan struct{}) {
+func (s *Webserver) StartWebServer(tls bool, isDev bool, shutdown chan struct{}, configDir string) {
 
 	// Start the Node client app (only for version "development")
 	if isDev {
-		StartNodeDevelopmentServer()
-	}
+		go StartNodeDevelopmentServer(shutdown)
+	} else {
+		done := make(chan bool)
 
-	done := make(chan bool)
+		go func() {
+			<-shutdown
+			log.Infoln(log.Webserver, "Webserver is shutting down.")
 
-	go func() {
-		<-shutdown
-		log.Infoln(log.Webserver, "Webserver is shutting down.")
-		//atomic.StoreInt32(&healthy, 0)
+			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			defer cancel()
 
-		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-		defer cancel()
+			s.HttpServer.SetKeepAlivesEnabled(false)
+			if err := s.HttpServer.Shutdown(ctx); err != nil {
+				log.Errorf(log.Webserver, "Could not gracefully shutdown the server: %v\n", err)
+			}
+			close(done)
+		}()
 
-		s.HttpServer.SetKeepAlivesEnabled(false)
-		if err := s.HttpServer.Shutdown(ctx); err != nil {
-			log.Errorf(log.Webserver, "Could not gracefully shutdown the server: %v\n", err)
+		if tls {
+			targetDir := crypto.GetTLSDir(configDir)
+			if err := crypto.CheckCerts(targetDir); err != nil {
+				log.Errorf(log.GRPClog, "gRPC checkCerts failed. err: %s\n", err)
+			}
+
+			log.Infof(log.Webserver, "Starting web server, listening on https://%v\n", s.Config.HttpListenAddr)
+			if err := s.HttpServer.ListenAndServeTLS(filepath.Join(targetDir, "cert.pem"), filepath.Join(targetDir, "key.pem")); err != nil && err != http.ErrServerClosed {
+				// unexpected error. port in use?
+				log.Errorf(log.Webserver, "Could not listen on %s: %v\n", s.Config.HttpListenAddr, err)
+			}
+		} else {
+			log.Infof(log.Webserver, "Starting web server, listening on http://%v\n", s.Config.HttpListenAddr)
+			if err := s.HttpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+				// unexpected error. port in use?
+				log.Errorf(log.Webserver, "Could not listen on %s: %v\n", s.Config.HttpListenAddr, err)
+			}
 		}
-		close(done)
-	}()
 
-	log.Infof(log.Webserver, "Starting web server, listening on http://%v\n", s.Config.HttpListenAddr)
-	if err := s.HttpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-		// unexpected error. port in use?
-		log.Errorf(log.Webserver, "Could not listen on %s: %v\n", s.Config.HttpListenAddr, err)
+		<-done
+		log.Infoln(log.Webserver, "Webserver stopped.")
 	}
-
-	<-done
-	log.Infoln(log.Webserver, "Webserver stopped.")
 
 }
 
 func logging() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
 			defer func() {
 				requestID, ok := r.Context().Value(requestIDKey).(string)
 				if !ok {
@@ -161,9 +163,12 @@ func tracing(nextRequestID func() string) func(http.Handler) http.Handler {
 	}
 }
 
-func StartNodeDevelopmentServer() {
+func StartNodeDevelopmentServer(shutdown chan struct{}) {
+
+	// todo: this stays on when we shutdown ...
 
 	go func() {
+
 		log.Debugf(log.Webserver, "Starting node development server ...")
 
 		var cmd *exec.Cmd
@@ -178,8 +183,12 @@ func StartNodeDevelopmentServer() {
 		}
 
 		// Wait for command to stop running, ie. node server is stopped
-		_ = cmd.Wait()
+		//_ = cmd.Wait()
 
+		<-shutdown
+		if err := cmd.Process.Kill(); err != nil {
+			log.Errorf(log.Webserver, "Error unable to kill process node development server %v.\n", err)
+		}
 		log.Infoln(log.Webserver, "Shutting down node development server ...")
 
 	}()
