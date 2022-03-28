@@ -166,6 +166,7 @@ Big shout out to these great resources!
 * [Choose an Open Source License](https://choosealicense.com)
 * [Best-README-Template](https://github.com/othneildrew/Best-README-Template/blob/master/README.md)
 * [Makefile tutorial](https://makefiletutorial.com/)
+* [GoCryptoTrader](https://github.com/thrasher-corp/gocryptotrader)
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
