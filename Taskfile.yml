@@ -54,9 +54,3 @@ tasks:
     dir: ./internal/grpcserver
     cmds:
       - buf generate
-      #- protoc --go_out=paths=source_relative:. rpc.proto
-      #- protoc --go-grpc_out=paths=source_relative:. rpc.proto
-      #- protoc -I={{.PROJECT_DIR}}/internal/grpcserver/proto/google/api --grpc-gateway_out=paths=source_relative,logtostderr=true:. rpc.proto
-
-      #- protoc -I=. rpc.proto --js_out=import_style=commonjs:{{.PROJECT_DIR}}/web/src/proto/
-      #- protoc -I=. rpc.proto --grpc-web_out=import_style=commonjs,mode=grpcwebtext:{{.PROJECT_DIR}}/web/src/proto/
