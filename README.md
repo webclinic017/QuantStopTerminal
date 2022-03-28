@@ -183,5 +183,5 @@ Big shout out to these great resources!
 [issues-shield]: https://img.shields.io/github/issues/quantstop/quantstopterminal.svg?style=for-the-badge
 [issues-url]: https://github.com/quantstop/quantstopterminal/issues
 [license-shield]: https://img.shields.io/github/license/quantstop/quantstopterminal.svg?style=for-the-badge
-[license-url]: https://github.com/QuantStop/QuantStopTerminal/blob/main/assets/licenses/Eula_en-us.rtf
+[license-url]: https://github.com/quantstop/quantstopterminal/blob/master/LICENSE
 [product-screenshot]: web/src/assets/screenshot.png
