@@ -83,6 +83,8 @@ func (s *Webserver) ListenAndServe(tls bool, configDir string) (err error) {
 		if err := crypto.CheckCerts(targetDir); err != nil {
 			log.Errorf(log.GRPClog, "gRPC checkCerts failed. err: %s\n", err)
 		}
+
+		log.Debugf(log.GRPClog, "Starting webserver on https://%v.\n", s.HttpListenAddr)
 		err = s.HttpServer.ListenAndServeTLS(filepath.Join(targetDir, "cert.pem"), filepath.Join(targetDir, "key.pem"))
 		if err == http.ErrServerClosed {
 			// expected error after calling Server.Shutdown().
@@ -92,6 +94,7 @@ func (s *Webserver) ListenAndServe(tls bool, configDir string) (err error) {
 			return
 		}
 	} else {
+		log.Debugf(log.GRPClog, "Starting webserver on http://%v.\n", s.HttpListenAddr)
 		err = s.HttpServer.ListenAndServe()
 		if err == http.ErrServerClosed {
 			// expected error after calling Server.Shutdown().
