@@ -130,7 +130,7 @@ func StartRPCServerTLS(engine internal.IEngine, config *Config, configDir string
 	}()
 
 	log.Debugln(log.GRPClog, "gRPC server started!")
-	//if s.Settings.EnableGRPCProxy {
+	//if config.GRPCProxyEnabled {
 	serv.StartRPCRESTProxy(configDir)
 	//}
 	return server
@@ -169,7 +169,7 @@ func (s *GRPCServer) StartRPCRESTProxy(configDir string) {
 	}
 
 	go func() {
-		if err := server.ListenAndServe(); err != nil {
+		if err := server.ListenAndServeTLS(filepath.Join(targetDir, "cert.pem"), filepath.Join(targetDir, "key.pem")); err != nil {
 			log.Errorf(log.GRPClog, "gRPC proxy failed to serve: %s\n", err)
 			return
 		}
