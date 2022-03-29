@@ -22,6 +22,7 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type GRPCServerClient interface {
+	Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginReply, error)
 	GetInfo(ctx context.Context, in *GetInfoRequest, opts ...grpc.CallOption) (*GetInfoResponse, error)
 	GetSubsystems(ctx context.Context, in *GetSubsystemsRequest, opts ...grpc.CallOption) (*GetSusbsytemsResponse, error)
 	EnableSubsystem(ctx context.Context, in *GenericSubsystemRequest, opts ...grpc.CallOption) (*GenericResponse, error)
@@ -34,6 +35,15 @@ type gRPCServerClient struct {
 
 func NewGRPCServerClient(cc grpc.ClientConnInterface) GRPCServerClient {
 	return &gRPCServerClient{cc}
+}
+
+func (c *gRPCServerClient) Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginReply, error) {
+	out := new(LoginReply)
+	err := c.cc.Invoke(ctx, "/grpcserver.GRPCServer/Login", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *gRPCServerClient) GetInfo(ctx context.Context, in *GetInfoRequest, opts ...grpc.CallOption) (*GetInfoResponse, error) {
@@ -76,6 +86,7 @@ func (c *gRPCServerClient) DisableSubsystem(ctx context.Context, in *GenericSubs
 // All implementations must embed UnimplementedGRPCServerServer
 // for forward compatibility
 type GRPCServerServer interface {
+	Login(context.Context, *LoginRequest) (*LoginReply, error)
 	GetInfo(context.Context, *GetInfoRequest) (*GetInfoResponse, error)
 	GetSubsystems(context.Context, *GetSubsystemsRequest) (*GetSusbsytemsResponse, error)
 	EnableSubsystem(context.Context, *GenericSubsystemRequest) (*GenericResponse, error)
@@ -87,6 +98,9 @@ type GRPCServerServer interface {
 type UnimplementedGRPCServerServer struct {
 }
 
+func (UnimplementedGRPCServerServer) Login(context.Context, *LoginRequest) (*LoginReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Login not implemented")
+}
 func (UnimplementedGRPCServerServer) GetInfo(context.Context, *GetInfoRequest) (*GetInfoResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetInfo not implemented")
 }
@@ -110,6 +124,24 @@ type UnsafeGRPCServerServer interface {
 
 func RegisterGRPCServerServer(s grpc.ServiceRegistrar, srv GRPCServerServer) {
 	s.RegisterService(&GRPCServer_ServiceDesc, srv)
+}
+
+func _GRPCServer_Login_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LoginRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GRPCServerServer).Login(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/grpcserver.GRPCServer/Login",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GRPCServerServer).Login(ctx, req.(*LoginRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _GRPCServer_GetInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -191,6 +223,10 @@ var GRPCServer_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "grpcserver.GRPCServer",
 	HandlerType: (*GRPCServerServer)(nil),
 	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "Login",
+			Handler:    _GRPCServer_Login_Handler,
+		},
 		{
 			MethodName: "GetInfo",
 			Handler:    _GRPCServer_GetInfo_Handler,

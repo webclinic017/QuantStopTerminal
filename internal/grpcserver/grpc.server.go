@@ -4,11 +4,9 @@ package grpcserver
 
 import (
 	"fmt"
-	grpcauth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/quantstop/quantstopterminal/internal"
 	"github.com/quantstop/quantstopterminal/internal/database/models"
-	"github.com/quantstop/quantstopterminal/internal/grpcserver/auth"
 	"github.com/quantstop/quantstopterminal/internal/log"
 	"github.com/quantstop/quantstopterminal/pkg/system/crypto"
 	"golang.org/x/net/context"
@@ -119,7 +117,7 @@ func StartRPCServerTLS(engine internal.IEngine, config *Config, configDir string
 	}
 	opts := []grpc.ServerOption{
 		grpc.Creds(creds),
-		grpc.UnaryInterceptor(grpcauth.UnaryServerInterceptor(serv.authenticateClient)),
+		//grpc.UnaryInterceptor(grpcauth.UnaryServerInterceptor(serv.authenticateClient)),
 	}
 	server := grpc.NewServer(opts...)
 	RegisterGRPCServerServer(server, &serv)
@@ -153,11 +151,12 @@ func (s *GRPCServer) StartRPCRESTProxy(configDir string) {
 	mux := runtime.NewServeMux()
 	opts := []grpc.DialOption{
 		grpc.WithTransportCredentials(creds),
-		grpc.WithPerRPCCredentials(auth.BasicAuth{
+		/*grpc.WithPerRPCCredentials(auth.BasicAuth{
 			Username: "admin",
 			Password: "admin",
-		}),
+		}),*/
 	}
+
 	err = RegisterGRPCServerHandlerFromEndpoint(context.Background(), mux, s.Config.ListenAddress, opts)
 	if err != nil {
 		log.Errorf(log.GRPClog, "Failed to register gRPC proxy. Err: %s\n", err)
@@ -171,24 +170,13 @@ func (s *GRPCServer) StartRPCRESTProxy(configDir string) {
 
 	go func() {
 		if err := server.ListenAndServe(); err != nil {
-			log.Errorf(log.GRPClog, "gRPC proxy failed to server: %s\n", err)
+			log.Errorf(log.GRPClog, "gRPC proxy failed to serve: %s\n", err)
 			return
 		}
 	}()
 
 	log.Debugln(log.GRPClog, "gRPC proxy server started!")
 }
-
-// allowedOrigin
-/*func allowedOrigin(origin string) bool {
-	if viper.GetString("cors") == "*" {
-		return true
-	}
-	if matched, _ := regexp.MatchString(viper.GetString("cors"), origin); matched {
-		return true
-	}
-	return false
-}*/
 
 // cors is a middleware function that handles settings CORS for the REST proxy.
 // This code was found from https://fale.io/blog/2021/07/28/cors-headers-with-grpc-gateway

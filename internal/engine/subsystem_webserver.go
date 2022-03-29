@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"fmt"
 	"github.com/quantstop/quantstopterminal/internal/log"
 	"github.com/quantstop/quantstopterminal/internal/webserver"
 	"sync"
@@ -25,6 +26,8 @@ func (s *WebserverSubsystem) init(bot *Engine, name string) error {
 		log.Errorf(log.Global, "Error creating webserver: %v", err)
 	}
 
+	s.server.SetupRoutes(s.bot.IsDevelopment)
+
 	s.enabled = bot.Config.Webserver.Enabled
 	s.initialized = true
 	log.Debugln(log.Webserver, s.name+MsgSubsystemInitialized)
@@ -36,15 +39,11 @@ func (s *WebserverSubsystem) start(wg *sync.WaitGroup) (err error) {
 		return err
 	}
 
-	s.server.SetupRoutes(s.bot.IsDevelopment)
-
-	wg.Add(1)
-	s.wg.Add(1)
-	//go s.run()
-	go s.server.StartWebServer(true, s.bot.IsDevelopment, s.shutdown, s.bot.Config.ConfigDir)
-
 	s.started = true
 	log.Debugln(log.Webserver, s.name+MsgSubsystemStarted)
+	wg.Add(1)
+	s.wg.Add(1)
+	go s.run(wg)
 	return nil
 }
 
@@ -54,8 +53,29 @@ func (s *WebserverSubsystem) stop() error {
 		return err
 	}
 	s.started = false
+	s.server.Shutdown()
 	close(s.shutdown)
 	s.wg.Wait()
 	log.Debugln(log.Webserver, s.name+MsgSubsystemShutdown)
 	return nil
+}
+
+// run this is the main loop for the subsystem
+func (s *WebserverSubsystem) run(wg *sync.WaitGroup) {
+
+	defer func() {
+		s.wg.Done()
+		wg.Done()
+		log.Debugln(log.Webserver, "Webserver subsystem shutdown.")
+	}()
+
+	if s.bot.IsDevelopment {
+		s.server.StartNodeDevelopmentServer()
+	} else {
+		err := s.server.ListenAndServe(true, s.bot.Config.ConfigDir)
+		if err != nil {
+			err = fmt.Errorf("unexpected error from ListenAndServe: %w", err)
+		}
+	}
+
 }

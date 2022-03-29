@@ -10,7 +10,7 @@ vars:
   VERSION: 0.0.1
   PROJECT_DIR:
     sh: pwd | sed 's/\\/\//g'
-  ISRELEASE: false
+  ISRELEASE: true
 
 tasks:
 
@@ -24,7 +24,7 @@ tasks:
     deps: [ frontend:npm-install ]
     dir: ./cmd/qst
     cmds:
-      - go run -tags=dev . -daemon=false -development=true
+      - go run -tags=prod . -daemon=false -development=false
 
   release: # Todo: implement this
     desc: Release the project
@@ -44,7 +44,7 @@ tasks:
       - task: windows:build-win-386
 
   clean:
-    desc: Build the project
+    desc: Clean the project
     cmds:
       - task: windows:clean-win-amd64
       - task: windows:clean-win-386

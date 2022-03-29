@@ -59,11 +59,13 @@ func main() {
 	} else {
 		version.IsRelease = false
 	}
+
 	version.Version = BuildFlagVersion
 
 	// Parse runtime flags into Version
 	flag.BoolVar(&version.IsDaemon, "daemon", false, "run as a background service")
 	flag.BoolVar(&version.IsDevelopment, "development", false, "set development mode")
+	flag.StringVar(&version.Version, "version", "0.1.0", "engine version")
 	flag.Parse()
 
 	// Inject the website frontend into variable for webserver
@@ -148,9 +150,9 @@ func onReady() {
 				// Todo: this wont work obviously, need to get install path eventually...
 				_ = open.Run("C:/Users/ethan/Documents/Quantstop/QuantstopTerminal/builds/windows-amd64/qstcli")
 			case <-quitBtn.ClickedCh:
-				fmt.Println("Requesting quit")
+				//fmt.Println("Requesting quit")
 				systray.Quit()
-				fmt.Println("Finished quitting")
+				//fmt.Println("Finished quitting")
 			}
 		}
 

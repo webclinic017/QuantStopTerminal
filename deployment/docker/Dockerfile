@@ -1,9 +1,14 @@
 FROM golang as build
 WORKDIR /go/src/quantstopterminal
 COPY . .
+
 RUN GO111MODULE=on go mod vendor
-RUN GOARCH=386 GOOS=linux go build -tags=prod -o qst ./cmd/qst/main_linux.go
+
+RUN GOARCH=386 GOOS=linux go run ./cmd/genassets/main.go
+RUN go generate
+RUN GOARCH=386 GOOS=linux go build -ldflags="-X=main.BuildFlagVersion=0.1.0 -X=main.BuildFlagIsRelease=true" -tags=prod -o qst ./cmd/qst/main_linux.go
 RUN GOARCH=386 GOOS=linux go build ./cmd/qstcli/
+
 RUN mv qst /go/bin/qst
 RUN mv qstcli /go/bin/qstcli
 

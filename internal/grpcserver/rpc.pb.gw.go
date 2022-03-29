@@ -31,6 +31,42 @@ var _ = runtime.String
 var _ = utilities.NewDoubleArray
 var _ = metadata.Join
 
+var (
+	filter_GRPCServer_Login_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
+)
+
+func request_GRPCServer_Login_0(ctx context.Context, marshaler runtime.Marshaler, client GRPCServerClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq LoginRequest
+	var metadata runtime.ServerMetadata
+
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_GRPCServer_Login_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
+	msg, err := client.Login(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+
+}
+
+func local_request_GRPCServer_Login_0(ctx context.Context, marshaler runtime.Marshaler, server GRPCServerServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq LoginRequest
+	var metadata runtime.ServerMetadata
+
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_GRPCServer_Login_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
+	msg, err := server.Login(ctx, &protoReq)
+	return msg, metadata, err
+
+}
+
 func request_GRPCServer_GetInfo_0(ctx context.Context, marshaler runtime.Marshaler, client GRPCServerClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq GetInfoRequest
 	var metadata runtime.ServerMetadata
@@ -144,6 +180,29 @@ func local_request_GRPCServer_DisableSubsystem_0(ctx context.Context, marshaler 
 // StreamingRPC :currently unsupported pending https://github.com/grpc/grpc-go/issues/906.
 // Note that using this registration option will cause many gRPC library features to stop working. Consider using RegisterGRPCServerHandlerFromEndpoint instead.
 func RegisterGRPCServerHandlerServer(ctx context.Context, mux *runtime.ServeMux, server GRPCServerServer) error {
+
+	mux.Handle("POST", pattern_GRPCServer_Login_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		var stream runtime.ServerTransportStream
+		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/grpcserver.GRPCServer/Login", runtime.WithHTTPPathPattern("/v1/login"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := local_request_GRPCServer_Login_0(rctx, inboundMarshaler, server, req, pathParams)
+		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
+		ctx = runtime.NewServerMetadataContext(ctx, md)
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_GRPCServer_Login_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
 
 	mux.Handle("GET", pattern_GRPCServer_GetInfo_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
@@ -278,6 +337,26 @@ func RegisterGRPCServerHandler(ctx context.Context, mux *runtime.ServeMux, conn 
 // "GRPCServerClient" to call the correct interceptors.
 func RegisterGRPCServerHandlerClient(ctx context.Context, mux *runtime.ServeMux, client GRPCServerClient) error {
 
+	mux.Handle("POST", pattern_GRPCServer_Login_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/grpcserver.GRPCServer/Login", runtime.WithHTTPPathPattern("/v1/login"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := request_GRPCServer_Login_0(rctx, inboundMarshaler, client, req, pathParams)
+		ctx = runtime.NewServerMetadataContext(ctx, md)
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_GRPCServer_Login_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
 	mux.Handle("GET", pattern_GRPCServer_GetInfo_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
@@ -362,6 +441,8 @@ func RegisterGRPCServerHandlerClient(ctx context.Context, mux *runtime.ServeMux,
 }
 
 var (
+	pattern_GRPCServer_Login_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "login"}, ""))
+
 	pattern_GRPCServer_GetInfo_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "getinfo"}, ""))
 
 	pattern_GRPCServer_GetSubsystems_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "getsubsystems"}, ""))
@@ -372,6 +453,8 @@ var (
 )
 
 var (
+	forward_GRPCServer_Login_0 = runtime.ForwardResponseMessage
+
 	forward_GRPCServer_GetInfo_0 = runtime.ForwardResponseMessage
 
 	forward_GRPCServer_GetSubsystems_0 = runtime.ForwardResponseMessage
