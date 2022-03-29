@@ -5,7 +5,7 @@
 - [Go 1.15+](https://go.dev/)
 - [NodeJS and NPM](https://nodejs.org/en/)
 - [Vue CLI](https://cli.vuejs.org/)
-- [make](https://www.gnu.org/software/make/)
+- [task](https://taskfile.dev/#/)
 
 #### There are standard setup guides below for each environment:
 - [Windows](DevelopmentEnvironmentWindows.md)
