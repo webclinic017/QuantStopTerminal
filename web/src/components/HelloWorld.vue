@@ -51,7 +51,7 @@ export default {
   },
 
   async created() {
-    const response = await fetch(`http://localhost:9053/v1/getinfo`);
+    const response = await fetch(`https://localhost:9053/v1/getinfo`);
     const data = await response.text();
     const result = JSON.parse(data);
     this.version = result.version.version;
