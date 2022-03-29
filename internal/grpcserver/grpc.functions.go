@@ -16,6 +16,7 @@ func (s *GRPCServer) GetInfo(_ context.Context, _ *GetInfoRequest) (*GetInfoResp
 		Version:         s.GetVersion(),
 		SubsystemStatus: s.GetSubsystemsStatus(),
 	}, nil
+
 }
 
 // GetSubsystems returns a list of subsystems and their status
@@ -24,7 +25,14 @@ func (s *GRPCServer) GetSubsystems(_ context.Context, _ *GetSubsystemsRequest) (
 }
 
 // EnableSubsystem enables a engine subsystem
-func (s *GRPCServer) EnableSubsystem(_ context.Context, r *GenericSubsystemRequest) (*GenericResponse, error) {
+func (s *GRPCServer) EnableSubsystem(ctx context.Context, r *GenericSubsystemRequest) (*GenericResponse, error) {
+
+	// auth endpoint
+	if _, err := auth.CheckAuth(ctx); err != nil {
+		return &GenericResponse{Status: "404", Data: ""}, nil
+	}
+
+	// set subsystem enabled
 	err := s.SetSubsystem(r.Subsystem, true)
 	if err != nil {
 		return nil, err
@@ -35,7 +43,14 @@ func (s *GRPCServer) EnableSubsystem(_ context.Context, r *GenericSubsystemReque
 }
 
 // DisableSubsystem disables a engine subsystem
-func (s *GRPCServer) DisableSubsystem(_ context.Context, r *GenericSubsystemRequest) (*GenericResponse, error) {
+func (s *GRPCServer) DisableSubsystem(ctx context.Context, r *GenericSubsystemRequest) (*GenericResponse, error) {
+
+	// auth endpoint
+	if _, err := auth.CheckAuth(ctx); err != nil {
+		return &GenericResponse{Status: "404", Data: ""}, nil
+	}
+
+	// set subsystem disabled
 	err := s.SetSubsystem(r.Subsystem, false)
 	if err != nil {
 		return nil, err
@@ -45,32 +60,28 @@ func (s *GRPCServer) DisableSubsystem(_ context.Context, r *GenericSubsystemRequ
 
 }
 
-func (s *GRPCServer) Login(ctx context.Context, in *LoginRequest) (*LoginReply, error) {
-	//fmt.Println("Loginrequest: ", in.Username)
+// Login authenticates user to endpoints using jwt
+func (s *GRPCServer) Login(_ context.Context, in *LoginRequest) (*LoginReply, error) {
 
 	// check if user exists in database
 	user := models.User{}
 	if err := user.GetUserByUsername(s.GetSQL(), in.Username); err != nil {
-		log.Errorf(log.DatabaseLogger, "Error authenticating client, could not find user: %v", err)
+		log.Errorf(log.GRPClog, "Error authenticating client, could not find user: %v", err)
 		return &LoginReply{Status: "403", Token: ""}, nil
 	}
 
 	// check that supplied password matches
 	if in.Password != user.Password {
-		log.Errorf(log.DatabaseLogger, "Error authenticating client, invalid password supplied.")
+		log.Errorf(log.GRPClog, "Error authenticating client, invalid password supplied.")
 		return &LoginReply{Status: "403", Token: ""}, nil
 	}
 
 	// create and return token
-	tokenString := auth.CreateToken(in.Username)
-	return &LoginReply{Status: "200", Token: tokenString}, nil
-
-	/*if in.Username == "gavin" && in.Password == "gavin" {
-		tokenString := auth.CreateToken(in.Username)
-		return &LoginReply{Status: "200", Token: tokenString}, nil
-
-	} else {
+	tokenString, err := auth.CreateToken(in.Username)
+	if err != nil {
+		log.Errorf(log.GRPClog, "Error authenticating client, cannot create token.")
 		return &LoginReply{Status: "403", Token: ""}, nil
-	}*/
+	}
+	return &LoginReply{Status: "200", Token: tokenString}, nil
 
 }
