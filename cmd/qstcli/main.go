@@ -6,12 +6,12 @@ import (
 	"github.com/quantstop/quantstopterminal/internal/config"
 	"github.com/quantstop/quantstopterminal/internal/engine"
 	"github.com/quantstop/quantstopterminal/internal/grpcserver"
-	"github.com/quantstop/quantstopterminal/internal/grpcserver/auth"
 	"github.com/quantstop/quantstopterminal/internal/qstcli/commands"
 	"golang.org/x/net/context"
 	"golang.org/x/term"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/metadata"
 	"log"
 	"os"
 	"path/filepath"
@@ -50,10 +50,10 @@ func main() {
 	// Set dial options for the gRPC connection
 	opts := []grpc.DialOption{
 		grpc.WithTransportCredentials(tlsCredentials),
-		grpc.WithPerRPCCredentials(auth.BasicAuth{
+		/*grpc.WithPerRPCCredentials(auth.BasicAuth{
 			Username: un,
 			Password: psw,
-		}),
+		}),*/
 	}
 
 	// Try dialing gRPC server
@@ -72,8 +72,18 @@ func main() {
 	// Set global client
 	client := grpcserver.NewGRPCServerClient(conn)
 
+	// Try login to server using connection above
+	loginResponse, err := client.Login(ctx, &grpcserver.LoginRequest{Username: un, Password: psw})
+	if err != nil || loginResponse.Status == "403" {
+		// If there is an error here, log fatal because it means we are not authenticated or the server is down
+		log.Fatal("login failed.")
+	}
+
+	// Add token to gRPC Request.
+	ctx = metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer "+loginResponse.Token)
+
 	// Try getting info from server using connection above
-	resp, err := client.GetInfo(ctx, &grpcserver.GetInfoRequest{})
+	infoResponse, err := client.GetInfo(ctx, &grpcserver.GetInfoRequest{})
 	if err != nil {
 		// If there is an error here, log fatal because it means we are not authenticated or the server is down
 		log.Fatalf("%v: ", err)
@@ -93,12 +103,12 @@ func main() {
 	fmt.Println(commands.ColorPurple + engine.BannerGraffiti + commands.ColorReset)
 
 	//version := json.Unmarshal(resp.Version, &engine.Version{})
-	fmt.Println(resp.Version["version"])
+	fmt.Println(infoResponse.Version["version"])
 
 	fmt.Println("")
 
 	// Print some system info
-	fmt.Println("System Uptime:", resp.Uptime)
+	fmt.Println("System Uptime:", infoResponse.Uptime)
 	fmt.Println("")
 
 	// Create a new reader for stdin
