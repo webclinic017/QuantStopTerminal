@@ -21,7 +21,7 @@ tasks:
 
   run:
     desc: Run the project
-    deps: [ frontend:npm-install ]
+    deps: [ frontend:gen-assets ]
     dir: ./cmd/qst
     cmds:
       - go run -tags=prod . -daemon=false -development=false
