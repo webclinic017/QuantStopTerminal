@@ -43,25 +43,22 @@ This toolset makes a standard .msi installer for the executables within Quantsto
 
 ### Installation
 
-_Below is an example of how you can instruct your audience on installing and setting up your app.
-This template doesn't rely on any external dependencies or services._
+_Once you have installed the required dependencies above, continue with getting the project 
+source files from github. This guide assumes you have a terminal with git installed._
 
-1. Open up a Git Bash Terminal
-2. Clone the repo
+1. Clone the repo
    ```sh
    git clone https://github.com/QuantStop/QuantStopTerminal.git
    ```
-3. Run the app directly in development mode:<br>
-   * ```sh 
+2. Run the app directly in development mode:<br>
+   ```sh 
      task run
      ```
-   Or build production executables:
-   * ```sh 
+   Or build production executables: <br>
+   _(Note: All executable files will be located in /builds)_ 
+   ```sh 
      task build
      ```
-   All executable files will be located in /builds
-    
-
 3. Profit.
 
 <p align="right">(<a href="https://github.com/quantstop/quantstopterminal#top">back to home</a>)</p>
