@@ -29,4 +29,4 @@ COPY --from=build /go/bin/qst /go/bin
 COPY --from=build /go/bin/qstcli /go/bin
 
 #COPY --from=build /go/src/github.com/thrasher-corp/gocryptotrader/config.json /root/.gocryptotrader/
-ENTRYPOINT [ "/go/bin/qst", "-daemon=true" ]
+ENTRYPOINT [ "/go/bin/qst" ]
