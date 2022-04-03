@@ -5,7 +5,7 @@ tasks:
   npm-install:
     desc: Run 'npm install'
     dir: ./web
-    #run: when_changed
+    run: when_changed
     sources:
       - src/*.js
       - src/*.vue
@@ -23,7 +23,7 @@ tasks:
     desc: Run 'npm build'
     deps: [ npm-install ]
     dir: ./web
-    #run: when_changed
+    run: when_changed
     sources:
       - src/*.js
       - src/*.vue
@@ -40,12 +40,12 @@ tasks:
   gen-assets:
     desc: Generate static frontend
     deps: [ npm-build ]
-    #run: when_changed
-    #sources:
-    #  - ./cmd/genassets/main.go
-    #generates:
-    #  - ./internal/assets/appcode.go
-    #method: timestamp
+    run: when_changed
+    sources:
+      - ./cmd/genassets/main.go
+    generates:
+      - ./internal/assets/appcode.go
+    method: timestamp
     cmds:
       - go run ./cmd/genassets/main.go
       - go generate

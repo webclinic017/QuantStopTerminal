@@ -23,9 +23,6 @@
    <!-- The source path for qst.exe -->
    <?define qstExeSourcePath = "$(var.ProjectDir)\builds\windows-amd64\qst.exe" ?>
 
-   <!-- The source path for qstcli.exe -->
-   <?define qstcliExeSourcePath = "$(var.ProjectDir)\builds\windows-amd64\qstcli.exe" ?>
-
    <!-- 32-bit / 64-bit variables -->
    <?if $(var.Platform) = x64 ?>
      <?define ProductName = "Product Name (64 bit)" ?>
@@ -183,10 +180,7 @@
 
                   </Component>
 
-                  <!-- QST-CLI program file -->
-                  <Component Id="qstcli.exe_comp" Guid="*" Win64="$(var.Win64)">
-                     <File Source="$(var.qstcliExeSourcePath)" Id="qstcliExe" KeyPath="yes" />
-                  </Component>
+
 
                </Directory>
             </Directory>
@@ -218,12 +212,6 @@
                   Target="[INSTALLDIR]\qst.exe"
                   Icon="qstIcon.exe"
                   WorkingDirectory="APPLICATIONROOTDIRECTORY"/>
-              <Shortcut Id="ApplicationStartMenuShortcutQSTCLI"
-                  Name="QST-CLI"
-                  Description="QuantstopTerminal Console"
-                  Target="[INSTALLDIR]\qstcli.exe"
-                  Icon="qstcliIcon.exe"
-                  WorkingDirectory="APPLICATIONROOTDIRECTORY"/>
               <RemoveFolder Id="ApplicationProgramsFolder" On="uninstall"/>
               <RegistryValue Root="HKCU" Key="Software\!(loc.ManufacturerName)\!(loc.ApplicationName)" Name="installed" Type="integer" Value="1" KeyPath="yes"/>
          </Component>
@@ -242,7 +230,6 @@
          <Feature Id="MainProgram" Title="!(loc.FeatureMainProgramTitle)" Description="!(loc.FeatureMainProgramDescription)" Level="1">
             <ComponentRef Id="INSTALLDIR_comp" />
             <ComponentRef Id="qst.exe_comp" />
-            <ComponentRef Id="qstcli.exe_comp" />
 
             <!-- Shortcut entries -->
             <ComponentRef Id="ApplicationShortcut" />
