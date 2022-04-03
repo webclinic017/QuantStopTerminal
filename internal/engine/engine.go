@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/quantstop/quantstopterminal/internal/config"
-	"github.com/quantstop/quantstopterminal/internal/grpcserver"
 	"github.com/quantstop/quantstopterminal/internal/log"
+	"github.com/quantstop/quantstopterminal/internal/webserver"
 	"github.com/quantstop/quantstopterminal/pkg/system"
 	"runtime"
 	"strings"
@@ -60,9 +60,9 @@ func (bot *Engine) Initialize() error {
 	}
 
 	// Initialize webserver subsystem
-	if err := bot.initWebserverSubsystem(); err != nil {
+	/*if err := bot.initWebserverSubsystem(); err != nil {
 		return err
-	}
+	}*/
 
 	// Initialize ntp checker subsystem
 	if err := bot.initNtpMonitorSubsystem(); err != nil {
@@ -100,7 +100,7 @@ func (bot *Engine) initDatabaseSubsystem() error {
 	return nil
 }
 
-func (bot *Engine) initWebserverSubsystem() error {
+/*func (bot *Engine) initWebserverSubsystem() error {
 	if bot.Config.Webserver.Enabled {
 		// Create and init webserver subsystem
 		bot.WebserverSubsystem = &WebserverSubsystem{Subsystem: Subsystem{}}
@@ -116,7 +116,7 @@ func (bot *Engine) initWebserverSubsystem() error {
 		}
 	}
 	return nil
-}
+}*/
 
 func (bot *Engine) initNtpMonitorSubsystem() error {
 	if bot.Config.NTP.Enabled {
@@ -195,9 +195,23 @@ func (bot *Engine) Run() error {
 	bot.SubsystemRegistry.StartAll(&bot.SubsystemWG)
 
 	// start gRPC GRPCServer
-	if bot.Config.GRPC.Enabled {
+	/*if bot.Config.GRPC.Enabled {
 		bot.GRPCServer = grpcserver.StartRPCServerTLS(bot, bot.Config.GRPC, bot.Config.ConfigDir)
+	}*/
+	// Everything good, create and run webserver
+	// This is done here, because the webserver depends upon the instantiated bot
+	var err error
+	bot.Webserver, err = webserver.CreateWebserver(bot, bot.Config.Webserver, bot.IsDevelopment)
+	if err != nil {
+		return err
 	}
+	// run api server
+	go func() {
+		err = bot.Webserver.ListenAndServe(true, bot.Config.ConfigDir)
+		if err != nil {
+			err = fmt.Errorf("unexpected error from ListenAndServe: %w", err)
+		}
+	}()
 
 	// Print some info
 	log.Infof(log.Global, "QuantstopTerminal started.\n")
@@ -218,6 +232,8 @@ func (bot *Engine) Stop() {
 
 	// Stop all subsystems
 	bot.SubsystemRegistry.StopAll()
+
+	bot.Webserver.Shutdown()
 
 	// Wait for subsystems to gracefully shutdown
 	bot.SubsystemWG.Wait()
@@ -282,18 +298,18 @@ func (bot *Engine) SetSubsystem(subSystemName string, enable bool) error {
 	var err error
 	switch strings.ToLower(subSystemName) {
 
-	case WebserverName:
-		if enable {
-			if bot.WebserverSubsystem == nil {
-				err = bot.WebserverSubsystem.init(bot, WebserverName)
-				if err != nil {
-					return err
-				}
+	/*case WebserverName:
+	if enable {
+		if bot.WebserverSubsystem == nil {
+			err = bot.WebserverSubsystem.init(bot, WebserverName)
+			if err != nil {
+				return err
 			}
-			return bot.WebserverSubsystem.start(&bot.SubsystemWG)
-		} else {
-			return bot.WebserverSubsystem.stop()
 		}
+		return bot.WebserverSubsystem.start(&bot.SubsystemWG)
+	} else {
+		return bot.WebserverSubsystem.stop()
+	}*/
 
 	case NTPSubsystemName:
 		if enable {
@@ -366,6 +382,11 @@ func (bot *Engine) GetVersion() map[string]string {
 
 }
 
-func (bot *Engine) GetSQL() *sql.DB {
-	return bot.DatabaseSubsystem.dbConn.SQL
+func (bot *Engine) GetSQL() (*sql.DB, error) {
+
+	if bot.DatabaseSubsystem.dbConn.SQL != nil {
+		return bot.DatabaseSubsystem.dbConn.SQL, nil
+	}
+	log.Errorln(log.Global, "database is nil!")
+	return nil, errors.New("engine cannot return nil database")
 }

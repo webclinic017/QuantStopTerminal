@@ -2,6 +2,7 @@ package models
 
 import (
 	"database/sql"
+	"errors"
 	"github.com/quantstop/quantstopterminal/internal/log"
 )
 
@@ -9,6 +10,7 @@ type User struct {
 	ID       uint32
 	Username string
 	Password string
+	Salt     string
 }
 
 func (u *User) CreateUser(db *sql.DB) error {
@@ -17,7 +19,7 @@ func (u *User) CreateUser(db *sql.DB) error {
 
 	// the `Exec` method returns a `Result` type instead of a `Row`
 	// we follow the same argument pattern to add query params
-	result, err := db.Exec("INSERT INTO users (username, password) VALUES ($1, $2)", u.Username, u.Password)
+	result, err := db.Exec("INSERT INTO users (username, password, salt) VALUES ($1, $2, $3)", u.Username, u.Password, u.Salt)
 	if err != nil {
 		log.Errorf(log.DatabaseLogger, "could not insert row: %v", err)
 	}
@@ -38,9 +40,17 @@ func (u *User) CreateUser(db *sql.DB) error {
 
 func (u *User) GetUserByUsername(db *sql.DB, username string) error {
 
+	if username == "" {
+		return errors.New("users model, cannot GetUserByUsername, username is nil")
+	}
+
+	if db == nil {
+		return errors.New("users model, cannot GetUserByUsername, db is nil")
+	}
+
 	row := db.QueryRow("SELECT * FROM users WHERE username=$1 LIMIT 1", username)
 	//user := models.User{}
-	if err := row.Scan(&u.ID, &u.Username, &u.Password); err != nil {
+	if err := row.Scan(&u.ID, &u.Username, &u.Password, &u.Salt); err != nil {
 		log.Errorf(log.DatabaseLogger, "could not get user by username: %v", err)
 		return err
 	}

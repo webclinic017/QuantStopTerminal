@@ -64,7 +64,7 @@ func main() {
 
 	// Parse runtime flags into Version
 	flag.BoolVar(&version.IsDaemon, "daemon", false, "run as a background service")
-	flag.BoolVar(&version.IsDevelopment, "development", false, "set development mode")
+	//flag.BoolVar(&version.IsDevelopment, "development", false, "set development mode")
 	flag.StringVar(&version.Version, "version", "0.1.0", "engine version")
 	flag.Parse()
 

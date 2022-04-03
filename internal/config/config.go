@@ -135,17 +135,15 @@ func (c *Config) SetupConfig() error {
 		c.Database = *database.GenDefaultSettings()
 		c.Webserver = &webserver.Config{
 			Enabled:             true,
-			HttpListenAddr:      ":8080",
+			HttpListenAddr:      ":443",
 			WebsocketListenAddr: ":8090",
 		}
 		c.GRPC = &grpcserver.Config{
 			Enabled:                true,
 			ListenAddress:          "localhost:9052",
-			GRPCProxyEnabled:       false,
+			GRPCProxyEnabled:       c.Webserver.Enabled,
 			GRPCProxyListenAddress: "localhost:9053",
 			TimeInNanoSeconds:      false,
-			/*Username:               "admin",
-			Password:               "admin",*/
 		}
 		c.NTP = ntpmonitor.Config{
 			Enabled: true,

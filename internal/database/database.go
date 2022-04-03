@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/quantstop/quantstopterminal/internal/database/models"
 	"github.com/quantstop/quantstopterminal/internal/log"
+	"github.com/quantstop/quantstopterminal/internal/webserver/utils"
 	"time"
 )
 
@@ -166,6 +167,7 @@ create table if not exists users
     id integer primary key autoincrement,
     username varchar(255) not null,
     password varchar(100) not null,
+    salt varchar(100) not null,
     constraint username
         unique (username)
 );
@@ -180,6 +182,14 @@ create table if not exists users
 			Username: "admin",
 			Password: "admin",
 		}
+
+		// Set salt, and hash password with salt
+		defaultUser.Salt = utils.GenerateRandomString(32)
+		defaultUser.Password, err = utils.HashPassword(defaultUser.Password, defaultUser.Salt)
+		if err != nil {
+			//return write.Error(err)
+		}
+
 		err = defaultUser.CreateUser(i.SQL)
 		if err != nil {
 			return err

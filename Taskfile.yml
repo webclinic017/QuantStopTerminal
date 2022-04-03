@@ -21,10 +21,16 @@ tasks:
 
   run:
     desc: Run the project
-    deps: [ frontend:gen-assets ]
-    dir: ./cmd/qst
+    dir: ./
     cmds:
-      - go run -tags=prod . -daemon=false -development=false
+      - air -c .air.toml
+
+  run-helper:
+    desc: Helper for run
+    deps: [ frontend:gen-assets ]
+    dir: ./
+    cmds:
+      - go build -tags=dev -o ./tmp/qst.exe ./cmd/qst/
 
   release: # Todo: implement this
     desc: Release the project

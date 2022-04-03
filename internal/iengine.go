@@ -7,5 +7,5 @@ type IEngine interface {
 	GetSubsystemsStatus() map[string]bool
 	SetSubsystem(subSystemName string, enable bool) error
 	GetVersion() map[string]string
-	GetSQL() *sql.DB
+	GetSQL() (*sql.DB, error)
 }
