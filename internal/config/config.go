@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/quantstop/quantstopterminal/internal/connectionmonitor"
 	"github.com/quantstop/quantstopterminal/internal/database"
-	"github.com/quantstop/quantstopterminal/internal/grpcserver"
 	"github.com/quantstop/quantstopterminal/internal/log"
 	"github.com/quantstop/quantstopterminal/internal/ntpmonitor"
 	"github.com/quantstop/quantstopterminal/internal/webserver"
@@ -33,11 +32,9 @@ type Config struct {
 	GoMaxProcessors int
 	Database        database.Config
 	Webserver       *webserver.Config
-	GRPC            *grpcserver.Config
-	//Strategy 		strategy.Config
-	NTP      ntpmonitor.Config
-	Internet connectionmonitor.Config
-	Logger   log.Config
+	NTP             ntpmonitor.Config
+	Internet        connectionmonitor.Config
+	Logger          log.Config
 }
 
 // DefaultFileMode controls the default permissions on any paths created by using MakePath.
@@ -137,13 +134,6 @@ func (c *Config) SetupConfig() error {
 			Enabled:             true,
 			HttpListenAddr:      ":443",
 			WebsocketListenAddr: ":8090",
-		}
-		c.GRPC = &grpcserver.Config{
-			Enabled:                true,
-			ListenAddress:          "localhost:9052",
-			GRPCProxyEnabled:       c.Webserver.Enabled,
-			GRPCProxyListenAddress: "localhost:9053",
-			TimeInNanoSeconds:      false,
 		}
 		c.NTP = ntpmonitor.Config{
 			Enabled: true,

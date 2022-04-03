@@ -59,11 +59,6 @@ func (bot *Engine) Initialize() error {
 		return err
 	}
 
-	// Initialize webserver subsystem
-	/*if err := bot.initWebserverSubsystem(); err != nil {
-		return err
-	}*/
-
 	// Initialize ntp checker subsystem
 	if err := bot.initNtpMonitorSubsystem(); err != nil {
 		return err
@@ -99,24 +94,6 @@ func (bot *Engine) initDatabaseSubsystem() error {
 
 	return nil
 }
-
-/*func (bot *Engine) initWebserverSubsystem() error {
-	if bot.Config.Webserver.Enabled {
-		// Create and init webserver subsystem
-		bot.WebserverSubsystem = &WebserverSubsystem{Subsystem: Subsystem{}}
-		if err := bot.WebserverSubsystem.init(bot, WebserverName); err != nil {
-			log.Errorf(log.Global, "Webserver subsystem unable to initialize: %v", err)
-			return err
-		}
-
-		// Register webserver subsystem
-		if err := bot.SubsystemRegistry.RegisterService(bot.WebserverSubsystem); err != nil {
-			log.Errorf(log.Global, "Webserver subsystem unable to register: %v", err)
-			return err
-		}
-	}
-	return nil
-}*/
 
 func (bot *Engine) initNtpMonitorSubsystem() error {
 	if bot.Config.NTP.Enabled {
@@ -194,10 +171,6 @@ func (bot *Engine) Run() error {
 	// Start all subsystems
 	bot.SubsystemRegistry.StartAll(&bot.SubsystemWG)
 
-	// start gRPC GRPCServer
-	/*if bot.Config.GRPC.Enabled {
-		bot.GRPCServer = grpcserver.StartRPCServerTLS(bot, bot.Config.GRPC, bot.Config.ConfigDir)
-	}*/
 	// Everything good, create and run webserver
 	// This is done here, because the webserver depends upon the instantiated bot
 	var err error
@@ -297,19 +270,6 @@ func (bot *Engine) SetSubsystem(subSystemName string, enable bool) error {
 
 	var err error
 	switch strings.ToLower(subSystemName) {
-
-	/*case WebserverName:
-	if enable {
-		if bot.WebserverSubsystem == nil {
-			err = bot.WebserverSubsystem.init(bot, WebserverName)
-			if err != nil {
-				return err
-			}
-		}
-		return bot.WebserverSubsystem.start(&bot.SubsystemWG)
-	} else {
-		return bot.WebserverSubsystem.stop()
-	}*/
 
 	case NTPSubsystemName:
 		if enable {
