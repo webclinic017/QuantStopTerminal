@@ -64,12 +64,8 @@ func main() {
 
 	// Parse runtime flags into Version
 	flag.BoolVar(&version.IsDaemon, "daemon", false, "run as a background service")
-	//flag.BoolVar(&version.IsDevelopment, "development", false, "set development mode")
 	flag.StringVar(&version.Version, "version", "0.1.0", "engine version")
 	flag.Parse()
-
-	// Inject the website frontend into variable for webserver
-	//webserver.Website = &WebFrontend
 
 	// Print banner and version
 	qstlog.Infof(qstlog.Global, "\n"+engine.GetRandomBanner()+"\n"+version.GetVersionString(false))
@@ -132,7 +128,6 @@ func onReady() {
 	companyUrl := systray.AddMenuItem("Quantstop.com", "Quantstop.com")
 	localUrl := systray.AddMenuItem("QuantstopTerminal", "Local Web App")
 	dataDirUrl := systray.AddMenuItem("App Directory", "Local App Data Directory")
-	cliBtn := systray.AddMenuItem("QST-CLI", "Launch CLI App")
 	quitBtn := systray.AddMenuItem("Quit", "Quit the whole app")
 
 	go func() {
@@ -142,17 +137,11 @@ func onReady() {
 			case <-companyUrl.ClickedCh:
 				_ = open.Run("https://quantstop.com/")
 			case <-localUrl.ClickedCh:
-				_ = open.Run("http://localhost:8080")
+				_ = open.Run("https://localhost")
 			case <-dataDirUrl.ClickedCh:
 				_ = open.Run(Config.ConfigDir)
-			case <-cliBtn.ClickedCh:
-				// Run qstcli in a new cmd window
-				// Todo: this wont work obviously, need to get install path eventually...
-				_ = open.Run("C:/Users/ethan/Documents/Quantstop/QuantstopTerminal/builds/windows-amd64/qstcli")
 			case <-quitBtn.ClickedCh:
-				//fmt.Println("Requesting quit")
 				systray.Quit()
-				//fmt.Println("Finished quitting")
 			}
 		}
 
