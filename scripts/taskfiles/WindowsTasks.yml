@@ -14,7 +14,6 @@ tasks:
     desc: Build the project for windows-amd64 (64-bit)
     cmds:
       - task: build-qst-win-amd64
-      - task: build-qstcli-win-amd64
       - task: package-win-amd64
 
   build-qst-win-amd64:
@@ -45,7 +44,6 @@ tasks:
     desc: Build the project for windows-386 (32-bit)
     cmds:
       - task: build-qst-win-386
-      - task: build-qstcli-win-386
       - task: package-win-386
 
   build-qst-win-386:

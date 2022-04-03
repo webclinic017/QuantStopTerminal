@@ -57,7 +57,6 @@
 
       <!-- Define icons (ID should not be longer than 18 chars and must end with ".exe") -->
       <Icon Id="qstIcon.exe" SourceFile="$(var.ProjectDir)\assets\images\qst.ico" />
-      <Icon Id="qstcliIcon.exe" SourceFile="$(var.ProjectDir)\assets\images\qstcli.ico" />
 
       <!-- Set properties for add/remove programs -->
       <Property Id="ARPPRODUCTICON" Value="qstIcon.exe" />

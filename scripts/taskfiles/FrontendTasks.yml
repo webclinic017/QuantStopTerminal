@@ -40,12 +40,12 @@ tasks:
   gen-assets:
     desc: Generate static frontend
     deps: [ npm-build ]
-    run: when_changed
-    sources:
-      - ./cmd/genassets/main.go
-    generates:
-      - ./internal/assets/appcode.go
-    method: timestamp
+    #run: always
+    #sources:
+    #  - ./cmd/genassets/main.go
+    #generates:
+    #  - ./internal/assets/appcode.go
+    #method: timestamp
     cmds:
       - go run ./cmd/genassets/main.go
       - go generate
