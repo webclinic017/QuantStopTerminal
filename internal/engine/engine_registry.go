@@ -22,8 +22,7 @@ func NewServiceRegistry() *ServiceRegistry {
 	}
 }
 
-// RegisterService appends a service constructor function to the service
-// registry.
+// RegisterService appends a service constructor function to the service registry
 func (s *ServiceRegistry) RegisterService(service iSubsystem) error {
 	kind := reflect.TypeOf(service)
 	if _, exists := s.services[kind]; exists {
@@ -66,7 +65,6 @@ func (s *ServiceRegistry) Start(name string, wg *sync.WaitGroup) error {
 			if !s.services[kind].isInitialized() {
 				return ErrSubsystemNotInitialized
 			}
-			//if err := StartSubsystem(s.services[kind], wg); err != nil {
 			if err := s.services[kind].start(wg); err != nil {
 				return err
 			}
@@ -82,13 +80,12 @@ func (s *ServiceRegistry) Start(name string, wg *sync.WaitGroup) error {
 	return nil
 }
 
-// StopAll ends every service in reverse order of registration, logging a
-// panic if any of them fail to stop.
+// StopAll ends every service in reverse order of registration,
+// logging a panic if any of them fail to stop.
 func (s *ServiceRegistry) StopAll() {
 	for i := len(s.serviceTypes) - 1; i >= 0; i-- {
 		kind := s.serviceTypes[i]
 		service := s.services[kind]
-		//if err := StopSubsystem(service); err != nil {
 		if err := service.stop(); err != nil {
 			log.Errorf(log.SubsystemLogger, "Could not stop the following service: %v, %v", kind, err)
 		}

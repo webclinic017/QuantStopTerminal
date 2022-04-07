@@ -10,7 +10,7 @@ vars:
   VERSION: 0.0.1
   PROJECT_DIR:
     sh: pwd | sed 's/\\/\//g'
-  ISRELEASE: false
+  ISRELEASE: true
 
 tasks:
 
@@ -21,10 +21,16 @@ tasks:
 
   run:
     desc: Run the project
-    deps: [ frontend:npm-install ]
-    dir: ./cmd/qst
+    dir: ./
     cmds:
-      - go run -tags=dev . -daemon=false -development=true
+      - air -c .air.toml
+
+  run-helper:
+    desc: Helper for run
+    deps: [ frontend:gen-assets ]
+    dir: ./
+    cmds:
+      - go build -tags=dev -o ./tmp/qst.exe ./cmd/qst/
 
   release: # Todo: implement this
     desc: Release the project
@@ -44,7 +50,7 @@ tasks:
       - task: windows:build-win-386
 
   clean:
-    desc: Build the project
+    desc: Clean the project
     cmds:
       - task: windows:clean-win-amd64
       - task: windows:clean-win-386

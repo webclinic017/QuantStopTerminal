@@ -35,3 +35,5 @@ go.work
 
 
 /.task/
+/tmp/
+/builds/

@@ -2,23 +2,24 @@ package engine
 
 import (
 	"github.com/quantstop/quantstopterminal/internal/config"
-	"google.golang.org/grpc"
+	"github.com/quantstop/quantstopterminal/internal/webserver"
 	"sync"
 	"time"
 )
 
 type Engine struct {
 	*Version
-	Config              *config.Config
-	SubsystemRegistry   *ServiceRegistry
-	DatabaseSubsystem   *DatabaseSubsystem
-	GRPCServer          *grpc.Server
+	Config            *config.Config
+	SubsystemRegistry *ServiceRegistry
+	DatabaseSubsystem *DatabaseSubsystem
+	//GRPCServer          *grpc.Server
 	NTPCheckerSubsystem *NTPCheckerSubsystem
 	StrategySubsystem   *StrategySubsystem
 	InternetSubsystem   *ConnectionMonitor
-	WebserverSubsystem  *WebserverSubsystem
-	SubsystemWG         sync.WaitGroup
-	Uptime              time.Time
+	//WebserverSubsystem  *WebserverSubsystem
+	Webserver   *webserver.Webserver
+	SubsystemWG sync.WaitGroup
+	Uptime      time.Time
 }
 
 const (
