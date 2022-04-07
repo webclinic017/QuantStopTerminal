@@ -6,6 +6,7 @@ import (
 	"github.com/quantstop/quantstopterminal/internal/database/drivers/mysql"
 	pgsql "github.com/quantstop/quantstopterminal/internal/database/drivers/postgres"
 	sqlite "github.com/quantstop/quantstopterminal/internal/database/drivers/sqlite3"
+	"github.com/quantstop/quantstopterminal/internal/database/seed"
 	"github.com/quantstop/quantstopterminal/internal/log"
 	"sync"
 	"time"
@@ -69,7 +70,7 @@ func (s *DatabaseSubsystem) start(wg *sync.WaitGroup) (err error) {
 		log.Debugln(log.DatabaseLogger, s.name+MsgSubsystemStarted)
 		s.started = true
 		s.dbConn.SetConnected(true)
-		err = s.dbConn.SeedDB()
+		err = seed.SeedDB(s.dbConn.SQL, s.bot.Config.Database.Driver)
 		if err != nil {
 			return err
 		}
