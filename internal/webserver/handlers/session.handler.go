@@ -36,25 +36,20 @@ func Login(db *sql.DB, user *models.User, w http.ResponseWriter, r *http.Request
 		return write.Error(errors.NoJSONBody)
 	}
 
-	//log.Println("Username: " + req.Username)
-	//log.Println("Password: " + req.Password)
-
 	if req.Username == "" || req.Password == "" {
 		return write.Error(errors.InvalidInput)
 	}
 
-	//log.Println("getting user")
 	user = &models.User{}
 	err = user.GetUserByUsername(db, req.Username)
 	if err != nil {
-		//log.Println("failed lookup")
 		if err == sql.ErrNoRows {
 			return write.Error(errors.FailedLogin)
 		}
 		return write.Error(err)
 	}
 
-	/*u, err = u.GetUserRoles(env.DB())
+	/*user, err = user.GetUserRoles(db)
 	if err != nil {
 		return write.Error(err)
 	}*/
@@ -77,7 +72,6 @@ func Login(db *sql.DB, user *models.User, w http.ResponseWriter, r *http.Request
 		},
 	}
 	return write.JSON(res)
-	//return write.Success()
 }
 
 func Logout(db *sql.DB, user *models.User, w http.ResponseWriter, r *http.Request) http.HandlerFunc {
