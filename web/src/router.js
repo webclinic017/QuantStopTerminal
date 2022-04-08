@@ -2,7 +2,6 @@ import Home from "./components/Home.vue";
 import Login from "./components/Login.vue";
 import Register from "./components/Register.vue";
 import Profile from "./components/Profile.vue";
-import Verify from "./components/Verify";
 import BoardAdmin from "./components/BoardAdmin.vue";
 import BoardModerator from "./components/BoardModerator.vue";
 import BoardUser from "./components/BoardUser.vue";
@@ -15,7 +14,6 @@ const routes = [
     { path: "/login", component: Login, meta: { requiredAuth: false } },
     { path: "/register", component: Register, meta: { requiredAuth: false } },
     { path: "/profile", component: Profile, meta: { requiredAuth: true } },
-    { path: "/verify/:code", component: Verify, meta: { requiredAuth: false } },
     { path: "/admin", component: BoardAdmin, meta: { requiredAuth: true } },
     { path: "/mod", component: BoardModerator, meta: { requiredAuth: true } },
     { path: "/user", component: BoardUser, meta: { requiredAuth: true } },
@@ -24,7 +22,6 @@ const routes = [
 export const routeConfig = createRouter({
     history: createWebHistory(),
     routes: routes,
-    //props: route => ({ query: route.query })
 });
 
 routeConfig.beforeEach(async (to, from, next) => {

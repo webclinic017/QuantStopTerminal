@@ -22,14 +22,14 @@ export default {
       actionGetAll: "getPublicContent",
     }),
     async getAll() {
-      //this.loading = true;
+      this.loading = true;
       await this.actionGetAll().then(
           (res) => {
-            //this.content = res
+            this.content = res
           },
           (error) => {
-            //this.loading = false;
-            //this.message = error.toString() + " | " + error.response.data.error;
+            this.loading = false;
+            this.message = error.toString() + " | " + error.response.status;
           }
       );
     },

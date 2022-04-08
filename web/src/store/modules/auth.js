@@ -8,10 +8,6 @@ const state = () => ({
   userProfile: {
     id: 0,
     username: "",
-    //lastName: "",
-    //firstName: "",
-    //email: "",
-    //phone: "",
     roles: "",
   },
   logOut: false
@@ -55,7 +51,7 @@ const actions = {
   },
 
   async registerApi({ commit }, payload) {
-    const response = await axios.post("https://localhost/api/user", payload, {
+    const response = await axios.post("https://localhost/api/signup", payload, {
       withCredentials: true,
       credentials: "include",
       headers: {
@@ -136,10 +132,6 @@ const mutations = {
     state.userProfile = {
       id: data.id,
       username: data.username,
-      //lastName: data.lastName,
-      //firstName: data.firstName,
-      //email: data.email,
-      //phone: data.phone,
       roles: data.roles
     };
   },
