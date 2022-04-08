@@ -28,12 +28,6 @@ func (s *Webserver) ConfigureRouter() {
 	log.Debugln(log.Webserver, "Setting up route handlers ... ")
 	s.mux.FrontendHandler = http.FileServer(assets.Assets)
 
-	/*s.mux.GET("/", func(db *sql.DB, user *models.User, w http.ResponseWriter, r *http.Request) http.HandlerFunc {
-		return func(writer http.ResponseWriter, request *http.Request) {
-			s.mux.FrontendHandler.ServeHTTP(writer, request)
-		}
-	}, router.Public)*/
-
 	s.mux.GET("/api/all", handlers.Test, router.Public)
 
 	// Session routes
@@ -45,16 +39,8 @@ func (s *Webserver) ConfigureRouter() {
 	s.mux.GET("/reset/([0-9]+)", handlers.DoReset, router.User)*/
 
 	// User routes
-	//s.mux.POST("/user", handlers.Signup, router.Public)
+	s.mux.POST("/api/signup", handlers.Signup, router.Public)
 	s.mux.GET("/api/user", handlers.Whoami, router.User)
-	/*s.mux.POST("/user/verify", handlers.Verify, router.User)
-	s.mux.PUT("/user/password", handlers.UpdatePassword, router.User)*/
-
-	// Posts routes
-	/*s.GET("/post", handlers.GetPosts)
-	s.GET("/post/:id", handlers.GetPost)
-	s.POST("/post", handlers.CreatePost)
-	s.PUT("/post", handlers.UpdatePost)
-	s.DELETE("/post/:id", handlers.DeletePost)*/
+	/*s.mux.PUT("/user/password", handlers.UpdatePassword, router.User)*/
 
 }

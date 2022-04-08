@@ -28,16 +28,16 @@ func CreateUsersTable(db *sql.DB, driver string) error {
 		log.Debugln(log.DatabaseLogger, "Checking for users table ... Not found.")
 		log.Debugln(log.DatabaseLogger, "Creating users table ... ")
 		usersTable := `
-create table if not exists users
-(
-    id integer primary key autoincrement,
-    username varchar(255) not null,
-    password varchar(100) not null,
-    salt varchar(100) not null,
-    constraint username
-        unique (username)
-);
-`
+			create table if not exists users
+			(
+				id integer primary key autoincrement,
+				username varchar(255) not null,
+				password varchar(255) not null,
+				salt varchar(255) not null,
+				constraint username
+					unique (username)
+			);
+		`
 		_, err := db.Exec(usersTable)
 		if err != nil {
 			log.Errorf(log.DatabaseLogger, "Creating users table ... Failed. Error: %v", err)
@@ -45,11 +45,6 @@ create table if not exists users
 		}
 		log.Debugln(log.DatabaseLogger, "Creating users table ... Success!")
 
-		// check/create default admin
-		if err := CreateDefaultAdmin(db); err != nil {
-			log.Errorf(log.DatabaseLogger, "Error creating default admin: %v", err)
-			return err
-		}
 	}
 
 	log.Debugln(log.DatabaseLogger, "Checking for users table ... Found!")
@@ -102,26 +97,38 @@ func (u *User) CreateUser(db *sql.DB) error {
 
 	log.Debugln(log.DatabaseLogger, "Creating user ...")
 
-	// the `Exec` method returns a `Result` type instead of a `Row`
-	// we follow the same argument pattern to add query params
 	result, err := db.Exec("INSERT INTO users (username, password, salt) VALUES ($1, $2, $3)", u.Username, u.Password, u.Salt)
 	if err != nil {
 		log.Errorf(log.DatabaseLogger, "could not insert row: %v", err)
 		return err
 	}
 
-	// the `Result` type has special methods like `RowsAffected` which returns the
-	// total number of affected rows reported by the database
-	// In this case, it will tell us the number of rows that were inserted using
-	// the above query
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
 		log.Errorf(log.DatabaseLogger, "could not get affected rows: %v", err)
 		return err
 	}
 
-	// we can log how many rows were inserted
 	log.Debugln(log.DatabaseLogger, "User created. Inserted", rowsAffected, "rows")
+
+	// get id
+	row := db.QueryRow("SELECT id FROM users WHERE username=$1", u.Username)
+	if err = row.Scan(&u.ID); err != nil {
+		return err
+	}
+
+	// set role
+	res, err := db.Exec("INSERT INTO users_roles (user_id, role_id) VALUES ($1, $2)", u.ID, 1)
+	if err != nil {
+		log.Errorf(log.DatabaseLogger, "could not insert row: %v", err)
+		return err
+	}
+	rowsA, err := res.RowsAffected()
+	if err != nil {
+		log.Errorf(log.DatabaseLogger, "could not get affected rows: %v", err)
+		return err
+	}
+	log.Debugln(log.DatabaseLogger, "Role association created. Inserted", rowsA, "rows")
 
 	return nil
 }
@@ -138,10 +145,33 @@ func (u *User) GetUserByUsername(db *sql.DB, username string) error {
 		return errors.New("users model, cannot GetUserByUsername, db is nil")
 	}
 
-	row := db.QueryRow("SELECT * FROM users WHERE username=$1 LIMIT 1", username)
-	if err := row.Scan(&u.ID, &u.Username, &u.Password, &u.Salt); err != nil {
-		log.Errorf(log.DatabaseLogger, "could not get user by username: %v", err)
+	query := `
+		SELECT u.id, u.username, u.password, u.salt, r.name
+		FROM users AS u
+		JOIN users_roles AS ur ON u.id = ur.user_id
+	    JOIN roles AS r ON ur.role_id = r.id
+		WHERE u.username = ?
+	`
+	rows, err := db.Query(query, username)
+	if err != nil {
+		log.Errorf(log.DatabaseLogger, "error getting user: %v", err)
 		return err
+	}
+
+	for rows.Next() {
+		roles := &Role{}
+		err = rows.Scan(
+			&u.ID,
+			&u.Username,
+			&u.Password,
+			&u.Salt,
+			&roles.Name,
+		)
+		if err != nil {
+			log.Errorf(log.DatabaseLogger, "error scanning rows: %v", err)
+			return err
+		}
+		u.Roles = append(u.Roles, roles.Name)
 	}
 
 	return nil

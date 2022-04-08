@@ -25,8 +25,7 @@ const (
 type Webserver struct {
 	*Config
 	internal.IEngine
-	HttpServer *http.Server
-	//mux *http.ServeMux
+	HttpServer       *http.Server
 	mux              *router.Router
 	shutdownFinished chan struct{}
 }
