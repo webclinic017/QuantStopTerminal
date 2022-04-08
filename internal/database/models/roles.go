@@ -29,14 +29,14 @@ func CreateRolesTable(db *sql.DB, driver string) error {
 		log.Debugln(log.DatabaseLogger, "Checking for roles table ... Not found.")
 		log.Debugln(log.DatabaseLogger, "Creating roles table ... ")
 		usersTable := `
-create table if not exists roles
-(
-    id integer primary key autoincrement,
-    name varchar(255) not null,
-    constraint name
-        unique (name)
-);
-`
+			create table if not exists roles
+			(
+				id integer primary key autoincrement,
+				name varchar(255) not null,
+				constraint name
+					unique (name)
+			);
+		`
 		_, err := db.Exec(usersTable)
 		if err != nil {
 			log.Errorf(log.DatabaseLogger, "Creating roles table ... Failed. Error: %v", err)
@@ -69,25 +69,18 @@ func (r *Role) CreateRole(db *sql.DB) error {
 
 	log.Debugln(log.DatabaseLogger, "Creating role ...")
 
-	// the `Exec` method returns a `Result` type instead of a `Row`
-	// we follow the same argument pattern to add query params
 	result, err := db.Exec("INSERT INTO roles (name) VALUES ($1)", r.Name)
 	if err != nil {
 		log.Errorf(log.DatabaseLogger, "could not insert row: %v", err)
 		return err
 	}
 
-	// the `Result` type has special methods like `RowsAffected` which returns the
-	// total number of affected rows reported by the database
-	// In this case, it will tell us the number of rows that were inserted using
-	// the above query
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
 		log.Errorf(log.DatabaseLogger, "could not get affected rows: %v", err)
 		return err
 	}
 
-	// we can log how many rows were inserted
 	log.Debugln(log.DatabaseLogger, "Role created. Inserted", rowsAffected, "rows")
 
 	return nil
