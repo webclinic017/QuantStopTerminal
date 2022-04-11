@@ -25,6 +25,7 @@ const (
 type Webserver struct {
 	*Config
 	internal.IEngine
+	isDev            bool
 	HttpServer       *http.Server
 	mux              *router.Router
 	shutdownFinished chan struct{}
@@ -45,25 +46,21 @@ func CreateWebserver(eng internal.IEngine, conf *Config, isDev bool) (*Webserver
 		return fmt.Sprintf("%d", time.Now().UnixNano())
 	}*/
 
-	db, err := eng.GetSQL()
-	if err != nil {
-		return nil, err
-	}
-
-	rtr, err := router.New(isDev, db)
+	rtr, err := router.New(isDev, eng)
 	if err != nil {
 		return nil, err
 	}
 
 	// Create server
 	server := &Webserver{
+		isDev:            isDev,
 		IEngine:          eng,
 		Config:           conf,
 		mux:              rtr,
 		shutdownFinished: make(chan struct{}),
 	}
 
-	server.ConfigureRouter()
+	server.ConfigureRouter(isDev)
 	server.mux.PrintRoutes()
 
 	server.HttpServer = &http.Server{
@@ -91,6 +88,11 @@ func CreateWebserver(eng internal.IEngine, conf *Config, isDev bool) (*Webserver
 func (s *Webserver) ListenAndServe(tls bool, configDir string) (err error) {
 	if s.shutdownFinished == nil {
 		s.shutdownFinished = make(chan struct{})
+	}
+
+	// if dev mode, run node server
+	if s.isDev {
+		go s.StartNodeDevelopmentServer()
 	}
 
 	if tls {
@@ -202,8 +204,6 @@ func (s *Webserver) StartNodeDevelopmentServer() {
 		log.Errorf(log.Webserver, "Error starting node development server %v.\n", err)
 	}
 
-	// todo: i think this all works as intended, the problem is node runtime spawns another background process
-	// todo: need to figure out how to kill all
 	<-s.shutdownFinished
 	log.Infoln(log.Webserver, "Shutting down node development server ...")
 	if err = cmd.Process.Kill(); err != nil {

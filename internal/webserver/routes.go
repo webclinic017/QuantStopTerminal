@@ -11,7 +11,7 @@ import (
 	"runtime/debug"
 )
 
-func (s *Webserver) ConfigureRouter() {
+func (s *Webserver) ConfigureRouter(isDev bool) {
 
 	log.Debugln(log.Webserver, "Setting up middleware ... ")
 	//s.router.Use(middlewares.HttpRequestLogger())
@@ -26,9 +26,15 @@ func (s *Webserver) ConfigureRouter() {
 	}
 
 	log.Debugln(log.Webserver, "Setting up route handlers ... ")
-	s.mux.FrontendHandler = http.FileServer(assets.Assets)
 
-	s.mux.GET("/api/all", handlers.Test, router.Public)
+	if isDev {
+		s.mux.FrontendHandler = http.FileServer(assets.Assets)
+	}
+
+	// Public Routes
+	s.mux.GET("/api/test", handlers.Test, router.Public)
+	s.mux.GET("/api/version", handlers.GetVersion, router.Public)
+	s.mux.GET("/api/sub-status", handlers.GetSubsystemStatus, router.Public)
 
 	// Session routes
 	s.mux.POST("/api/session", handlers.Login, router.Public)

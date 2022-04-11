@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"database/sql"
+	"github.com/quantstop/quantstopterminal/internal"
 	"github.com/quantstop/quantstopterminal/internal/database/models"
 	"github.com/quantstop/quantstopterminal/internal/webserver/write"
 	"net/http"
@@ -45,7 +45,7 @@ type WhoamiResponse struct {
 	Roles    []string `json:"roles"`
 }
 
-func Whoami(db *sql.DB, user *models.User, w http.ResponseWriter, r *http.Request) http.HandlerFunc {
+func Whoami(bot internal.IEngine, user *models.User, w http.ResponseWriter, r *http.Request) http.HandlerFunc {
 
 	res := WhoamiResponse{
 		ID:       user.ID,

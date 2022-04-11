@@ -3,6 +3,7 @@ package handlers
 import (
 	"database/sql"
 	"encoding/json"
+	"github.com/quantstop/quantstopterminal/internal"
 	"github.com/quantstop/quantstopterminal/internal/database/models"
 	"github.com/quantstop/quantstopterminal/internal/webserver/errors"
 	"github.com/quantstop/quantstopterminal/internal/webserver/jwt"
@@ -28,11 +29,9 @@ type signupRequest struct {
 	Password string `json:"password"`
 }
 
-func Login(db *sql.DB, user *models.User, w http.ResponseWriter, r *http.Request) http.HandlerFunc {
+func Login(bot internal.IEngine, user *models.User, w http.ResponseWriter, r *http.Request) http.HandlerFunc {
 
-	if db == nil {
-		return write.Error(errors.NilDBError)
-	}
+	db, _ := bot.GetSQL()
 
 	decoder := json.NewDecoder(r.Body)
 	req := loginRequest{}
@@ -69,17 +68,15 @@ func Login(db *sql.DB, user *models.User, w http.ResponseWriter, r *http.Request
 	return write.JSON(res)
 }
 
-func Logout(db *sql.DB, user *models.User, w http.ResponseWriter, r *http.Request) http.HandlerFunc {
+func Logout(bot internal.IEngine, user *models.User, w http.ResponseWriter, r *http.Request) http.HandlerFunc {
 	u := &models.User{}
 	jwt.WriteUserCookie(w, u)
 	return write.Success()
 }
 
-func Signup(db *sql.DB, user *models.User, w http.ResponseWriter, r *http.Request) http.HandlerFunc {
+func Signup(bot internal.IEngine, user *models.User, w http.ResponseWriter, r *http.Request) http.HandlerFunc {
 
-	if db == nil {
-		return write.Error(errors.NilDBError)
-	}
+	db, _ := bot.GetSQL()
 
 	decoder := json.NewDecoder(r.Body)
 	req := signupRequest{}

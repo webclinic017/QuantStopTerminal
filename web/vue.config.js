@@ -1,8 +1,12 @@
 module.exports = {
     devServer: {
-        port: 8081, // CHANGE YOUR PORT HERE!
-        https: true,
-        proxy: 'https://localhost/',
+        proxy: {
+            '^/api': {
+                target: 'https://localhost',
+                ws: true,
+                changeOrigin: true
+            },
+        }
     },
     configureWebpack: {
         devServer: {

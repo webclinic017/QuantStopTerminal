@@ -3,10 +3,11 @@ package router
 import (
 	"context"
 	"database/sql"
-	"errors"
+	"github.com/quantstop/quantstopterminal/internal"
 	"github.com/quantstop/quantstopterminal/internal/log"
 	"github.com/quantstop/quantstopterminal/internal/webserver/middleware"
 	"github.com/quantstop/quantstopterminal/internal/webserver/utils"
+	"github.com/quantstop/quantstopterminal/internal/webserver/write"
 	"net/http"
 	"regexp"
 )
@@ -17,6 +18,7 @@ import (
 type Router struct {
 	isDev            bool
 	DB               *sql.DB
+	Bot              internal.IEngine
 	Routes           []Route
 	FrontendHandler  http.Handler
 	MethodNotAllowed http.HandlerFunc
@@ -30,15 +32,17 @@ type Router struct {
 // ctxKey context key for request context
 type ctxKey struct{}
 
-func New(isDev bool, db *sql.DB) (*Router, error) {
+func New(isDev bool, eng internal.IEngine) (*Router, error) {
 
-	if db == nil {
-		return nil, errors.New("cannot create router, db is nil")
+	db, err := eng.GetSQL()
+	if err != nil {
+		return nil, err
 	}
 
 	return &Router{
 		isDev: isDev,
 		DB:    db,
+		Bot:   eng,
 	}, nil
 }
 
@@ -91,9 +95,6 @@ func (r *Router) Handle(httpMethod, pattern string, handler AuthHandler, authTyp
 		//log.Fatal("http method " + httpMethod + " is not valid")
 	}
 
-	// wrap auth route handler
-	//auth := r.HandleFunc(handler, authType)
-
 	// create the Route
 	route := newRoute(httpMethod, pattern, r.wrap(handler, authType))
 
@@ -111,7 +112,7 @@ func (r *Router) wrap(h AuthHandler, authType AuthType) http.HandlerFunc {
 		//log.Println("Middleware chain | 0 | wrap")
 
 		// 1: role based authentication middleware
-		authHandler := AuthRoute(r.DB, h, response, request, authType)
+		authHandler := AuthRoute(r.Bot, h, response, request, authType)
 
 		// Handlers are executed in reverse order from where chain is built starting here
 
@@ -143,7 +144,7 @@ func (r *Router) ServeHTTP(response http.ResponseWriter, request *http.Request) 
 	var head string
 	// shift head and tail to get below "api/" part of the path
 	head, _ = utils.ShiftPath(request.URL.Path)
-	if head != "api" {
+	if head != "api" && !r.isDev {
 		r.FrontendHandler.ServeHTTP(response, request)
 		return
 	}
@@ -168,7 +169,15 @@ func (r *Router) ServeHTTP(response http.ResponseWriter, request *http.Request) 
 			if request.Method != route.method {
 
 				if request.Method == "OPTIONS" {
-					continue
+					// cors shit, i have no fucking idea why this doesnt work in the actual handler but whatever
+					// todo: ok now im really fucking lost, cant remove the cors handler from wrap because it throws a cors error .... WHAT THE FUCK!
+					response.Header().Add("Access-Control-Allow-Origin", "http://localhost:8080")
+					response.Header().Add("Access-Control-Allow-Credentials", "true")
+					response.Header().Add("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
+					response.Header().Add("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+					write.Success()
+					return
+
 				} else {
 					allow = append(allow, route.method)
 				}

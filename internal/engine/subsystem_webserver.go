@@ -27,8 +27,6 @@ func (s *WebserverSubsystem) init(bot *Engine, name string) error {
 		return err
 	}
 
-	//s.server.SetupRoutes(s.bot.IsDevelopment)
-
 	s.enabled = bot.Config.Webserver.Enabled
 	s.initialized = true
 	log.Debugln(log.Webserver, s.name+MsgSubsystemInitialized)
@@ -44,12 +42,8 @@ func (s *WebserverSubsystem) start(wg *sync.WaitGroup) (err error) {
 	log.Debugln(log.Webserver, s.name+MsgSubsystemStarted)
 	wg.Add(1)
 	s.wg.Add(1)
-	go s.run(wg)
 
-	// if dev mode, run node server
-	/*if s.bot.IsDevelopment {
-		go s.server.StartNodeDevelopmentServer()
-	}*/
+	go s.run(wg)
 
 	return nil
 }

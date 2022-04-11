@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"github.com/quantstop/quantstopterminal/internal/webserver/write"
+	"log"
 	"net/http"
 	"os"
 )
@@ -27,14 +28,16 @@ func Cors(fn http.HandlerFunc) http.HandlerFunc {
 			// simple response for the preflight check
 			fn = write.Success()
 		}*/
+		log.Println("cors headers")
 
-		w.Header().Add("Access-Control-Allow-Origin", "*")
+		w.Header().Add("Access-Control-Allow-Origin", "http://localhost:8080")
 		w.Header().Add("Access-Control-Allow-Credentials", "true")
 		w.Header().Add("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
 		w.Header().Add("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
 
 		if r.Method == http.MethodOptions {
 			//http.Error(w, "No Content", http.StatusNoContent)
+			log.Println("cors writing success")
 			fn = write.Success()
 			//return
 		}
@@ -43,7 +46,7 @@ func Cors(fn http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-const localDev = "https://localhost"
+const localDev = "http://localhost:8080"
 
 // only returns an origin if it matches our list
 func validateOrigin(r *http.Request) string {
@@ -61,7 +64,7 @@ func validateOrigin(r *http.Request) string {
 
 // a list of paths to bypass cors checks - this is useful for webhooks and stuff
 var bypassPaths = []string{
-	"/",
+	"/api/sub-status",
 }
 
 func skipCorsAndCSRF(path string) bool {

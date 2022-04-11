@@ -1,8 +1,9 @@
 package router
 
 import (
-	"database/sql"
+	"github.com/quantstop/quantstopterminal/internal"
 	"github.com/quantstop/quantstopterminal/internal/database/models"
+	"github.com/quantstop/quantstopterminal/internal/webserver/errors"
 	"github.com/quantstop/quantstopterminal/internal/webserver/jwt"
 	"github.com/quantstop/quantstopterminal/internal/webserver/write"
 	"net/http"
@@ -32,10 +33,10 @@ func (s AuthType) String() string {
 }
 
 // AuthHandler is the extended handler function that our API routes use
-type AuthHandler func(db *sql.DB, user *models.User, w http.ResponseWriter, r *http.Request) http.HandlerFunc
+type AuthHandler func(bot internal.IEngine, user *models.User, w http.ResponseWriter, r *http.Request) http.HandlerFunc
 
 // AuthRoute populates the custom AuthHandler args for our route handlers
-func AuthRoute(db *sql.DB, h AuthHandler, w http.ResponseWriter, r *http.Request, authType AuthType) http.HandlerFunc {
+func AuthRoute(bot internal.IEngine, h AuthHandler, w http.ResponseWriter, r *http.Request, authType AuthType) http.HandlerFunc {
 
 	//log.Println("AuthRoute: " + authType.String())
 
@@ -46,6 +47,11 @@ func AuthRoute(db *sql.DB, h AuthHandler, w http.ResponseWriter, r *http.Request
 
 		// parse the user cookie
 		var err error
+		db, err := bot.GetSQL()
+		if err != nil {
+			return write.Error(err)
+		}
+
 		user, err = jwt.HandleUserCookie(db, w, r)
 		if err != nil {
 			return write.Error(err)
@@ -55,26 +61,26 @@ func AuthRoute(db *sql.DB, h AuthHandler, w http.ResponseWriter, r *http.Request
 		// continue with role based auth
 
 		// check if there are any roles at all
-		/*if len(user.Roles) == 0 {
+		if len(user.Roles) == 0 {
 			return write.Error(errors.RouteUnauthorized)
-		}*/
+		}
 
 		// set a flag for if we find a role match
-		//matchFound := false
+		matchFound := false
 
 		// loop through users roles, and set match if user role is the same as the routes auth type
-		/*for _, role := range user.Roles {
-			if role.Name == authType.String() {
+		for _, role := range user.Roles {
+			if role == authType.String() {
 				matchFound = true
 			}
-		}*/
+		}
 
 		// if no match found, user is not authorized
-		/*if !matchFound {
+		if !matchFound {
 			return write.Error(errors.RouteUnauthorized)
-		}*/
+		}
 
 	}
 
-	return h(db, user, w, r)
+	return h(bot, user, w, r)
 }

@@ -16,7 +16,7 @@ const getters = {
 const actions = {
 
     async getPublicContent({ commit }) {
-        const response = await jwtInterceptor.get("https://localhost/api/all", {
+        const response = await jwtInterceptor.get("https://localhost/api/sub-status", {
             withCredentials: true,
             credentials: "include",
             headers: {

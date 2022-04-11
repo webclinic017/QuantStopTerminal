@@ -99,16 +99,12 @@ export default {
       setUserProfile: "setUserProfile",
     }),
     async logOut() {
-      /*this.$store.dispatch('auth/logout');
-      this.$router.push('/login');*/
       await this.userLogout();
       if (this.getLogout) {
         const resetUser = {
           id: 0,
           username: "",
           roles: null,
-          //email: "",
-          //phone: "",
         };
         this.setUserProfile(resetUser);
         this.setLogout(false);
