@@ -81,11 +81,16 @@ func CreateDefaultAdmin(db *sql.DB) error {
 	}
 	log.Debugln(log.DatabaseLogger, "Creating default admin ... Success! Finished SeedDB.")
 
+	// check/create default admin roles
+	if err = CreateDefaultAdminRoles(db); err != nil {
+		return err
+	}
+
 	return nil
 }
 
 func CheckDefaultAdminExists(db *sql.DB) bool {
-	row := db.QueryRow("SELECT 1 FROM users WHERE id=$1 LIMIT 1", "1")
+	row := db.QueryRow("SELECT * FROM users WHERE id=$1 LIMIT 1", "1")
 	u := &User{}
 	if err := row.Scan(&u.ID, &u.Username, &u.Password, &u.Salt); err != nil {
 		return false
