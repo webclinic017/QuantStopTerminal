@@ -7,7 +7,6 @@ import (
 	"github.com/quantstop/quantstopterminal/internal/log"
 	"github.com/quantstop/quantstopterminal/internal/webserver/middleware"
 	"github.com/quantstop/quantstopterminal/internal/webserver/utils"
-	"github.com/quantstop/quantstopterminal/internal/webserver/write"
 	"net/http"
 	"regexp"
 )
@@ -92,7 +91,7 @@ func (r *Router) Handle(httpMethod, pattern string, handler AuthHandler, authTyp
 
 	// validate method, fatal un-recoverable if not valid
 	if matches, err := regexp.MatchString("^[A-Z]+$", httpMethod); !matches || err != nil {
-		//log.Fatal("http method " + httpMethod + " is not valid")
+		log.Error(log.Webserver, "http method "+httpMethod+" is not valid")
 	}
 
 	// create the Route
@@ -140,16 +139,16 @@ func (r *Router) recover(w http.ResponseWriter, req *http.Request) {
 // ServeHTTP implements the http.handler interface
 func (r *Router) ServeHTTP(response http.ResponseWriter, request *http.Request) {
 
-	//if !r.isDev {
 	var head string
+
 	// shift head and tail to get below "api/" part of the path
 	head, _ = utils.ShiftPath(request.URL.Path)
 	if head != "api" && !r.isDev {
 		r.FrontendHandler.ServeHTTP(response, request)
 		return
 	}
-	//}
 
+	// defer panic
 	if r.PanicHandler != nil {
 		defer r.recover(response, request)
 	}
@@ -165,23 +164,12 @@ func (r *Router) ServeHTTP(response http.ResponseWriter, request *http.Request) 
 		if len(matches) > 0 {
 
 			// match found but request method doesn't match,
-			// add it to the array defined earlier, and keep going
-			if request.Method != route.method {
-
-				if request.Method == "OPTIONS" {
-					// cors shit, i have no fucking idea why this doesnt work in the actual handler but whatever
-					// todo: ok now im really fucking lost, cant remove the cors handler from wrap because it throws a cors error .... WHAT THE FUCK!
-					response.Header().Add("Access-Control-Allow-Origin", "http://localhost:8080")
-					response.Header().Add("Access-Control-Allow-Credentials", "true")
-					response.Header().Add("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
-					response.Header().Add("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
-					write.Success()
-					return
-
-				} else {
-					allow = append(allow, route.method)
-				}
-				continue
+			// Note: let requests for OPTIONS pass
+			// todo: options method goes through cors handler better to have it here i think
+			if request.Method != route.method && request.Method != http.MethodOptions {
+				// add it to the array defined earlier
+				allow = append(allow, route.method)
+				continue // exit for loop, but don't return from function
 			}
 
 			// match of request path and method found! execute the handler with context

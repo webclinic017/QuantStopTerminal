@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"github.com/quantstop/quantstopterminal/internal/webserver/write"
-	"log"
 	"net/http"
 	"os"
 )
@@ -10,7 +9,7 @@ import (
 // Cors adds CORS headers to the response
 func Cors(fn http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		//log.Println("Middleware chain | 4 | Cors")
+
 		/*if skipCorsAndCSRF(r.URL.Path) {
 			fn(w, r)
 			return
@@ -23,12 +22,7 @@ func Cors(fn http.HandlerFunc) http.HandlerFunc {
 
 		w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS, POST, DELETE")
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, X-Requested-With")
-
-		if r.Method == http.MethodOptions {
-			// simple response for the preflight check
-			fn = write.Success()
-		}*/
-		log.Println("cors headers")
+		*/
 
 		w.Header().Add("Access-Control-Allow-Origin", "http://localhost:8080")
 		w.Header().Add("Access-Control-Allow-Credentials", "true")
@@ -36,10 +30,8 @@ func Cors(fn http.HandlerFunc) http.HandlerFunc {
 		w.Header().Add("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
 
 		if r.Method == http.MethodOptions {
-			//http.Error(w, "No Content", http.StatusNoContent)
-			log.Println("cors writing success")
+			// simple response for the preflight check
 			fn = write.Success()
-			//return
 		}
 
 		fn(w, r)
@@ -47,6 +39,10 @@ func Cors(fn http.HandlerFunc) http.HandlerFunc {
 }
 
 const localDev = "http://localhost:8080"
+
+var allowedHosts = []string{
+	"http://localhost:8080",
+}
 
 // only returns an origin if it matches our list
 func validateOrigin(r *http.Request) string {
