@@ -13,7 +13,7 @@ import (
 )
 
 // jwt-cookie building and parsing
-const cookieName = "gvsn"
+const cookieName = "qst"
 const insecureSecret = "asd973hkalkjhx97asdh"
 
 // tokens auto-refresh at the end of their lifetime,
@@ -52,7 +52,7 @@ func WriteUserCookie(w http.ResponseWriter, u *models.User) {
 		Path:     "/",
 		HttpOnly: true,
 		Secure:   true,
-		SameSite: http.SameSiteLaxMode,
+		SameSite: http.SameSiteNoneMode,
 		MaxAge:   60 * 60 * 24 * 7, // one week
 	})
 }
