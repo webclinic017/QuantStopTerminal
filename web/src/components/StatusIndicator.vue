@@ -20,8 +20,9 @@ export default {
 
 <style scoped>
 .led-box {
-  height: 30px;
-  width: 30px;
+  padding-left: 10px;
+  height: 24px;
+  width: 24px;
 }
 .led-light {
   width: 24px;

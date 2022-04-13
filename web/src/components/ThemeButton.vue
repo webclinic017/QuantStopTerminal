@@ -60,7 +60,7 @@ export default {
     setTheme(theme) {
       localStorage.setItem("user-theme", theme);
       this.userTheme = theme;
-      document.documentElement.className = theme;
+      document.documentElement.className = theme + ' h-100';
     },
 
     getMediaPreference() {
@@ -108,10 +108,10 @@ export default {
   border-radius: 50%;
   /*top: calc(var(--element-size) * 0.07);
   left: calc(var(--element-size) * 0.07);*/
-  height: calc(var(--element-size) * 0.38);
-  width: calc(var(--element-size) * 0.38);
+  height: calc(var(--element-size) * 0.4);
+  width: calc(var(--element-size) * 0.4);
   transform: translateX(0);
-  transition: transform 0.3s ease, background-color 0.5s ease;
+  transition: transform 0.25s ease, background-color 0.5s ease;
   z-index: 2;
 }
 
@@ -121,6 +121,6 @@ export default {
   z-index: 3;
 }
 .switch-toggle-checked {
-  transform: translateX(calc(var(--element-size) * 0.38)) !important;
+  transform: translateX(calc(var(--element-size) * 0.4)) !important;
 }
 </style>

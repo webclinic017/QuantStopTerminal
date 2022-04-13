@@ -1,16 +1,19 @@
 <template>
   <div class="container">
-    <header class="jumbotron">
+<!--    <header class="jumbotron">
       <h3>{{ content }}</h3>
-    </header>
+    </header>-->
+    <UserManager></UserManager>
   </div>
 </template>
 
 <script>
 /*import UserService from "../services/user.service";*/
 
+import UserManager from "./admin/UserManager";
 export default {
   name: "Admin",
+  components: {UserManager},
   data() {
     return {
       content: "",
