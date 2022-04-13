@@ -69,7 +69,11 @@ func Login(bot internal.IEngine, user *models.User, w http.ResponseWriter, r *ht
 }
 
 func Logout(bot internal.IEngine, user *models.User, w http.ResponseWriter, r *http.Request) http.HandlerFunc {
-	u := &models.User{}
+	u := &models.User{
+		ID:       0,
+		Username: "",
+		Roles:    []string{""},
+	}
 	jwt.WriteUserCookie(w, u)
 	return write.Success()
 }
