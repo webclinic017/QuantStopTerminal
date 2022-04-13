@@ -3,7 +3,7 @@ package router
 import (
 	"context"
 	"database/sql"
-	"errors"
+	"github.com/quantstop/quantstopterminal/internal"
 	"github.com/quantstop/quantstopterminal/internal/log"
 	"github.com/quantstop/quantstopterminal/internal/webserver/middleware"
 	"github.com/quantstop/quantstopterminal/internal/webserver/utils"
@@ -17,6 +17,7 @@ import (
 type Router struct {
 	isDev            bool
 	DB               *sql.DB
+	Bot              internal.IEngine
 	Routes           []Route
 	FrontendHandler  http.Handler
 	MethodNotAllowed http.HandlerFunc
@@ -30,15 +31,17 @@ type Router struct {
 // ctxKey context key for request context
 type ctxKey struct{}
 
-func New(isDev bool, db *sql.DB) (*Router, error) {
+func New(isDev bool, eng internal.IEngine) (*Router, error) {
 
-	if db == nil {
-		return nil, errors.New("cannot create router, db is nil")
+	db, err := eng.GetSQL()
+	if err != nil {
+		return nil, err
 	}
 
 	return &Router{
 		isDev: isDev,
 		DB:    db,
+		Bot:   eng,
 	}, nil
 }
 
@@ -88,11 +91,8 @@ func (r *Router) Handle(httpMethod, pattern string, handler AuthHandler, authTyp
 
 	// validate method, fatal un-recoverable if not valid
 	if matches, err := regexp.MatchString("^[A-Z]+$", httpMethod); !matches || err != nil {
-		//log.Fatal("http method " + httpMethod + " is not valid")
+		log.Error(log.Webserver, "http method "+httpMethod+" is not valid")
 	}
-
-	// wrap auth route handler
-	//auth := r.HandleFunc(handler, authType)
 
 	// create the Route
 	route := newRoute(httpMethod, pattern, r.wrap(handler, authType))
@@ -111,7 +111,7 @@ func (r *Router) wrap(h AuthHandler, authType AuthType) http.HandlerFunc {
 		//log.Println("Middleware chain | 0 | wrap")
 
 		// 1: role based authentication middleware
-		authHandler := AuthRoute(r.DB, h, response, request, authType)
+		authHandler := AuthRoute(r.Bot, h, response, request, authType)
 
 		// Handlers are executed in reverse order from where chain is built starting here
 
@@ -139,16 +139,16 @@ func (r *Router) recover(w http.ResponseWriter, req *http.Request) {
 // ServeHTTP implements the http.handler interface
 func (r *Router) ServeHTTP(response http.ResponseWriter, request *http.Request) {
 
-	//if !r.isDev {
 	var head string
+
 	// shift head and tail to get below "api/" part of the path
 	head, _ = utils.ShiftPath(request.URL.Path)
-	if head != "api" {
+	if head != "api" && !r.isDev {
 		r.FrontendHandler.ServeHTTP(response, request)
 		return
 	}
-	//}
 
+	// defer panic
 	if r.PanicHandler != nil {
 		defer r.recover(response, request)
 	}
@@ -164,15 +164,12 @@ func (r *Router) ServeHTTP(response http.ResponseWriter, request *http.Request) 
 		if len(matches) > 0 {
 
 			// match found but request method doesn't match,
-			// add it to the array defined earlier, and keep going
-			if request.Method != route.method {
-
-				if request.Method == "OPTIONS" {
-					continue
-				} else {
-					allow = append(allow, route.method)
-				}
-				continue
+			// Note: let requests for OPTIONS pass
+			// todo: options method goes through cors handler better to have it here i think
+			if request.Method != route.method && request.Method != http.MethodOptions {
+				// add it to the array defined earlier
+				allow = append(allow, route.method)
+				continue // exit for loop, but don't return from function
 			}
 
 			// match of request path and method found! execute the handler with context

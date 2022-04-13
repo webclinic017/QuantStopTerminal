@@ -4,7 +4,6 @@ import jwtInterceptor from '../../shared/jwt.interceptor'
 const state = () => ({
   loginApiStatus: "",
   registerApiStatus: "",
-  verifyApiStatus: "",
   userProfile: {
     id: 0,
     username: "",
@@ -19,9 +18,6 @@ const getters = {
   },
   getRegisterApiStatus(state) {
     return state.registerApiStatus;
-  },
-  getVerifyApiStatus(state) {
-    return state.verifyApiStatus;
   },
   getUserProfile(state) {
     return state.userProfile;
@@ -67,22 +63,6 @@ const actions = {
     }
   },
 
-  async verifyApi({ commit }, payload) {
-    const response = await axios.post("https://localhost/api/user/verify", payload, {
-      withCredentials: true,
-      credentials: "include",
-      headers: {
-        'X-Requested-With': 'XMLHttpRequest' // CSRF prevention
-      },
-    });
-
-    if (response && response.data) {
-      commit("setVerifyApiStatus", "success");
-    } else {
-      commit("setVerifyApiStatus", "failed");
-    }
-  },
-
   async userProfile({ commit }) {
     const response = await jwtInterceptor.get("https://localhost/api/user", {
       withCredentials: true,
@@ -122,10 +102,6 @@ const mutations = {
 
   setRegisterApiStatus(state, data) {
     state.registerApiStatus = data;
-  },
-
-  setVerifyApiStatus(state, data) {
-    state.verifyApiStatus = data;
   },
 
   setUserProfile(state, data) {

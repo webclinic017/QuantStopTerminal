@@ -79,3 +79,7 @@ func (ur *UserRole) CreateUserRole(db *sql.DB) error {
 
 	return nil
 }
+
+/*func (ur *UserRole) GetUsersRoles(db *sql.DB) ([]Role, error) {
+
+}*/

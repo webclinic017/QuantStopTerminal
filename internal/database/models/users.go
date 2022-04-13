@@ -81,11 +81,16 @@ func CreateDefaultAdmin(db *sql.DB) error {
 	}
 	log.Debugln(log.DatabaseLogger, "Creating default admin ... Success! Finished SeedDB.")
 
+	// check/create default admin roles
+	if err = CreateDefaultAdminRoles(db); err != nil {
+		return err
+	}
+
 	return nil
 }
 
 func CheckDefaultAdminExists(db *sql.DB) bool {
-	row := db.QueryRow("SELECT 1 FROM users WHERE id=$1 LIMIT 1", "1")
+	row := db.QueryRow("SELECT * FROM users WHERE id=$1 LIMIT 1", "1")
 	u := &User{}
 	if err := row.Scan(&u.ID, &u.Username, &u.Password, &u.Salt); err != nil {
 		return false
@@ -175,4 +180,67 @@ func (u *User) GetUserByUsername(db *sql.DB, username string) error {
 	}
 
 	return nil
+}
+
+func (u *User) GetUsers(db *sql.DB) ([]*User, error) {
+
+	if db == nil {
+		log.Errorf(log.DatabaseLogger, "db is nil")
+		return nil, errors.New("users model, cannot GetUsers, db is nil")
+	}
+
+	query := `
+		SELECT * FROM users
+		JOIN users_roles ON users.id = users_roles.user_id
+		JOIN roles ON users_roles.role_id = roles.id
+	`
+	rows, err := db.Query(query)
+	if err != nil {
+		log.Errorf(log.DatabaseLogger, "error getting users: %v", err)
+		return nil, err
+	}
+
+	var usersArray []*User
+
+	tempID := 0
+	for rows.Next() {
+
+		user := &User{}
+		role := &Role{}
+		userRole := &UserRole{}
+		err = rows.Scan(
+			&user.ID,
+			&user.Username,
+			&user.Password,
+			&user.Salt,
+			&userRole.UserID,
+			&userRole.RoleID,
+			&role.ID,
+			&role.Name,
+		)
+		if err != nil {
+			log.Errorf(log.DatabaseLogger, "error scanning rows: %v", err)
+			return nil, err
+		}
+
+		if int(user.ID) == tempID {
+			for _, usr := range usersArray {
+				if usr.ID == user.ID {
+					usr.Roles = append(usr.Roles, role.Name) // second, third, ... roles
+				}
+			}
+		} else {
+			user.Roles = append(user.Roles, role.Name) // first role
+			usersArray = append(usersArray, user)
+		}
+
+		tempID = int(user.ID)
+
+	}
+
+	// todo: pagination?
+	// todo: is this the most efficient way?
+
+	return usersArray, nil
+
 }

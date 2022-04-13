@@ -11,7 +11,7 @@ import (
 	"runtime/debug"
 )
 
-func (s *Webserver) ConfigureRouter() {
+func (s *Webserver) ConfigureRouter(isDev bool) {
 
 	log.Debugln(log.Webserver, "Setting up middleware ... ")
 	//s.router.Use(middlewares.HttpRequestLogger())
@@ -26,13 +26,20 @@ func (s *Webserver) ConfigureRouter() {
 	}
 
 	log.Debugln(log.Webserver, "Setting up route handlers ... ")
-	s.mux.FrontendHandler = http.FileServer(assets.Assets)
 
-	s.mux.GET("/api/all", handlers.Test, router.Public)
+	if isDev {
+		s.mux.FrontendHandler = http.FileServer(assets.Assets)
+	}
+
+	// Public Routes
+	s.mux.GET("/api/test", handlers.Test, router.Public)
+	s.mux.GET("/api/version", handlers.GetVersion, router.Public)
+	s.mux.GET("/api/sub-status", handlers.GetSubsystemStatus, router.Public)
 
 	// Session routes
 	s.mux.POST("/api/session", handlers.Login, router.Public)
-	s.mux.DELETE("/api/session", handlers.Logout, router.Public)
+	s.mux.DELETE("/api/session", handlers.Logout, router.User)
+	s.mux.GET("/api/refresh-token", handlers.Test, router.User)
 
 	// Reset routes
 	/*s.mux.POST("/reset", handlers.CreateReset, router.User)
@@ -42,5 +49,8 @@ func (s *Webserver) ConfigureRouter() {
 	s.mux.POST("/api/signup", handlers.Signup, router.Public)
 	s.mux.GET("/api/user", handlers.Whoami, router.User)
 	/*s.mux.PUT("/user/password", handlers.UpdatePassword, router.User)*/
+
+	// Admin routes
+	s.mux.GET("/api/get-users", handlers.GetAllUsers, router.Admin)
 
 }

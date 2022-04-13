@@ -13,7 +13,7 @@ import (
 )
 
 // jwt-cookie building and parsing
-const cookieName = "gvsn"
+const cookieName = "qst"
 const insecureSecret = "asd973hkalkjhx97asdh"
 
 // tokens auto-refresh at the end of their lifetime,
@@ -34,12 +34,9 @@ func init() {
 }
 
 type userClaims struct {
-	ID       uint32 `json:"id"`
-	Username string `json:"username"`
-	/*Email        string   `json:"email"`
-	Status       string   `json:"status"`
-	Verification string   `json:"verification"`
-	Roles        []string `json:"roles"`*/
+	ID       uint32   `json:"id"`
+	Username string   `json:"username"`
+	Roles    []string `json:"roles"`
 }
 
 type claims struct {
@@ -55,7 +52,7 @@ func WriteUserCookie(w http.ResponseWriter, u *models.User) {
 		Path:     "/",
 		HttpOnly: true,
 		Secure:   true,
-		SameSite: http.SameSiteLaxMode,
+		SameSite: http.SameSiteNoneMode,
 		MaxAge:   60 * 60 * 24 * 7, // one week
 	})
 }
@@ -74,13 +71,6 @@ func HandleUserCookie(db *sql.DB, w http.ResponseWriter, r *http.Request) (*mode
 			return wipeCookie(db, w)
 		}
 
-		/*if user.Status == models.UserStatusActive {
-			WriteUserCookie(w, &user)
-			return &user, nil
-		} else {
-			// their account isn't verified, log them out
-			return wipeCookie(db, w)
-		}*/
 	}
 
 	if err != nil {
@@ -119,24 +109,11 @@ func userFromCookie(r *http.Request) (*models.User, error) {
 // encodeUser convert a user struct into a jwt
 func encodeUser(u *models.User, t time.Time) (tokenString string) {
 
-	// convert []Role to []string
-	/*var roles []string
-	for _, role := range u.Roles {
-		roles = append(roles, role.Name)
-	}
-
-	for _, r := range roles {
-		log.Println(r)
-	}*/
-
 	claims := claims{
 		&userClaims{
 			ID:       u.ID,
 			Username: u.Username,
-			/*Email:        u.Email,
-			Status:       u.Status,
-			Verification: u.Verification,
-			Roles:        roles,*/
+			Roles:    u.Roles,
 		},
 		jwt.StandardClaims{
 			IssuedAt:  t.Add(-time.Second).Unix(),
@@ -200,19 +177,10 @@ func decodeUser(tokenString string) (*models.User, error) {
 
 func getUserFromToken(token *jwt.Token) *models.User {
 	if c, ok := token.Claims.(*claims); ok {
-		/*var roles []models.Role
-		for _, role := range c.User.Roles {
-			roles = append(roles, models.Role{
-				Name: role,
-			})
-		}*/
 		return &models.User{
 			ID:       c.User.ID,
 			Username: c.User.Username,
-			/*Email:        c.User.Email,
-			Status:       c.User.Status,
-			Verification: c.User.Verification,
-			Roles:        roles,*/
+			Roles:    c.User.Roles,
 		}
 	}
 

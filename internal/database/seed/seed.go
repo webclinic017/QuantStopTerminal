@@ -28,11 +28,6 @@ func SeedDB(db *sql.DB, driver string) error {
 		return err
 	}
 
-	// check/create default admin roles
-	if err := models.CreateDefaultAdminRoles(db); err != nil {
-		return err
-	}
-
 	return nil
 
 }
