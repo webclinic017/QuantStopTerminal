@@ -10,4 +10,4 @@ const app = createApp(App)
 app.use(appRouter.routeConfig);
 app.use(store);
 app.component("font-awesome-icon", FontAwesomeIcon)
-app.mount('#app')
+app.mount('body')
