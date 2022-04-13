@@ -73,18 +73,6 @@ func CreateWebserver(eng internal.IEngine, conf *Config, isDev bool) (*Webserver
 
 }
 
-/*func (s *Webserver) SetupRoutes(isDev bool) {
-
-	if isDev {
-		log.Debugln(log.Webserver, "Development mode: On. Starting node server ...")
-
-	} else {
-		log.Debugln(log.Webserver, "Development mode: Off. Serving static frontend.")
-	}
-
-	s.mux.PrintRoutes()
-}*/
-
 func (s *Webserver) ListenAndServe(tls bool, configDir string) (err error) {
 	if s.shutdownFinished == nil {
 		s.shutdownFinished = make(chan struct{})
