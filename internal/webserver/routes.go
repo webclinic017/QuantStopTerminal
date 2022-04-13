@@ -38,7 +38,8 @@ func (s *Webserver) ConfigureRouter(isDev bool) {
 
 	// Session routes
 	s.mux.POST("/api/session", handlers.Login, router.Public)
-	s.mux.DELETE("/api/session", handlers.Logout, router.Public)
+	s.mux.DELETE("/api/session", handlers.Logout, router.User)
+	s.mux.GET("/api/refresh-token", handlers.Test, router.User)
 
 	// Reset routes
 	/*s.mux.POST("/reset", handlers.CreateReset, router.User)
@@ -48,5 +49,8 @@ func (s *Webserver) ConfigureRouter(isDev bool) {
 	s.mux.POST("/api/signup", handlers.Signup, router.Public)
 	s.mux.GET("/api/user", handlers.Whoami, router.User)
 	/*s.mux.PUT("/user/password", handlers.UpdatePassword, router.User)*/
+
+	// Admin routes
+	s.mux.GET("/api/get-users", handlers.GetAllUsers, router.Admin)
 
 }

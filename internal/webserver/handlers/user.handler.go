@@ -1,9 +1,12 @@
 package handlers
 
 import (
+	"database/sql"
 	"github.com/quantstop/quantstopterminal/internal"
 	"github.com/quantstop/quantstopterminal/internal/database/models"
+	"github.com/quantstop/quantstopterminal/internal/webserver/errors"
 	"github.com/quantstop/quantstopterminal/internal/webserver/write"
+	"log"
 	"net/http"
 )
 
@@ -53,4 +56,19 @@ func Whoami(bot internal.IEngine, user *models.User, w http.ResponseWriter, r *h
 		Roles:    user.Roles,
 	}
 	return write.JSON(res)
+}
+
+func GetAllUsers(bot internal.IEngine, user *models.User, w http.ResponseWriter, r *http.Request) http.HandlerFunc {
+
+	db, _ := bot.GetSQL()
+	users, err := user.GetUsers(db)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			log.Println("cannot get users")
+			return write.Error(errors.FailedLogin)
+		}
+		return write.Error(errors.FailedLogin)
+	}
+	return write.JSON(users)
+
 }

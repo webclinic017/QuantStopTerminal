@@ -181,3 +181,66 @@ func (u *User) GetUserByUsername(db *sql.DB, username string) error {
 
 	return nil
 }
+
+func (u *User) GetUsers(db *sql.DB) ([]*User, error) {
+
+	if db == nil {
+		log.Errorf(log.DatabaseLogger, "db is nil")
+		return nil, errors.New("users model, cannot GetUsers, db is nil")
+	}
+
+	query := `
+		SELECT * FROM users
+		JOIN users_roles ON users.id = users_roles.user_id
+		JOIN roles ON users_roles.role_id = roles.id
+	`
+	rows, err := db.Query(query)
+	if err != nil {
+		log.Errorf(log.DatabaseLogger, "error getting users: %v", err)
+		return nil, err
+	}
+
+	var usersArray []*User
+
+	tempID := 0
+	for rows.Next() {
+
+		user := &User{}
+		role := &Role{}
+		userRole := &UserRole{}
+		err = rows.Scan(
+			&user.ID,
+			&user.Username,
+			&user.Password,
+			&user.Salt,
+			&userRole.UserID,
+			&userRole.RoleID,
+			&role.ID,
+			&role.Name,
+		)
+		if err != nil {
+			log.Errorf(log.DatabaseLogger, "error scanning rows: %v", err)
+			return nil, err
+		}
+
+		if int(user.ID) == tempID {
+			for _, usr := range usersArray {
+				if usr.ID == user.ID {
+					usr.Roles = append(usr.Roles, role.Name) // second, third, ... roles
+				}
+			}
+		} else {
+			user.Roles = append(user.Roles, role.Name) // first role
+			usersArray = append(usersArray, user)
+		}
+
+		tempID = int(user.ID)
+
+	}
+
+	// todo: pagination?
+	// todo: is this the most efficient way?
+
+	return usersArray, nil
+
+}
