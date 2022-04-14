@@ -1,6 +1,6 @@
 <template>
   <header>
-    <nav class="navbar navbar-expand navbar-dark fixed-top bg-dark">
+    <nav class="navbar navbar-expand fixed-top qst-header-nav">
       <div class="container-fluid">
         <router-link to="/" class="navbar-brand nav-link">QuantstopTerminal</router-link>
 
@@ -111,5 +111,9 @@ export default {
 </script>
 
 <style scoped>
-
+.qst-header-nav {
+  color: var(--text-primary-color) !important;
+  background-color: var(--background-color-primary) !important;
+  border-bottom: 1px solid var(--theme-switch-border-color);
+}
 </style>
