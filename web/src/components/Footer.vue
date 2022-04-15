@@ -1,7 +1,7 @@
 <template>
 
-  <footer class="footer py-3">
-    <div class="container">
+  <footer class="qst-footer footer py-3 fixed-bottom">
+    <div class="container text-center">
       <span class="text-center">
         Version: {{version.version}} <br>
         {{version.copyright}}
@@ -45,5 +45,9 @@ export default {
 </script>
 
 <style scoped>
-
+.qst-footer {
+  color: var(--text-primary-color) !important;
+  background-color: var(--background-color-primary) !important;
+  border-top: 1px solid var(--theme-switch-border-color);
+}
 </style>

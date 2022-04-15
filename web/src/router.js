@@ -1,22 +1,18 @@
-import Home from "./components/Home.vue";
-import Login from "./components/Login.vue";
-import Register from "./components/Register.vue";
-import Profile from "./components/Profile.vue";
-import BoardAdmin from "./components/BoardAdmin.vue";
-import BoardModerator from "./components/BoardModerator.vue";
-import BoardUser from "./components/BoardUser.vue";
+import Home from "./pages/Home.vue";
+import Login from "./pages/Login.vue";
+import Profile from "./pages/Profile.vue";
+import Settings from "./pages/settings/Settings";
+import UserManager from "./pages/admin/UserManager";
 import { createRouter, createWebHistory } from "vue-router";
 import store from "./store/index";
 
 const routes = [
-    { path: "/", component: Home, meta: { requiredAuth: false } },
-    { path: "/home", component: Home, meta: { requiredAuth: false } },
+    { path: "/", component: Home, meta: { requiredAuth: true } },
+    { path: "/home", component: Home, meta: { requiredAuth: true } },
     { path: "/login", component: Login, meta: { requiredAuth: false } },
-    { path: "/register", component: Register, meta: { requiredAuth: false } },
     { path: "/profile", component: Profile, meta: { requiredAuth: true } },
-    { path: "/admin", component: BoardAdmin, meta: { requiredAuth: true } },
-    { path: "/mod", component: BoardModerator, meta: { requiredAuth: true } },
-    { path: "/user", component: BoardUser, meta: { requiredAuth: true } },
+    { path: "/settings", component: Settings, meta: { requiredAuth: true } },
+    { path: "/users", component: UserManager, meta: { requiredAuth: true } },
 ];
 
 export const routeConfig = createRouter({
@@ -36,10 +32,6 @@ routeConfig.beforeEach(async (to, from, next) => {
         if (userProfile.id === 0) {
             return next({ path: "/login" });
         }
-    } /*else {
-        if (userProfile.id !== 0) {
-            return next({ path: "/profile" });
-        }
-    }*/
+    }
     return next();
 });

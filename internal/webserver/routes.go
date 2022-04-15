@@ -35,6 +35,7 @@ func (s *Webserver) ConfigureRouter(isDev bool) {
 	s.mux.GET("/api/test", handlers.Test, router.Public)
 	s.mux.GET("/api/version", handlers.GetVersion, router.Public)
 	s.mux.GET("/api/sub-status", handlers.GetSubsystemStatus, router.Public)
+	s.mux.GET("/api/uptime", handlers.GetUptime, router.Public)
 
 	// Session routes
 	s.mux.POST("/api/session", handlers.Login, router.Public)

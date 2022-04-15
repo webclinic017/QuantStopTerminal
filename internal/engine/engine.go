@@ -8,6 +8,7 @@ import (
 	"github.com/quantstop/quantstopterminal/internal/log"
 	"github.com/quantstop/quantstopterminal/internal/webserver"
 	"github.com/quantstop/quantstopterminal/pkg/system"
+	"github.com/quantstop/quantstopterminal/pkg/system/convert"
 	"runtime"
 	"strings"
 	"time"
@@ -217,7 +218,8 @@ func (bot *Engine) Stop() {
 }
 
 func (bot *Engine) GetUptime() string {
-	return time.Since(bot.Uptime).String()
+	//return time.Since(bot.Uptime).String()
+	return convert.RoundDuration(time.Since(bot.Uptime), 2).String()
 }
 
 // GetSubsystemsStatus returns the status of all engine subsystems
