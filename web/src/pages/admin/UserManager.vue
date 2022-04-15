@@ -1,6 +1,6 @@
 <template>
   <table class="table table-striped table-bordered table-hover">
-    <thead class="thead-dark">
+    <thead class="thead">
     <tr>
       <th>#</th>
       <th>Username</th>
