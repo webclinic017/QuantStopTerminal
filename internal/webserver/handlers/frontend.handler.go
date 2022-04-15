@@ -16,3 +16,8 @@ func GetSubsystemStatus(bot internal.IEngine, user *models.User, w http.Response
 
 	return write.JSON(bot.GetSubsystemsStatus())
 }
+
+func GetUptime(bot internal.IEngine, user *models.User, w http.ResponseWriter, r *http.Request) http.HandlerFunc {
+
+	return write.JSON(bot.GetUptime())
+}
