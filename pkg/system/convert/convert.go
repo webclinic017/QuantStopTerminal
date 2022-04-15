@@ -83,3 +83,17 @@ func BoolPtr(condition bool) *bool {
 	b := condition
 	return &b
 }
+
+// RoundDuration takes in a time.Duration, and rounds to the wanted digits
+func RoundDuration(d time.Duration, digits int) time.Duration {
+	var divs = []time.Duration{time.Duration(1), time.Duration(10), time.Duration(100), time.Duration(1000)}
+	switch {
+	case d > time.Second:
+		d = d.Round(time.Second / divs[digits])
+	case d > time.Millisecond:
+		d = d.Round(time.Millisecond / divs[digits])
+	case d > time.Microsecond:
+		d = d.Round(time.Microsecond / divs[digits])
+	}
+	return d
+}
