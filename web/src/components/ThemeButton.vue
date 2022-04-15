@@ -10,7 +10,7 @@
     <label for="checkbox" class="switch-label">
       <span class="switch-toggle" :class="{ 'switch-toggle-checked': userTheme === 'dark-theme' }">
         <svg class="sun-and-moon" aria-hidden="true" width="22.4" height="22.4" viewBox="0 0 24 24">
-          <circle class="sun" cx="12" cy="12" r="6" mask="url(#moon-mask)" stroke="currentColor" :style="{'fill': isActive ? 'currentColor': 'none'}" />
+          <circle class="sun" cx="12" cy="12" r="6" mask="url(#moon-mask)" stroke="currentColor" :style="{'fill': userTheme === 'dark-theme' ? 'currentColor': 'none'}" />
           <g class="sun-beams" stroke="currentColor">
             <line x1="12" y1="2" x2="12" y2="4" />
             <line x1="12" y1="20" x2="12" y2="22" />
