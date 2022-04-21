@@ -29,7 +29,12 @@ func (s *TraderSubsystem) start(wg *sync.WaitGroup) (err error) {
 		return err
 	}
 
-	go trader.Run()
+	db, err := s.bot.GetSQL()
+	if err != nil {
+		return err
+	}
+
+	go trader.Run(db)
 	s.started = true
 	log.Debugln(log.TraderLogger, s.name+MsgSubsystemStarted)
 	return nil

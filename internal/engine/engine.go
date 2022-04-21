@@ -174,7 +174,7 @@ func (bot *Engine) Run() error {
 	bot.SubsystemRegistry.StartAll(&bot.SubsystemWG)
 
 	// Everything good, create and run webserver
-	// This is done here, because the webserver depends upon the instantiated bot
+	// This is done here, because the webserver depends upon the instantiated bot and database connection
 	var err error
 	bot.Webserver, err = webserver.CreateWebserver(bot, bot.Config.Webserver, bot.IsDevelopment)
 	if err != nil {
@@ -205,10 +205,11 @@ func (bot *Engine) Stop() {
 
 	log.Debugln(log.Global, "Engine shutting down..")
 
+	// Stop webserver
+	bot.Webserver.Shutdown()
+
 	// Stop all subsystems
 	bot.SubsystemRegistry.StopAll()
-
-	bot.Webserver.Shutdown()
 
 	// Wait for subsystems to gracefully shutdown
 	bot.SubsystemWG.Wait()
@@ -218,6 +219,7 @@ func (bot *Engine) Stop() {
 
 }
 
+// GetUptime returns the time since the bot last started
 func (bot *Engine) GetUptime() string {
 	//return time.Since(bot.Uptime).String()
 	return convert.RoundDuration(time.Since(bot.Uptime), 2).String()
@@ -320,6 +322,7 @@ func (bot *Engine) SetSubsystem(subSystemName string, enable bool) error {
 	return fmt.Errorf("%s: %w", subSystemName, ErrSubsystemNotFound)
 }
 
+// GetVersion returns a map of the current version, along with other info
 func (bot *Engine) GetVersion() map[string]string {
 	version := make(map[string]string)
 
@@ -348,6 +351,7 @@ func (bot *Engine) GetVersion() map[string]string {
 
 }
 
+// GetSQL returns a pointer to the database connection
 func (bot *Engine) GetSQL() (*sql.DB, error) {
 
 	if bot.DatabaseSubsystem.dbConn.SQL != nil {
@@ -357,6 +361,7 @@ func (bot *Engine) GetSQL() (*sql.DB, error) {
 	return nil, errors.New("engine cannot return nil database")
 }
 
+// SetSystemConfig saves system configuration data
 func (bot *Engine) SetSystemConfig(apiUrl string, maxProcs string) error {
 	intVar, err := strconv.Atoi(maxProcs)
 	if err != nil {
