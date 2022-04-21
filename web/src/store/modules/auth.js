@@ -4,6 +4,7 @@ import jwtInterceptor from '../../shared/jwt.interceptor'
 const state = () => ({
   loginApiStatus: "",
   registerApiStatus: "",
+  registerExchangeApiStatus: "",
   userProfile: {
     id: 0,
     username: "",
@@ -18,6 +19,9 @@ const getters = {
   },
   getRegisterApiStatus(state) {
     return state.registerApiStatus;
+  },
+  getRegisterExchangeApiStatus(state) {
+    return state.registerExchangeApiStatus;
   },
   getUserProfile(state) {
     return state.userProfile;
@@ -63,6 +67,23 @@ const actions = {
     }
   },
 
+  async registerExchangeApi({ commit }, payload) {
+    const response = await axios.post("/api/exchange", payload, {
+      withCredentials: true,
+      credentials: "include",
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest' // CSRF prevention
+      },
+    });
+
+    if (response && response.data) {
+      localStorage.setItem("isAuthenticated", "true");
+      commit("setRegisterExchangeApiStatus", "success");
+    } else {
+      commit("setRegisterExchangeApiStatus", "failed");
+    }
+  },
+
   async userProfile({ commit }) {
     const response = await jwtInterceptor.get("/api/user", {
       withCredentials: true,
@@ -102,6 +123,10 @@ const mutations = {
 
   setRegisterApiStatus(state, data) {
     state.registerApiStatus = data;
+  },
+
+  setRegisterExchangeApiStatus(state, data) {
+    state.registerExchangeApiStatus = data;
   },
 
   setUserProfile(state, data) {

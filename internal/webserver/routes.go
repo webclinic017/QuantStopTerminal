@@ -50,5 +50,6 @@ func (s *Webserver) ConfigureRouter(isDev bool) {
 	s.mux.GET("/api/get-users", handlers.GetAllUsers, router.Admin)
 	s.mux.POST("/api/set-subsystem", handlers.SetSubsystem, router.Admin)
 	s.mux.POST("/api/set-sysconfig", handlers.SetSystemConfig, router.Admin)
+	s.mux.POST("/api/exchange", handlers.SetExchange, router.Admin)
 
 }

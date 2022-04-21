@@ -26,7 +26,7 @@ type Version struct {
 
 func CreateDefaultVersion() *Version {
 	return &Version{
-		Version:         "0.1.0",
+		Version:         "0.0.0",
 		Copyright:       Copyright,
 		PrereleaseBlurb: PrereleaseBlurb,
 		GitHub:          GitHub,

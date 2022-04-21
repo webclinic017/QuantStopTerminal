@@ -5,7 +5,9 @@ Coinbasepro developer documentation: https://docs.cloud.coinbase.com/exchange/do
 */
 
 import (
+	"context"
 	"github.com/quantstop/quantstopterminal/pkg/exchange/base"
+	"golang.org/x/sync/errgroup"
 	"strings"
 )
 
@@ -94,7 +96,7 @@ func (c *Client) Close() error {
 }
 
 // Watch provides a feed of real-time market data updates for orders and trades.
-/*func (c *Client) Watch(ctx context.Context, subscriptionRequest SubscriptionRequest, feed Feed) (capture error) {
+func (c *Client) Watch(ctx context.Context, subscriptionRequest SubscriptionRequest, feed Feed) (capture error) {
 	wsConn, err := c.Websocket.Dial()
 	if err != nil {
 		return err
@@ -106,4 +108,49 @@ func (c *Client) Close() error {
 		return err
 	}
 	return c.watch(ctx, wsConn, feed)
-}*/
+}
+
+type jsonReader interface {
+	ReadJSON(v interface{}) error
+}
+
+func (c *Client) watch(ctx context.Context, r jsonReader, feed Feed) (capture error) {
+	messages := make(chan interface{})
+	wg, ctx := errgroup.WithContext(ctx)
+	wg.Go(func() error {
+		defer close(messages)
+		for {
+			select {
+			case <-ctx.Done():
+				return ctx.Err()
+				// TODO: Does this prevent blocking?
+			case messages <- func() interface{} {
+				// TODO: Does message have a real structure
+				var message interface{}
+				err := r.ReadJSON(&message)
+				if err != nil {
+					return err
+				}
+				//log.Debugf(log.TraderLogger, "receive message on socket. %v", message)
+				return message
+			}():
+			}
+		}
+	})
+
+	wg.Go(func() error {
+		for message := range messages {
+			select {
+			case <-ctx.Done():
+				return ctx.Err()
+			case feed.Messages <- message:
+				//logrus.Debug("publish message on channel")
+				//log.Debugln(log.TraderLogger, "publish message on channel")
+				//log.Debugf(log.TraderLogger, "publishing message on channel. %v", message)
+			default:
+			}
+		}
+		return nil
+	})
+	return wg.Wait()
+}

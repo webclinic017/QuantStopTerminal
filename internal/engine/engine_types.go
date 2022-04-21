@@ -9,26 +9,21 @@ import (
 
 type Engine struct {
 	*Version
-	Config            *config.Config
-	SubsystemRegistry *ServiceRegistry
-	DatabaseSubsystem *DatabaseSubsystem
-	//GRPCServer          *grpc.Server
+	Config              *config.Config
+	SubsystemRegistry   *ServiceRegistry
+	DatabaseSubsystem   *DatabaseSubsystem
 	NTPCheckerSubsystem *NTPCheckerSubsystem
 	TraderSubsystem     *TraderSubsystem
 	InternetSubsystem   *ConnectionMonitor
-	//WebserverSubsystem  *WebserverSubsystem
-	Webserver   *webserver.Webserver
-	SubsystemWG sync.WaitGroup
-	Uptime      time.Time
+	Webserver           *webserver.Webserver
+	SubsystemWG         sync.WaitGroup
+	Uptime              time.Time
 }
 
 const (
 	DatabaseSubsystemName string = "database"
 	NTPSubsystemName      string = "ntp_timekeeper"
 	TraderSubsystemName   string = "active_trader"
-	WebserverName         string = "webserver"
-	GRPCServerName        string = "grpc"
-	GRPCProxyServerName   string = "grpc_proxy"
 	InternetCheckerName   string = "internet_monitor"
 )
 

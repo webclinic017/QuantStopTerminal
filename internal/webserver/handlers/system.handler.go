@@ -21,6 +21,14 @@ type setSysConfigRequest struct {
 	GoMaxProcs string `json:"maxProcs"`
 }
 
+type setExchangeRequest struct {
+	Name           string `json:"name"`
+	AuthKey        string `json:"authKey"`
+	AuthPassphrase string `json:"authPassphrase"`
+	AuthSecret     string `json:"AuthSecret"`
+	Currency       string `json:"currency"`
+}
+
 func SetSubsystem(bot internal.IEngine, user *models.User, w http.ResponseWriter, r *http.Request) http.HandlerFunc {
 
 	decoder := json.NewDecoder(r.Body)
@@ -88,4 +96,45 @@ func isValidUrl(toTest string) bool {
 	}
 
 	return true
+}
+
+func SetExchange(bot internal.IEngine, user *models.User, w http.ResponseWriter, r *http.Request) http.HandlerFunc {
+
+	db, _ := bot.GetSQL()
+
+	decoder := json.NewDecoder(r.Body)
+	req := setExchangeRequest{}
+	err := decoder.Decode(&req)
+	if err != nil || &req == nil {
+		return write.Error(errors.NoJSONBody)
+	}
+
+	if req.Name == "" || req.Currency == "" {
+		return write.Error(errors.InvalidInput)
+	}
+
+	exchange := &models.CryptoExchange{
+		Name:           req.Name,
+		AuthKey:        req.AuthKey,
+		AuthPassphrase: req.AuthPassphrase,
+		AuthSecret:     req.AuthSecret,
+		Currency:       req.Currency,
+	}
+
+	//todo: encrypt api keys ...
+
+	// Set salt, and hash password with salt
+	/*user.Salt = utils.GenerateRandomString(32)
+	user.Password, err = utils.HashPassword(req.Password, user.Salt)
+	if err != nil {
+		return write.Error(err)
+	}*/
+
+	err = exchange.CreateCryptoExchange(db)
+	if err != nil {
+		//todo: can we get more specific errors? do we even need to?
+		return write.Error(err)
+	}
+
+	return write.Success()
 }
