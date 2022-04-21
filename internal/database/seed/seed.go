@@ -28,6 +28,11 @@ func SeedDB(db *sql.DB, driver string) error {
 		return err
 	}
 
+	// check/create crypto_exchanges table
+	if err := models.CreateCryptoExchangesTable(db, driver); err != nil {
+		return err
+	}
+
 	return nil
 
 }
