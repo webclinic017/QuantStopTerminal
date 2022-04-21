@@ -3,14 +3,13 @@ package middleware
 import (
 	"github.com/quantstop/quantstopterminal/internal/webserver/write"
 	"net/http"
-	"os"
 )
 
 // Cors adds CORS headers to the response
 func Cors(fn http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
-		/*if skipCorsAndCSRF(r.URL.Path) {
+		if skipCorsAndCSRF(r.URL.Path) {
 			fn(w, r)
 			return
 		}
@@ -20,11 +19,7 @@ func Cors(fn http.HandlerFunc) http.HandlerFunc {
 			w.Header().Set("Access-Control-Allow-Origin", origin)
 		}
 
-		w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS, POST, DELETE")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, X-Requested-With")
-		*/
-
-		w.Header().Add("Access-Control-Allow-Origin", "http://localhost:8080")
+		/*w.Header().Add("Access-Control-Allow-Origin", "http://localhost:8080")*/
 		w.Header().Add("Access-Control-Allow-Credentials", "true")
 		w.Header().Add("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
 		w.Header().Add("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
@@ -47,7 +42,7 @@ var allowedHosts = []string{
 // only returns an origin if it matches our list
 func validateOrigin(r *http.Request) string {
 	origin := r.Header.Get("Origin")
-	apiRoot := os.Getenv("API_ROOT")
+	/*apiRoot := os.Getenv("API_ROOT")
 	switch origin {
 	case apiRoot:
 		return apiRoot
@@ -55,13 +50,13 @@ func validateOrigin(r *http.Request) string {
 		return localDev
 	default:
 		return ""
-	}
+	}*/
+
+	return origin
 }
 
 // a list of paths to bypass cors checks - this is useful for webhooks and stuff
-var bypassPaths = []string{
-	"/api/sub-status",
-}
+var bypassPaths = []string{}
 
 func skipCorsAndCSRF(path string) bool {
 	for _, c := range bypassPaths {
