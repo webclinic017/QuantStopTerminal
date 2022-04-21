@@ -1,6 +1,6 @@
 import axios from "axios";
-
 const jwtInterceptor = axios.create({});
+
 
 jwtInterceptor.interceptors.request.use((config) => {
   return config;
@@ -13,7 +13,7 @@ jwtInterceptor.interceptors.response.use(
   async (error) => {
     if (error.response.status === 401) {
      var response = await axios.get(
-        "https://localhost/api/refresh-token",
+         "/api/refresh-token",
         {
           withCredentials: true,
         }

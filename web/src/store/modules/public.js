@@ -1,8 +1,6 @@
 import axios from "axios";
 import jwtInterceptor from '../../shared/jwt.interceptor'
 
-const API_URL = 'https://localhost/api/';
-
 const state = () => ({
     subsystemStatus: "",
     version: "",
@@ -20,7 +18,7 @@ const getters = {
 const actions = {
 
     async getSubsystemStatus({ commit }) {
-        const response = await jwtInterceptor.get("https://localhost/api/sub-status", {
+        const response = await jwtInterceptor.get("/api/sub-status", {
             withCredentials: true,
             credentials: "include",
             headers: {
@@ -33,7 +31,7 @@ const actions = {
     },
 
     async getVersion({ commit }) {
-        const response = await jwtInterceptor.get("https://localhost/api/version", {
+        const response = await jwtInterceptor.get("/api/version", {
             withCredentials: true,
             credentials: "include",
             headers: {

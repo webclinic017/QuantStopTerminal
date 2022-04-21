@@ -29,7 +29,7 @@ const getters = {
 
 const actions = {
   async loginApi({ commit }, payload) {
-    const response = await axios.post("https://localhost/api/session", payload, {
+    const response = await axios.post("/api/session", payload, {
       withCredentials: true,
       credentials: "include",
       headers: {
@@ -47,7 +47,7 @@ const actions = {
   },
 
   async registerApi({ commit }, payload) {
-    const response = await axios.post("https://localhost/api/signup", payload, {
+    const response = await axios.post("/api/signup", payload, {
       withCredentials: true,
       credentials: "include",
       headers: {
@@ -64,7 +64,7 @@ const actions = {
   },
 
   async userProfile({ commit }) {
-    const response = await jwtInterceptor.get("https://localhost/api/user", {
+    const response = await jwtInterceptor.get("/api/user", {
       withCredentials: true,
       credentials: "include",
       headers: {
@@ -78,7 +78,7 @@ const actions = {
   },
 
   async userLogout({ commit }) {
-    const response = await axios.delete("https://localhost/api/session", {
+    const response = await axios.delete("/api/session", {
       withCredentials: true,
       credentials: "include",
       headers: {
