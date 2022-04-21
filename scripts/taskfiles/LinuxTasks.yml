@@ -12,14 +12,14 @@ tasks:
   build-qst-linux-amd64:
     desc: Build qst for linux-amd64 (64-bit)
     cmds:
-      - task frontend:gen-assets
+      - task frontend:npm-build
       #- go-winres make
       - GO111MODULE=on GOOS=linux GOARCH=amd64 go build -ldflags="-X=main.BuildFlagVersion={{.VERSION}} -X=main.BuildFlagIsRelease={{.ISRELEASE}}" -tags=prod -o {{.PROJECT_DIR}}/builds/linux-amd64/qst {{.PROJECT_DIR}}/cmd/qst/main.go
 
   build-qst-linux-amd64-headless:
     desc: Build qst for linux-amd64 (64-bit) with no gui components at all
     cmds:
-      - task frontend:gen-assets
+      - task frontend:npm-build
       #- go-winres make
       - GO111MODULE=on GOOS=linux GOARCH=amd64 go build -ldflags="-X=main.BuildFlagVersion={{.VERSION}} -X=main.BuildFlagIsRelease={{.ISRELEASE}}" -tags=prod -o {{.PROJECT_DIR}}/builds/linux-amd64/qst {{.PROJECT_DIR}}/cmd/qst/main_linux.go
 

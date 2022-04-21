@@ -19,7 +19,7 @@ tasks:
   build-qst-win-amd64:
     desc: Build qst for windows-amd64 (64-bit)
     cmds:
-      - task frontend:gen-assets
+      - task frontend:npm-build
       - cd cmd/qst && goversioninfo -icon={{.PROJECT_DIR}}/assets/images/qst.ico -company=Quantstop -product-version={{.VERSION}} -product-name=QST
       - GO111MODULE=on GOOS=windows GOARCH=amd64 go build -ldflags="-H=windowsgui -X=main.BuildFlagVersion={{.VERSION}} -X=main.BuildFlagIsRelease={{.ISRELEASE}}" -tags=prod -o {{.PROJECT_DIR}}/builds/windows-amd64/qst.exe {{.PROJECT_DIR}}/cmd/qst/
       - rm cmd/qst/resource.syso
@@ -49,7 +49,7 @@ tasks:
   build-qst-win-386:
     desc: Build qst for windows-386 (32-bit)
     cmds:
-      - task frontend:gen-assets
+      - task frontend:npm-build
       - cd cmd/qst && goversioninfo -icon={{.PROJECT_DIR}}/assets/images/qst.ico -company=Quantstop -product-version={{.VERSION}} -product-name=QST
       - GO111MODULE=on GOOS=windows GOARCH=386 go build -ldflags="-H=windowsgui -X=main.BuildFlagVersion={{.VERSION}} -X=main.BuildFlagIsRelease={{.ISRELEASE}}" -tags=prod -o {{.PROJECT_DIR}}/builds/windows-386/qst.exe {{.PROJECT_DIR}}/cmd/qst/
       - rm cmd/qst/resource.syso
