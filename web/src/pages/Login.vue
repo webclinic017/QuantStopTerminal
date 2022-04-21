@@ -1,40 +1,38 @@
 <template>
-
-  <div id="qst-login-form">
-
+  <div style="margin-top: 150px;">
     <div class="text-center">
-      <h3>QuantstopTerminal</h3>
-      <i><small>{{version.version}}</small></i>
+      <div class="qst-login-logo">QuantstopTerminal</div>
+      <div class="qst-login-version">{{version.version}}</div>
     </div>
 
-
-    <Form @submit="login" :validation-schema="schema">
-      <div class="form-group">
-        <label for="username">Username</label>
-        <Field name="username" type="text" class="form-control" />
-        <ErrorMessage name="username" class="error-feedback" />
-      </div>
-      <div class="form-group">
-        <label for="password">Password</label>
-        <Field name="password" type="password" class="form-control" />
-        <ErrorMessage name="password" class="error-feedback" />
-      </div>
-
-      <div class="form-group d-flex justify-content-center" id="qst-login-button-container">
-        <button class="btn btn-primary btn-block" :disabled="loading">
-          <span v-show="loading" class="spinner-border spinner-border-sm"></span>
-          <span>Login</span>
-        </button>
-      </div>
-
-      <div class="form-group">
-        <div v-if="message" class="alert alert-danger" role="alert">
-          {{ message }}
+    <div id="qst-login-form">
+      <Form @submit="login" :validation-schema="schema">
+        <div class="form-group">
+          <label for="username">Username</label>
+          <Field name="username" type="text" class="form-control" />
+          <ErrorMessage name="username" class="error-feedback" />
         </div>
-      </div>
-    </Form>
-  </div>
+        <div class="form-group">
+          <label for="password">Password</label>
+          <Field name="password" type="password" class="form-control" />
+          <ErrorMessage name="password" class="error-feedback" />
+        </div>
 
+        <div class="form-group d-flex justify-content-center" id="qst-login-button-container">
+          <button class="btn btn-primary btn-block" :disabled="loading">
+            <span v-show="loading" class="spinner-border spinner-border-sm"></span>
+            <span>Login</span>
+          </button>
+        </div>
+
+        <div class="form-group">
+          <div v-if="message" class="alert alert-danger" role="alert">
+            {{ message }}
+          </div>
+        </div>
+      </Form>
+    </div>
+  </div>
 </template>
 
 <script>
@@ -119,18 +117,24 @@ label {
 }
 #qst-login-form {
   max-width: 400px;
-  margin-top: 80px;
-  margin-left: auto;
-  margin-right: auto;
+  margin: auto;
   padding: 20px;
   background-color: var(--background-color-primary) !important;
-}
-.error-feedback {
-  color: red;
 }
 
 #qst-login-button-container {
   padding-top: 30px;
   padding-bottom: 20px;
+}
+.qst-login-logo {
+  font-family: Impact, sans-serif;
+  font-style: italic;
+  font-size: xxx-large;
+  color: var(--text-primary-color) !important;
+}
+.qst-login-version {
+  font-style: italic;
+  font-size: 12px;
+  color: var(--text-primary-color) !important;
 }
 </style>
