@@ -3,12 +3,15 @@ package router
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"github.com/quantstop/quantstopterminal/internal"
 	"github.com/quantstop/quantstopterminal/internal/log"
 	"github.com/quantstop/quantstopterminal/internal/webserver/middleware"
 	"github.com/quantstop/quantstopterminal/internal/webserver/utils"
+	"github.com/quantstop/quantstopterminal/web"
 	"net/http"
 	"regexp"
+	"strings"
 )
 
 // Simple RegExp based Http Router
@@ -19,7 +22,6 @@ type Router struct {
 	DB               *sql.DB
 	Bot              internal.IEngine
 	Routes           []Route
-	FrontendHandler  http.Handler
 	MethodNotAllowed http.HandlerFunc
 	NotFound         http.HandlerFunc
 
@@ -144,7 +146,9 @@ func (r *Router) ServeHTTP(response http.ResponseWriter, request *http.Request) 
 	// shift head and tail to get below "api/" part of the path
 	head, _ = utils.ShiftPath(request.URL.Path)
 	if head != "api" && !r.isDev {
-		r.FrontendHandler.ServeHTTP(response, request)
+		wfs := web.GetFileSystem()
+		httpFS := http.FS(wfs)
+		serveFileContents(response, request, httpFS)
 		return
 	}
 
@@ -192,4 +196,40 @@ func (r *Router) ServeHTTP(response http.ResponseWriter, request *http.Request) 
 
 func (r *Router) ExecuteMiddleware() {
 
+}
+
+func serveFileContents(w http.ResponseWriter, r *http.Request, files http.FileSystem) {
+
+	path := r.URL.Path
+	if path == "/" {
+		path = "index.html"
+	}
+
+	// Restrict only to instances where the browser is looking for html, css, or javascript files
+	if !strings.Contains(r.Header.Get("Accept"), "text/html") ||
+		!strings.Contains(r.Header.Get("Accept"), "text/css") ||
+		!strings.Contains(r.Header.Get("Accept"), "text/javascript") {
+		w.WriteHeader(http.StatusNotFound)
+		fmt.Fprint(w, "404 not found")
+		return
+	}
+
+	// Open the file and return its contents using http.ServeContent
+	index, err := files.Open(path)
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		fmt.Fprintf(w, "%s not found", path)
+		return
+	}
+
+	fi, err := index.Stat()
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		fmt.Fprintf(w, "%s not found", path)
+		return
+	}
+
+	// todo: idk is this needed?
+	//w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	http.ServeContent(w, r, fi.Name(), fi.ModTime(), index)
 }

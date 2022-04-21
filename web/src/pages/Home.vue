@@ -106,7 +106,7 @@ export default {
       );
     },
     async getUptime() {
-      const response = await jwtInterceptor.get("https://localhost/api/uptime", {
+      const response = await jwtInterceptor.get("/api/uptime", {
         withCredentials: true,
         credentials: "include",
         headers: {

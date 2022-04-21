@@ -3,6 +3,7 @@ import Login from "./pages/Login.vue";
 import Profile from "./pages/Profile.vue";
 import Settings from "./pages/settings/Settings";
 import UserManager from "./pages/admin/UserManager";
+import FinancialChart from "./pages/FinancialChart";
 import { createRouter, createWebHistory } from "vue-router";
 import store from "./store/index";
 
@@ -13,6 +14,7 @@ const routes = [
     { path: "/profile", component: Profile, meta: { requiredAuth: true } },
     { path: "/settings", component: Settings, meta: { requiredAuth: true } },
     { path: "/users", component: UserManager, meta: { requiredAuth: true } },
+    { path: "/chart", component: FinancialChart, meta: { requiredAuth: true } },
 ];
 
 export const routeConfig = createRouter({

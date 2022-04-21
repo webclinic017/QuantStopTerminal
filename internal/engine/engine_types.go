@@ -14,7 +14,7 @@ type Engine struct {
 	DatabaseSubsystem *DatabaseSubsystem
 	//GRPCServer          *grpc.Server
 	NTPCheckerSubsystem *NTPCheckerSubsystem
-	StrategySubsystem   *StrategySubsystem
+	TraderSubsystem     *TraderSubsystem
 	InternetSubsystem   *ConnectionMonitor
 	//WebserverSubsystem  *WebserverSubsystem
 	Webserver   *webserver.Webserver
@@ -25,7 +25,7 @@ type Engine struct {
 const (
 	DatabaseSubsystemName string = "database"
 	NTPSubsystemName      string = "ntp_timekeeper"
-	StrategySubsystemName string = "strategy"
+	TraderSubsystemName   string = "active_trader"
 	WebserverName         string = "webserver"
 	GRPCServerName        string = "grpc"
 	GRPCProxyServerName   string = "grpc_proxy"

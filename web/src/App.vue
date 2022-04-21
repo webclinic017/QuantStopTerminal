@@ -84,6 +84,7 @@ footer {
   --theme-switch-background-color: #f1f1f1; /* Theme switch background color */
   --theme-switch-border-color: rgb(60 60 60 / 29%);
   --theme-switch-border-color-hover: rgba(59, 59, 59, 0.29);
+  --table-border-hover: rgba(65, 64, 64, 0.29);
 }
 
 /* Define styles for the root window with dark - mode preference */
@@ -95,6 +96,7 @@ footer {
   --theme-switch-background-color: #2f2f2f; /* Theme switch background color */
   --theme-switch-border-color: rgb(84 84 84 / 65%);
   --theme-switch-border-color-hover: rgba(196, 193, 193, 0.29);
+  --table-border-hover: rgba(65, 64, 64, 0.29);
 }
 
 a, p, i, .nav-link, label, h1, h2, h3, h4, button {
@@ -111,7 +113,9 @@ body {
   height: 16px;
   vertical-align: text-bottom;
 }
-
+.error-feedback {
+  color: red;
+}
 
 
 /*

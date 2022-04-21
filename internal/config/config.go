@@ -201,6 +201,31 @@ func (c *Config) SetupConfig() error {
 	return nil
 }
 
+func (c *Config) SaveConfig() error {
+	// A common use case is to get a private config folder for your app to
+	// place its settings files into, that are specific to the local user.
+	configPath := LocalConfig("QuantstopTerminal")
+
+	// Deal with a JSON configuration file in that folder.
+	configFile := filepath.Join(configPath, "settings.json")
+	//fh, err := os.Open(configFile)
+	fh, err := os.OpenFile(configFile, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, DefaultFileMode)
+	if err != nil {
+		return err
+	}
+	defer func(fh *os.File) {
+		_ = fh.Close()
+	}(fh)
+	// Write config to file in json format
+	err = jsonUtils.PrettyEncodeJson(&c, fh)
+	if err != nil {
+		//log.Fatal(err)
+		log.Error(log.Global, err)
+		return err
+	}
+	return nil
+}
+
 // CheckConfig will run private functions to verify the system config, and all subsystem configs are valid
 func (c *Config) CheckConfig() error {
 	err := c.checkLoggerConfig()

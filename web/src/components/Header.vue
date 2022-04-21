@@ -1,42 +1,12 @@
 <template>
 
-  <header class="qst-header-nav navbar sticky-top flex-md-nowrap p-0">
-    <router-link to="/" class="navbar-brand col-md-3 col-lg-2 me-0 px-3">QuantstopTerminal</router-link>
-    <button class="navbar-toggler position-absolute d-md-none" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarMenu" aria-controls="sidebarMenu" aria-expanded="false" aria-label="Toggle navigation">
-      <svg class="m-auto" id="menu-bars" viewBox="0 0 20 20" width="20" height="20" fill="currentColor">
-        <rect width="20" height="4"></rect>
-        <rect y="6.5" width="20" height="4"></rect>
-        <rect y="13" width="20" height="4"></rect>
-      </svg>
-    </button>
-    <input v-if="getUserProfile.id !== 0" class="form-control w-100 me-3" type="text" placeholder="Search" aria-label="Search">
-    <div class="d-flex qst-collapse collapse">
-        <span class="nav-item m-auto me-3">
-          <theme-button />
-        </span>
+  <header class="qst-header-nav navbar navbar-expand-md sticky-top p-0">
 
-      <div class="dropdown me-2" v-if="getUserProfile.id !== 0">
-        <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-          <img src="//ssl.gstatic.com/accounts/ui/avatar_2x.png" alt="" width="32" height="32" class="rounded-circle me-2">
-          <strong>{{ getUserProfile.username }}</strong>
-        </a>
-        <ul class="qst-user-dropdown dropdown-menu dropdown-menu-end text-small shadow" aria-labelledby="userDropdown">
-          <li><router-link to="/settings" class="dropdown-item">Settings</router-link></li>
-          <li><router-link to="/profile" class="dropdown-item">Profile</router-link></li>
-          <li><hr class="dropdown-divider"></li>
-          <li><a class="dropdown-item" @click.prevent="logOut" href="/logout"><font-awesome-icon icon="sign-out-alt" /> Sign out</a></li>
-        </ul>
-      </div>
-    </div>
-  </header>
+    <div class="container-fluid p-0">
 
-<!--  <header class="navbar navbar-expand-md sticky-top flex-md-nowrap p-0 qst-header-nav">
-
-      &lt;!&ndash; Logo &ndash;&gt;
       <router-link to="/" class="navbar-brand col-md-3 col-lg-2 me-0 px-3">QuantstopTerminal</router-link>
 
-      <button v-if="getUserProfile.id !== 0" id="qst-menu-toggle" class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarMenu" aria-controls="sidebarMenu" aria-expanded="false" aria-label="Toggle navigation">
-&lt;!&ndash;        <span id="qst-menu-toggle-icon" class="navbar-toggler-icon"></span>&ndash;&gt;
+      <button ref="qstNavToggle" class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".qst-collapse" aria-controls="sidebarMenu headerMenu" aria-expanded="false" aria-label="Toggle navigation">
         <svg class="m-auto" id="menu-bars" viewBox="0 0 20 20" width="20" height="20" fill="currentColor">
           <rect width="20" height="4"></rect>
           <rect y="6.5" width="20" height="4"></rect>
@@ -44,36 +14,35 @@
         </svg>
       </button>
 
-      &lt;!&ndash; Left Aligned Buttons &ndash;&gt;
-      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-        <li class="nav-item">
+      <div class="qst-collapse collapse navbar-collapse w-100" id="headerMenu">
 
-        </li>
-      </ul>
+        <input v-if="getUserProfile.id !== 0" class="form-control w-100 me-3" type="text" placeholder="Search" aria-label="Search">
 
-      &lt;!&ndash; Right Aligned Buttons / User Menu &ndash;&gt;
-      <div class="d-flex">
-        <span class="nav-item m-auto me-3">
+
+        <div class="nav-item m-auto me-3 theme-button d-inline-flex justify-content-end">
           <theme-button />
-        </span>
+        </div>
 
-        <div class="dropdown me-2" v-if="getUserProfile.id !== 0">
+        <div class="nav-item dropdown m-auto me-3 user-dropdown d-inline-flex justify-content-end" v-if="getUserProfile.id !== 0">
           <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-            &lt;!&ndash; todo: user images ... &ndash;&gt;
             <img src="//ssl.gstatic.com/accounts/ui/avatar_2x.png" alt="" width="32" height="32" class="rounded-circle me-2">
             <strong>{{ getUserProfile.username }}</strong>
           </a>
           <ul class="qst-user-dropdown dropdown-menu dropdown-menu-end text-small shadow" aria-labelledby="userDropdown">
-            <li><a class="dropdown-item" href="#">Settings</a></li>
-            <li><a class="dropdown-item" href="#">Profile</a></li>
+            <li><router-link to="/settings" class="dropdown-item">Settings</router-link></li>
+            <li><router-link to="/profile" class="dropdown-item">Profile</router-link></li>
             <li><hr class="dropdown-divider"></li>
             <li><a class="dropdown-item" @click.prevent="logOut" href="/logout"><font-awesome-icon icon="sign-out-alt" /> Sign out</a></li>
           </ul>
         </div>
+
       </div>
 
 
-  </header>-->
+
+    </div>
+  </header>
+
 </template>
 
 <script>
@@ -138,9 +107,11 @@ export default {
 .navbar-brand {
   padding-top: 0.75rem;
   padding-bottom: 0.75rem;
-  font-size: 1rem;
   text-align: center;
-  /*border-right: 1px solid var(--theme-switch-border-color);*/
+  font-family: Impact, sans-serif;
+  font-style: italic;
+  font-size: large;
+  color: var(--text-primary-color) !important;
 }
 .qst-user-dropdown {
   color: var(--text-primary-color) !important;
@@ -150,6 +121,7 @@ export default {
   height: 30px;
   width: 30px;
   text-align: center;
+  margin-right: 10px;
   opacity: 1;
   color: var(--text-primary-color) !important;
   background-color: var(--theme-switch-background-color) !important;
@@ -159,5 +131,19 @@ export default {
   position: relative;
   right: 8px;
   bottom: 2px;
+}
+
+@media screen and (max-width: 767px) {
+  .qst-collapse {
+  }
+  .nav-item {
+    width: 100%;
+  }
+  .user-dropdown {
+    height: 48px;
+  }
+  .theme-button {
+    height: 48px;
+  }
 }
 </style>

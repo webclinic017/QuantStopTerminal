@@ -1,5 +1,4 @@
 import axios from "axios";
-import jwtInterceptor from '../../shared/jwt.interceptor'
 
 const state = () => ({
     users: "",
@@ -15,7 +14,7 @@ const getters = {
 
 const actions = {
     async getAllUsers({ commit }) {
-        const response = await axios.get("https://localhost/api/get-users", {
+        const response = await axios.get("/api/get-users", {
             withCredentials: true,
             credentials: "include",
             headers: {

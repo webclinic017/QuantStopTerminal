@@ -1,7 +1,6 @@
 package webserver
 
 import (
-	"github.com/quantstop/quantstopterminal/internal/assets"
 	"github.com/quantstop/quantstopterminal/internal/log"
 	"github.com/quantstop/quantstopterminal/internal/webserver/errors"
 	"github.com/quantstop/quantstopterminal/internal/webserver/handlers"
@@ -27,10 +26,6 @@ func (s *Webserver) ConfigureRouter(isDev bool) {
 
 	log.Debugln(log.Webserver, "Setting up route handlers ... ")
 
-	if isDev {
-		s.mux.FrontendHandler = http.FileServer(assets.Assets)
-	}
-
 	// Public Routes
 	s.mux.GET("/api/test", handlers.Test, router.Public)
 	s.mux.GET("/api/version", handlers.GetVersion, router.Public)
@@ -53,5 +48,7 @@ func (s *Webserver) ConfigureRouter(isDev bool) {
 
 	// Admin routes
 	s.mux.GET("/api/get-users", handlers.GetAllUsers, router.Admin)
+	s.mux.POST("/api/set-subsystem", handlers.SetSubsystem, router.Admin)
+	s.mux.POST("/api/set-sysconfig", handlers.SetSystemConfig, router.Admin)
 
 }

@@ -12,6 +12,7 @@ import (
 
 type NTPCheckerSubsystem struct {
 	Subsystem
+	wg                        sync.WaitGroup
 	level                     int64
 	allowedDifference         time.Duration
 	allowedNegativeDifference time.Duration
@@ -47,7 +48,6 @@ func (s *NTPCheckerSubsystem) start(wg *sync.WaitGroup) (err error) {
 	if err = s.Subsystem.start(wg); err != nil {
 		return err
 	}
-
 	s.started = true
 	if s.enabled && s.initialized {
 		// Sometimes the NTP client can have transient issues due to UDP, try
@@ -72,8 +72,11 @@ func (s *NTPCheckerSubsystem) start(wg *sync.WaitGroup) (err error) {
 		s.started = false
 		return ntpmonitor.ErrNTPSubsystemDisabled
 	}
+
 	log.Debugln(log.NTPLogger, s.name+MsgSubsystemStarted)
-	go s.run()
+	//wg.Add(1)
+	//s.wg.Add(1)
+	go s.run(wg)
 	return nil
 }
 
@@ -83,25 +86,30 @@ func (s *NTPCheckerSubsystem) stop() error {
 		return err
 	}
 
-	s.started = false
-
 	close(s.shutdown)
 
+	//s.wg.Wait()
+	s.started = false
 	log.Debugln(log.NTPLogger, s.name+MsgSubsystemShutdown)
 
 	return nil
 }
 
 // continuously checks the internet connection at intervals
-func (s *NTPCheckerSubsystem) run() {
+func (s *NTPCheckerSubsystem) run(wg *sync.WaitGroup) {
+	log.Debugln(log.NTPLogger, s.name+" goroutine started.")
 	t := time.NewTicker(s.checkInterval)
 	defer func() {
 		t.Stop()
+		//s.wg.Done()
+		//wg.Done()
+		log.Debugln(log.NTPLogger, s.name+" goroutine stopped.")
 	}()
 
 	for {
 		select {
 		case <-s.shutdown:
+			log.Debugln(log.NTPLogger, s.name+" goroutine stopping.")
 			return
 		case <-t.C:
 			err := s.processTime()

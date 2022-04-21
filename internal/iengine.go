@@ -8,4 +8,5 @@ type IEngine interface {
 	SetSubsystem(subSystemName string, enable bool) error
 	GetVersion() map[string]string
 	GetSQL() (*sql.DB, error)
+	SetSystemConfig(string, string) error
 }

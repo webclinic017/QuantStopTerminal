@@ -158,7 +158,7 @@ func init() {
 	ConnMonitor = registerNewSubLogger("CONNECTION")
 	DatabaseLogger = registerNewSubLogger("DATABASE")
 	NTPLogger = registerNewSubLogger("TIMEKEEPER")
-	StrategyLogger = registerNewSubLogger("STRATEGY")
+	TraderLogger = registerNewSubLogger("TRADER")
 	Webserver = registerNewSubLogger("WEBSERVER")
 	GRPClog = registerNewSubLogger("GRPC")
 }

@@ -95,6 +95,7 @@ func (sub *Subsystem) start(wg *sync.WaitGroup) error {
 		return fmt.Errorf("%s subsystem %w", sub.name, ErrSubsystemAlreadyStarted)
 	}
 	sub.started = false
+	sub.shutdown = make(chan struct{})
 	log.Debugln(log.SubsystemLogger, sub.name+MsgSubsystemStarting)
 	return nil
 }

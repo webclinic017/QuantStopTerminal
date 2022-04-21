@@ -29,16 +29,3 @@ tasks:
     method: timestamp
     cmds:
       - npm run build
-
-  gen-assets:
-    desc: Generate static frontend
-    deps: [ npm-build ]
-    #run: always
-    #sources:
-    #  - ./cmd/genassets/main.go
-    #generates:
-    #  - ./internal/assets/appcode.go
-    #method: timestamp
-    cmds:
-      - go run ./cmd/genassets/main.go
-      - go generate

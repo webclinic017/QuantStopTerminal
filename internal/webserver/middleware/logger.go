@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"log"
+	"github.com/quantstop/quantstopterminal/internal/log"
 	"net/http"
 	"strings"
 	"time"
@@ -72,6 +72,5 @@ func getRemoteAddressFromHttpRequest(request *http.Request) string {
 
 // logHttpRequest logs information about http requests
 func logHttpRequest(ri *HTTPReqInfo) {
-	//todo: log to file
-	log.Println(ri.ipaddr + " " + time.Now().String() + " " + ri.method + " " + ri.uri + " " + ri.referer + " " + ri.userAgent)
+	log.Infoln(log.Webserver, ri.ipaddr+" "+time.Now().String()+" "+ri.method+" "+ri.uri+" "+ri.referer+" "+ri.userAgent)
 }

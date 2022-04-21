@@ -10,6 +10,7 @@ import (
 	"github.com/quantstop/quantstopterminal/pkg/system"
 	"github.com/quantstop/quantstopterminal/pkg/system/convert"
 	"runtime"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -117,22 +118,22 @@ func (bot *Engine) initNtpMonitorSubsystem() error {
 }
 
 func (bot *Engine) initStrategySubsystem() error {
-	/*if bot.Config.Strategy.Enabled {
+	/*if bot.Config.Strategy.Enabled {*/
 
-		// Create and init strategy subsystem
-		bot.StrategySubsystem = &StrategySubsystem{Subsystem: Subsystem{}}
-		if err := bot.StrategySubsystem.init(bot, StrategySubsystemName); err != nil {
-			log.Errorf(log.Global, "Strategy subsystem unable to initialize: %v", err)
-			return err
-		}
+	// Create and init strategy subsystem
+	bot.TraderSubsystem = &TraderSubsystem{Subsystem: Subsystem{}}
+	if err := bot.TraderSubsystem.init(bot, TraderSubsystemName); err != nil {
+		log.Errorf(log.Global, "Trader subsystem unable to initialize: %v", err)
+		return err
+	}
 
-		// Register strategy subsystem
-		if err := bot.SubsystemRegistry.RegisterService(bot.StrategySubsystem); err != nil {
-			log.Errorf(log.Global, "Strategy subsystem unable to register: %v", err)
-			return err
-		}
+	// Register strategy subsystem
+	if err := bot.SubsystemRegistry.RegisterService(bot.TraderSubsystem); err != nil {
+		log.Errorf(log.Global, "Trader subsystem unable to register: %v", err)
+		return err
+	}
 
-	}*/
+	//}
 	return nil
 }
 
@@ -239,10 +240,10 @@ func (bot *Engine) GetSubsystemsStatus() map[string]bool {
 		status[NTPSubsystemName] = bot.NTPCheckerSubsystem.isRunning()
 	}
 
-	if bot.StrategySubsystem == nil {
-		status[StrategySubsystemName] = false
+	if bot.TraderSubsystem == nil {
+		status[TraderSubsystemName] = false
 	} else {
-		status[StrategySubsystemName] = bot.StrategySubsystem.isRunning()
+		status[TraderSubsystemName] = bot.TraderSubsystem.isRunning()
 	}
 
 	if bot.InternetSubsystem == nil {
@@ -270,6 +271,9 @@ func (bot *Engine) SetSubsystem(subSystemName string, enable bool) error {
 		return errNilEngine
 	}
 
+	engineMutex.Lock()
+	defer engineMutex.Unlock()
+
 	var err error
 	switch strings.ToLower(subSystemName) {
 
@@ -286,17 +290,17 @@ func (bot *Engine) SetSubsystem(subSystemName string, enable bool) error {
 			return bot.NTPCheckerSubsystem.stop()
 		}
 
-	case StrategySubsystemName:
+	case TraderSubsystemName:
 		if enable {
-			if bot.StrategySubsystem == nil {
-				err = bot.StrategySubsystem.init(bot, StrategySubsystemName)
+			if bot.TraderSubsystem == nil {
+				err = bot.TraderSubsystem.init(bot, TraderSubsystemName)
 				if err != nil {
 					return err
 				}
 			}
-			return bot.StrategySubsystem.start(&bot.SubsystemWG)
+			return bot.TraderSubsystem.start(&bot.SubsystemWG)
 		} else {
-			return bot.StrategySubsystem.stop()
+			return bot.TraderSubsystem.stop()
 		}
 
 	case InternetCheckerName:
@@ -351,4 +355,18 @@ func (bot *Engine) GetSQL() (*sql.DB, error) {
 	}
 	log.Errorln(log.Global, "database is nil!")
 	return nil, errors.New("engine cannot return nil database")
+}
+
+func (bot *Engine) SetSystemConfig(apiUrl string, maxProcs string) error {
+	intVar, err := strconv.Atoi(maxProcs)
+	if err != nil {
+		return err
+	}
+	bot.Config.GoMaxProcessors = intVar //todo: does this only take effect on restart?
+
+	err = bot.Config.SaveConfig()
+	if err != nil {
+		return err
+	}
+	return nil
 }

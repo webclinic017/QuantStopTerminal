@@ -14,7 +14,7 @@ var (
 	ConnMonitor     *SubLogger
 	DatabaseLogger  *SubLogger
 	NTPLogger       *SubLogger
-	StrategyLogger  *SubLogger
+	TraderLogger    *SubLogger
 	Webserver       *SubLogger
 	GRPClog         *SubLogger
 )
