@@ -12,14 +12,40 @@
       </button>
     </div>-->
   </div>
+
+  <ul class="nav nav-tabs" id="myTab" role="tablist">
+    <li class="nav-item" role="presentation">
+      <button class="nav-link active" id="home-tab" data-bs-toggle="tab" data-bs-target="#home" type="button" role="tab" aria-controls="home" aria-selected="true">NTP</button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="profile-tab" data-bs-toggle="tab" data-bs-target="#profile" type="button" role="tab" aria-controls="profile" aria-selected="false">Database</button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="contact-tab" data-bs-toggle="tab" data-bs-target="#contact" type="button" role="tab" aria-controls="contact" aria-selected="false">System</button>
+    </li>
+  </ul>
+  <div class="tab-content" id="myTabContent">
+    <div class="tab-pane fade show active" id="home" role="tabpanel" aria-labelledby="home-tab"><NTPSettings></NTPSettings></div>
+    <div class="tab-pane fade" id="profile" role="tabpanel" aria-labelledby="profile-tab">Database</div>
+    <div class="tab-pane fade" id="contact" role="tabpanel" aria-labelledby="contact-tab"><SystemSettings></SystemSettings></div>
+  </div>
+
 </template>
 
 <script>
+import NTPSettings from "./NTPSettings";
+import SystemSettings from "./SystemSettings";
 export default {
-  name: "Settings"
+  name: "Settings",
+  components: {SystemSettings, NTPSettings}
 }
 </script>
 
 <style scoped>
-
+.nav-link.active {
+  border-right: 1px solid var(--theme-switch-border-color) !important;
+  border-left: 1px solid var(--theme-switch-border-color) !important;
+  border-top: 1px solid var(--theme-switch-border-color) !important;
+  background-color: var(--background-color-primary) !important;
+}
 </style>
