@@ -15,12 +15,6 @@ import (
 	"time"
 )
 
-/*type key int
-
-const (
-	requestIDKey key = 0
-)*/
-
 // Webserver is the type to access and store both http/https webserver, and ws/wss webserver.
 type Webserver struct {
 	*Config
@@ -40,11 +34,6 @@ func CreateWebserver(eng internal.IEngine, conf *Config, isDev bool) (*Webserver
 	if conf == nil {
 		return nil, errors.New("config cannot be nil")
 	}
-
-	// next request id used for logging
-	/*nextRequestID := func() string {
-		return fmt.Sprintf("%d", time.Now().UnixNano())
-	}*/
 
 	rtr, err := router.New(isDev, eng)
 	if err != nil {
@@ -133,46 +122,6 @@ func (s *Webserver) Shutdown() {
 
 }
 
-/*func logging() func(http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
-			defer func() {
-				requestID, ok := r.Context().Value(requestIDKey).(string)
-				if !ok {
-					requestID = "unknown"
-				}
-				log.Debugln(log.Webserver, requestID, r.Method, r.URL.Path, GetIP(r), r.UserAgent())
-			}()
-			next.ServeHTTP(w, r)
-		})
-	}
-}
-
-// GetIP gets a requests IP address by reading off the forwarded-for
-// header (for proxies) and falls back to use the remote address.
-func GetIP(r *http.Request) string {
-	forwarded := r.Header.Get("X-FORWARDED-FOR")
-	if forwarded != "" {
-		return forwarded
-	}
-	return r.RemoteAddr
-}
-
-func tracing(nextRequestID func() string) func(http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			requestID := r.Header.Get("X-Request-Id")
-			if requestID == "" {
-				requestID = nextRequestID()
-			}
-			ctx := context.WithValue(r.Context(), requestIDKey, requestID)
-			w.Header().Set("X-Request-Id", requestID)
-			next.ServeHTTP(w, r.WithContext(ctx))
-		})
-	}
-}*/
-
 func (s *Webserver) StartNodeDevelopmentServer() {
 
 	if s.shutdownFinished == nil {
@@ -194,8 +143,11 @@ func (s *Webserver) StartNodeDevelopmentServer() {
 
 	<-s.shutdownFinished
 	log.Infoln(log.Webserver, "Shutting down node development server ...")
-	if err = cmd.Process.Kill(); err != nil {
+	err = cmd.Process.Kill()
+	if err != nil {
 		log.Errorf(log.Webserver, "Error unable to kill process node development server %v.\n", err)
+	} else {
+		log.Infoln(log.Webserver, "Shutting down node development server ... Success.")
 	}
 
 	return
