@@ -56,15 +56,16 @@ func main() {
 	// Set build flags, unfortunately can only be of type string so must convert for IsRelease
 	if BuildFlagIsRelease == "true" {
 		version.IsRelease = true
+		version.IsDevelopment = false
 	} else {
 		version.IsRelease = false
+		version.IsDevelopment = true
 	}
 
 	version.Version = BuildFlagVersion
 
 	// Parse runtime flags into Version
 	flag.BoolVar(&version.IsDaemon, "daemon", false, "run as a background service")
-	flag.StringVar(&version.Version, "version", "0.1.0", "engine version")
 	flag.Parse()
 
 	// Print banner and version
@@ -102,8 +103,10 @@ func main() {
 
 		if !version.IsDaemon {
 			systray.Quit()
+		} else {
+			Engine.Stop()
 		}
-		Engine.Stop()
+
 		qstlog.Infoln(qstlog.Global, "Exiting.")
 	}()
 
