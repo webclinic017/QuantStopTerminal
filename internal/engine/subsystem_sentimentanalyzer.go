@@ -8,6 +8,7 @@ import (
 
 type SentimentAnalyzerSubsystem struct {
 	Subsystem
+	wg *sync.WaitGroup
 }
 
 func (s *SentimentAnalyzerSubsystem) init(bot *Engine, name string) error {
@@ -43,7 +44,7 @@ func (s *SentimentAnalyzerSubsystem) start(wg *sync.WaitGroup) (err error) {
 		Wg:       wg,
 	}
 
-	twitterAnalyzer.Wg.Add(1)
+	wg.Add(1)
 	go twitterAnalyzer.TestTwitterSentiment()
 
 	log.Debugln(log.SentimentAnalyzer, s.name+MsgSubsystemStarted)
