@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/quantstop/quantstopterminal/internal/log"
 	"github.com/quantstop/quantstopterminal/pkg/vader"
+	"github.com/quantstop/quantstopterminal/pkg/vader/sentitext"
 	"sync"
 	"time"
 
@@ -18,8 +19,8 @@ type TwitterAnalyzer struct {
 func (r *TwitterAnalyzer) TestTwitterSentiment() {
 
 	scraper := twitterScraper.New()
-
-	timer := time.NewTimer(30 * time.Second)
+	scraper.SetSearchMode(twitterScraper.SearchLatest)
+	timer := time.NewTicker(time.Second * 30)
 
 	defer func() {
 		timer.Stop()
@@ -34,18 +35,46 @@ func (r *TwitterAnalyzer) TestTwitterSentiment() {
 			log.Debugf(log.SentimentAnalyzer, "Twitter analyzer stopping ...\n")
 			return
 		case <-timer.C:
+
+			var scores []sentitext.Sentiment
+
 			for tweet := range scraper.SearchTweets(context.Background(),
 				"$GME -filter:retweets", 50) {
 				if tweet.Error != nil {
 					log.Errorf(log.SentimentAnalyzer, "Twitter analyzer error. %v", tweet.Error)
 				}
-				log.Debugln(log.SentimentAnalyzer, "Tweet | "+tweet.Text)
-
-				sentiment := vader.GetSentiment(tweet.Text)
-				log.Debugf(log.SentimentAnalyzer, "Twitter analyzer sentiment: %v", sentiment)
+				//log.Debugln(log.SentimentAnalyzer, "Tweet | "+tweet.Text)
+				scores = append(scores, vader.GetSentiment(tweet.Text))
+				//log.Debugf(log.SentimentAnalyzer, "Twitter analyzer sentiment: %v", sentiment)
 
 			}
-			return
+
+			avgCompoundScore := 0.0
+			avgNeutralScore := 0.0
+			avgNegativeScore := 0.0
+			avgPositiveScore := 0.0
+
+			for _, sentiment := range scores {
+				avgCompoundScore = avgCompoundScore + sentiment.Compound
+				avgNeutralScore = avgNeutralScore + sentiment.Neutral
+				avgNegativeScore = avgNegativeScore + sentiment.Negative
+				avgPositiveScore = avgPositiveScore + sentiment.Positive
+			}
+
+			avgCompoundScore = avgCompoundScore / float64(len(scores))
+			avgNeutralScore = avgNeutralScore / float64(len(scores))
+			avgNegativeScore = avgNegativeScore / float64(len(scores))
+			avgPositiveScore = avgPositiveScore / float64(len(scores))
+
+			log.Debugf(
+				log.SentimentAnalyzer,
+				"Twitter analyzer sentiment: Compound: %v Neutral: %v Negative: %v Positive: %v",
+				avgCompoundScore,
+				avgNeutralScore,
+				avgNegativeScore,
+				avgPositiveScore,
+			)
+
 		}
 	}
 
