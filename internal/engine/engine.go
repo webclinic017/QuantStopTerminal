@@ -76,6 +76,11 @@ func (bot *Engine) Initialize() error {
 		return err
 	}
 
+	// Initialize sentiment analyzer subsystem
+	if err := bot.initSentimentAnalyzerSubsystem(); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -154,6 +159,26 @@ func (bot *Engine) initInternetMonitorSubsystem() error {
 		}
 
 	}
+	return nil
+}
+
+func (bot *Engine) initSentimentAnalyzerSubsystem() error {
+	/*if bot.Config.Strategy.Enabled {*/
+
+	// Create and init strategy subsystem
+	bot.SentimentAnalyzer = &SentimentAnalyzerSubsystem{Subsystem: Subsystem{}}
+	if err := bot.SentimentAnalyzer.init(bot, SentimentAnalyzerName); err != nil {
+		log.Errorf(log.Global, "Sentiment Analyzer subsystem unable to initialize: %v", err)
+		return err
+	}
+
+	// Register strategy subsystem
+	if err := bot.SubsystemRegistry.RegisterService(bot.SentimentAnalyzer); err != nil {
+		log.Errorf(log.Global, "Sentiment Analyzer subsystem unable to register: %v", err)
+		return err
+	}
+
+	//}
 	return nil
 }
 

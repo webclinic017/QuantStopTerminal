@@ -160,5 +160,5 @@ func init() {
 	NTPLogger = registerNewSubLogger("TIMEKEEPER")
 	TraderLogger = registerNewSubLogger("TRADER")
 	Webserver = registerNewSubLogger("WEBSERVER")
-	GRPClog = registerNewSubLogger("GRPC")
+	SentimentAnalyzer = registerNewSubLogger("SENTIMENT")
 }

@@ -16,6 +16,7 @@ type Engine struct {
 	TraderSubsystem     *TraderSubsystem
 	InternetSubsystem   *ConnectionMonitor
 	Webserver           *webserver.Webserver
+	SentimentAnalyzer   *SentimentAnalyzerSubsystem
 	SubsystemWG         sync.WaitGroup
 	Uptime              time.Time
 }
@@ -25,6 +26,7 @@ const (
 	NTPSubsystemName      string = "ntp_timekeeper"
 	TraderSubsystemName   string = "active_trader"
 	InternetCheckerName   string = "internet_monitor"
+	SentimentAnalyzerName string = "sentiment_analyzer"
 )
 
 // engineMutex only locks and unlocks on engine creation functions

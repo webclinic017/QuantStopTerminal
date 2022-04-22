@@ -9,14 +9,14 @@ import (
 var (
 	SubLoggers = map[string]*SubLogger{}
 
-	Global          *SubLogger
-	SubsystemLogger *SubLogger
-	ConnMonitor     *SubLogger
-	DatabaseLogger  *SubLogger
-	NTPLogger       *SubLogger
-	TraderLogger    *SubLogger
-	Webserver       *SubLogger
-	GRPClog         *SubLogger
+	Global            *SubLogger
+	SubsystemLogger   *SubLogger
+	ConnMonitor       *SubLogger
+	DatabaseLogger    *SubLogger
+	NTPLogger         *SubLogger
+	TraderLogger      *SubLogger
+	Webserver         *SubLogger
+	SentimentAnalyzer *SubLogger
 )
 
 // SubLogger defines a sub logger can be used externally for packages wanted to
