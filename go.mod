@@ -16,5 +16,6 @@ require (
 	golang.org/x/crypto v0.0.0-20220331220935-ae2d96664a29
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	golang.org/x/sys v0.0.0-20211216021012-1d35b9e2eb4e // indirect
+	golang.org/x/time v0.0.0-20220411224347-583f2d630306
 	modernc.org/sqlite v1.15.4
 )
