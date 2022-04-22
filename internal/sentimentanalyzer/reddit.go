@@ -28,7 +28,7 @@ func (r *RedditAnalyzer) TestWSBSentiment() {
 		return
 	}
 
-	posts, _, err := client.Subreddit.HotPosts(ctx, "wallstreetbets", &reddit.ListOptions{Limit: 5})
+	posts, res, err := client.Subreddit.HotPosts(ctx, "wallstreetbets", &reddit.ListOptions{Limit: 5})
 	if err != nil {
 		log.Errorf(log.SentimentAnalyzer, "Reddit analyzer error! %v\n", err)
 		return
@@ -36,10 +36,11 @@ func (r *RedditAnalyzer) TestWSBSentiment() {
 	for _, post := range posts {
 		log.Debugln(log.SentimentAnalyzer, post.Title)
 	}
+	logResponse(res.Request, res.Response)
 
 	//client.OnRequestCompleted(logResponse)
 
-	timer := time.NewTimer(time.Minute)
+	timer := time.NewTicker(time.Second * 30)
 
 	defer func() {
 		timer.Stop()
