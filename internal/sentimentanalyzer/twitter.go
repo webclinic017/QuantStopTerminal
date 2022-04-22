@@ -43,9 +43,8 @@ func (r *TwitterAnalyzer) TestTwitterSentiment() {
 				if tweet.Error != nil {
 					log.Errorf(log.SentimentAnalyzer, "Twitter analyzer error. %v", tweet.Error)
 				}
-				//log.Debugln(log.SentimentAnalyzer, "Tweet | "+tweet.Text)
+				log.Debugln(log.SentimentAnalyzer, "Tweet URL | "+tweet.PermanentURL)
 				scores = append(scores, vader.GetSentiment(tweet.Text))
-				//log.Debugf(log.SentimentAnalyzer, "Twitter analyzer sentiment: %v", sentiment)
 
 			}
 
