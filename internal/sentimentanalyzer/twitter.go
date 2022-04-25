@@ -20,7 +20,7 @@ func (r *TwitterAnalyzer) TestTwitterSentiment() {
 
 	scraper := twitterScraper.New()
 	scraper.SetSearchMode(twitterScraper.SearchLatest)
-	timer := time.NewTicker(time.Second * 30)
+	timer := time.NewTicker(time.Minute * 5)
 
 	defer func() {
 		timer.Stop()
