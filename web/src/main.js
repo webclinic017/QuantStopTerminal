@@ -6,9 +6,6 @@ import "bootstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { FontAwesomeIcon } from './plugins/font-awesome'
 
-/*import * as config from './config'
-config.GetApiUrl()*/
-
 const app = createApp(App)
 app.use(appRouter.routeConfig);
 app.use(store);
