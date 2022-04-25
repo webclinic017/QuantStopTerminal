@@ -1,6 +1,8 @@
 package internal
 
-import "database/sql"
+import (
+	"database/sql"
+)
 
 type IEngine interface {
 	GetUptime() string

@@ -8,6 +8,7 @@ import (
 	"github.com/d5/tengo/v2"
 	"github.com/quantstop/quantstopterminal/internal/database/models"
 	"github.com/quantstop/quantstopterminal/internal/log"
+	"github.com/quantstop/quantstopterminal/internal/webserver"
 	"github.com/quantstop/quantstopterminal/pkg/exchange/coinbasepro"
 	"golang.org/x/sync/errgroup"
 	"time"
@@ -27,7 +28,7 @@ each([a, b, c, d], func(x) {
 
 var Coinbasepro *coinbasepro.Client
 
-func Run(db *sql.DB) {
+func Run(db *sql.DB, hub *webserver.Hub) {
 	/*log.Debugln(log.TraderLogger, "starting workers ...")
 	const numJobs = 5
 	jobs := make(chan int, numJobs)
@@ -69,10 +70,10 @@ func Run(db *sql.DB) {
 		return
 	}
 
-	go testReadWebsocketTrades()
+	go testReadWebsocketTrades(hub)
 }
 
-func testReadWebsocketTrades() {
+func testReadWebsocketTrades(hub *webserver.Hub) {
 	ctx := context.TODO()
 
 	// create a new subscription request
@@ -121,6 +122,8 @@ func testReadWebsocketTrades() {
 				if err != nil {
 					return err
 				}
+
+				hub.TradeChannel <- inrec
 
 				switch v := message.(type) {
 

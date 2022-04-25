@@ -29,12 +29,6 @@ func (s *TraderSubsystem) start(wg *sync.WaitGroup) (err error) {
 		return err
 	}
 
-	db, err := s.bot.GetSQL()
-	if err != nil {
-		return err
-	}
-
-	go trader.Run(db)
 	s.started = true
 	log.Debugln(log.TraderLogger, s.name+MsgSubsystemStarted)
 	return nil
@@ -48,5 +42,14 @@ func (s *TraderSubsystem) stop() error {
 
 	s.started = false
 	log.Debugln(log.TraderLogger, s.name+MsgSubsystemShutdown)
+	return nil
+}
+
+func (s *TraderSubsystem) run() error {
+	db, err := s.bot.GetSQL()
+	if err != nil {
+		return err
+	}
+	go trader.Run(db, s.bot.Webserver.Hub)
 	return nil
 }

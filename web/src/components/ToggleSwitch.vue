@@ -1,6 +1,15 @@
 <template>
-  <div class="toggle" :class=[this.state_class] @click.self="onClick">
-    <div class="draggable" @mousedown.prevent="dragStart" :style="style">
+  <div
+    class="toggle"
+    :class=[this.state_class]
+    @click.self="onClick"
+    :style="styleBtn"
+  >
+    <div
+      class="draggable"
+      @mousedown.prevent="dragStart"
+      :style="style"
+    >
     </div>
   </div>
 </template>
@@ -13,11 +22,20 @@ export default {
       type: Boolean,
       required: true,
       default: false
+    },
+    width: {
+      type: Number,
+      required: true,
+      default: 100
+    },
+    height: {
+      type: Number,
+      required: true,
+      default: 50
     }
   },
   data() {
     return {
-      width: 100,
       state: false,
       pressed: 0,
       position: 0
@@ -27,13 +45,21 @@ export default {
     this.toggle(this.value)
   },
   computed: {
+    styleBtn() {
+      return {
+        width: `${this.width}px`,
+        height: `${this.height}px`
+      }
+    },
     style() {
       return {
-        transform: `translateX(${this.pos_percentage})`
+        transform: `translateX(${this.pos_percentage})`,
+        width: `${this.height -1}px`,
+        height: `${this.height -2}px`
       }
     },
     pos_percentage() {
-      return `${this.position / this.width * 100}%`
+      return `${this.position / this.width * this.width}%`
     },
     state_class() {
       if (this.state) {
@@ -59,7 +85,7 @@ export default {
     },
     dragging(e) {
       const pos = e.clientX - this.$el.offsetLeft
-      const percent = pos / this.width * 100
+      const percent = pos / this.width * this.width
       this.position = percent <= 0
           ? 0
           : percent >= 100
@@ -101,8 +127,6 @@ export default {
 
 .toggle {
   cursor: pointer;
-  width: 100px;
-  height: 50px;
   background: var(--background-color-secondary);
   border: 1px solid var(--theme-switch-border-color);
   border-radius: 200px;
@@ -112,8 +136,6 @@ export default {
 .draggable {
   position: absolute;
 
-  height: 48px;
-  width: 49px;
   background: var(--background-color-primary);
   border-radius: 100%;
   /*box-shadow: 0px 3px 10px rgba(0,0,0, 0.6);*/

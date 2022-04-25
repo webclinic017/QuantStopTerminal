@@ -24,7 +24,7 @@ type Router struct {
 	Routes           []Route
 	MethodNotAllowed http.HandlerFunc
 	NotFound         http.HandlerFunc
-
+	WebsocketHandler http.HandlerFunc
 	// Function to handle panics recovered from http handlers.
 	// Used to keep the server from crashing because of un-recovered panics.
 	PanicHandler func(http.ResponseWriter, *http.Request, interface{})
@@ -140,6 +140,11 @@ func (r *Router) recover(w http.ResponseWriter, req *http.Request) {
 
 // ServeHTTP implements the http.handler interface
 func (r *Router) ServeHTTP(response http.ResponseWriter, request *http.Request) {
+	//log.Debugln(log.Webserver, request.URL.Path)
+	if request.URL.Path == "/api/ws" {
+		r.WebsocketHandler.ServeHTTP(response, request)
+		return
+	}
 
 	var head string
 

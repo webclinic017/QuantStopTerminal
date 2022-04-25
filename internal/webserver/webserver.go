@@ -22,6 +22,7 @@ type Webserver struct {
 	isDev            bool
 	HttpServer       *http.Server
 	mux              *router.Router
+	Hub              *Hub
 	shutdownFinished chan struct{}
 }
 
@@ -46,6 +47,7 @@ func CreateWebserver(eng internal.IEngine, conf *Config, isDev bool) (*Webserver
 		IEngine:          eng,
 		Config:           conf,
 		mux:              rtr,
+		Hub:              newHub(),
 		shutdownFinished: make(chan struct{}),
 	}
 
@@ -66,6 +68,8 @@ func (s *Webserver) ListenAndServe(tls bool, configDir string) (err error) {
 	if s.shutdownFinished == nil {
 		s.shutdownFinished = make(chan struct{})
 	}
+
+	go s.Hub.run()
 
 	// if dev mode, run node server
 	if s.isDev {

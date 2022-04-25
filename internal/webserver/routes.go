@@ -52,4 +52,9 @@ func (s *Webserver) ConfigureRouter(isDev bool) {
 	s.mux.POST("/api/set-sysconfig", handlers.SetSystemConfig, router.Admin)
 	s.mux.POST("/api/exchange", handlers.SetExchange, router.Admin)
 
+	log.Debugln(log.Webserver, "Setting up websocket handler ... ")
+	s.mux.WebsocketHandler = func(writer http.ResponseWriter, request *http.Request) {
+		serveWs(s.Hub, writer, request)
+	}
+
 }
