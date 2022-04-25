@@ -8,7 +8,14 @@
           <p class="text-muted mb-0">Turn the NTP subsystem on or off.</p>
         </div>
         <div class="col-auto">
-          <ToggleSwitch id="ntp_enable" :value="subsystems.ntp_timekeeper" @input="setNtp"></ToggleSwitch>
+          <ToggleSwitch
+              id="ntp_enable"
+              :value="subsystems.ntp_timekeeper"
+              @input="setNtp"
+              :width="100"
+              :height="50"
+          >
+          </ToggleSwitch>
         </div>
       </div>
     </div>
