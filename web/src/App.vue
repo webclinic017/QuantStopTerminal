@@ -1,24 +1,28 @@
 <template>
 
-  <!--  Header / Navbar  -->
+  <!--  Header / Navbar if logged in  -->
   <div v-if="getUserProfile.id !== 0">
-    <Header />
+    <Header @custom-change2="toggleTheme" />
   </div>
+
+  <!--  Header / Navbar if not logged in (theme button only) -->
   <div v-if="getUserProfile.id === 0" class="d-flex">
-    <div class="ms-auto p-3">
-      <ThemeButton />
+    <div class="ms-auto p-3" style="height: 52px;">
+      <ThemeButton @custom-change="toggleTheme" />
     </div>
   </div>
-  <div class="container-fluid">
-    <div class="row">
+
+  <!--  Main container and row, full height minus header height  -->
+  <div class="container-fluid qst-body m-0 p-0">
+    <div class="row qst-body m-0 p-0">
 
       <!--  Sidebar Navigation / Logged in only  -->
-      <div v-if="getUserProfile.id !== 0">
+      <div v-if="getUserProfile.id !== 0" class="sidebar-container">
         <SidebarNav></SidebarNav>
       </div>
 
       <!--  App View  -->
-      <div :class="getUserProfile.id !== 0 ? 'col-md-9 ms-sm-auto col-lg-10 px-md-4' : ''">
+      <div id="routerView" :class="getUserProfile.id !== 0 ? 'col-md-9 ms-sm-auto col-lg-10 p-0 m-0 qst-body' : ''">
         <router-view />
       </div>
 
@@ -26,9 +30,9 @@
   </div>
 
   <!--  Footer  -->
-  <div v-if="getUserProfile.id !== 0">
+<!--  <div v-if="getUserProfile.id !== 0">
     <Footer />
-  </div>
+  </div>-->
 
 </template>
 
@@ -57,22 +61,15 @@ export default {
     document.body.classList.add('h-100')
     document.documentElement.classList.add('h-100')
   },
+  methods: {
+    toggleTheme() {
+      //console.log("toggle theme from app")
+    }
+  }
 }
 </script>
 
 <style>
-body {
-  background-color: var(--background-color-primary) !important;
-}
-
-main {
-  background-color: var(--background-color-primary);
-  margin-top: 55px;
-  margin-bottom: auto;
-}
-footer {
-  background-color: var(--background-color-primary);
-}
 
 /* Define styles for the default root window element */
 :root {
@@ -85,10 +82,13 @@ footer {
   --theme-switch-border-color: rgb(60 60 60 / 29%);
   --theme-switch-border-color-hover: rgba(59, 59, 59, 0.29);
   --table-border-hover: rgba(65, 64, 64, 0.29);
+
+  --slider-color-left: #b7b7b7;
+  --slider-color-right: #fafafa;
 }
 
 /* Define styles for the root window with dark - mode preference */
-:root.dark-theme {
+:root.dark {
   --background-color-primary: #1a1a1a;
   --background-color-secondary: #2d2d30;
   --accent-color: #3f3f3f;
@@ -97,16 +97,43 @@ footer {
   --theme-switch-border-color: rgb(84 84 84 / 65%);
   --theme-switch-border-color-hover: rgba(196, 193, 193, 0.29);
   --table-border-hover: rgba(65, 64, 64, 0.29);
+
+  --slider-color-left: #8c8c8c;
+  --slider-color-right: #2d2d30;
+}
+
+body {
+  font-size: .875rem;
+  background-color: var(--background-color-primary) !important;
+}
+.qst-body {
+  height: calc(100% - 52px);
+}
+
+footer {
+  background-color: var(--background-color-primary);
 }
 
 a, p, i, .nav-link, label, h1, h2, h3, h4, button {
   color: var(--text-primary-color) !important;
 }
 
+ul {
+  list-style-type: none !important;
+  margin-block-start: 1em;
+  margin-block-end: 1em;
+  margin-inline-start: 0px;
+  margin-inline-end: 0px;
+  padding-inline-start: 40px;
 
-body {
-  font-size: .875rem;
 }
+
+input, select {
+  color: var(--text-primary-color) !important;
+  background-color: var(--background-color-primary) !important;
+}
+
+
 
 .feather {
   width: 16px;
@@ -118,10 +145,13 @@ body {
 }
 
 
-/*
- * Sidebar
- */
-
+/************** Sidebar **************/
+.sidebar-container {
+  /* remove bootstrap styles inherited from row */
+  width: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
 .sidebar {
   position: fixed;
   top: 0;
@@ -132,7 +162,7 @@ body {
   /* rtl:remove */
   left: 0;
   z-index: 100; /* Behind the navbar */
-  padding: 48px 0 0; /* Height of navbar */
+  padding: 52px 0 0; /* Height of navbar */
 
 }
 
@@ -145,7 +175,7 @@ body {
 .sidebar-sticky {
   position: relative;
   top: 0;
-  height: calc(100vh - 48px);
+  height: calc(100vh - 52px);
   padding-top: .5rem;
   overflow-x: hidden;
   overflow-y: auto; /* Scrollable contents if viewport is shorter than content. */
@@ -162,7 +192,7 @@ body {
 }
 
 .sidebar .nav-link.active {
-  color: #2470dc;
+  color: #2470dc !important;
 }
 
 .sidebar .nav-link:hover .feather,
@@ -175,9 +205,7 @@ body {
   text-transform: uppercase;
 }
 
-/*
- * Navbar
- */
+/************** Navbar **************/
 
 .navbar-brand {
   padding-top: .75rem;
@@ -198,14 +226,7 @@ body {
   border-radius: 0;
 }
 
-.form-control {
-  color: var(--text-primary-color) !important;
-  background-color: var(--background-color-secondary) !important;
-  border-color: var(--theme-switch-border-color) !important;
-}
-.form-control:hover {
-  border-color: var(--theme-switch-border-color-hover) !important;
-}
+
 .dropdown-item:hover {
   background-color: var(--background-color-secondary) !important;
 }
@@ -226,5 +247,12 @@ body {
   background-color: var(--background-color-primary) !important;
   border-color: var(--theme-switch-border-color) !important;
 }
+
+.modal-header, .modal-body, .modal-footer, .dropdown-menu {
+  color: var(--text-primary-color) !important;
+  background-color: var(--background-color-primary) !important;
+  border-color: var(--theme-switch-border-color) !important;
+}
+
 
 </style>

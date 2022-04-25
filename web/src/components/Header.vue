@@ -20,7 +20,7 @@
 
 
         <div class="nav-item m-auto me-3 theme-button d-inline-flex justify-content-end">
-          <theme-button />
+          <theme-button @custom-change="toggleTheme" />
         </div>
 
         <div class="nav-item dropdown m-auto me-3 user-dropdown d-inline-flex justify-content-end" v-if="getUserProfile.id !== 0">
@@ -53,6 +53,7 @@ export default {
   components: {
     ThemeButton,
   },
+  emits: ['customChange2'],
   computed: {
     ...mapGetters("auth", {
       getUserProfile: "getUserProfile",
@@ -93,6 +94,10 @@ export default {
         this.setLogout(false);
         await this.$router.push("/");
       }
+    },
+    toggleTheme() {
+      //console.log("toggle theme from header")
+      this.$emit("customChange2", event.target.value)
     }
   },
 }
