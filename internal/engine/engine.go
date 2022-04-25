@@ -213,6 +213,11 @@ func (bot *Engine) Run() error {
 		}
 	}()
 
+	err = bot.TraderSubsystem.run()
+	if err != nil {
+		return err
+	}
+
 	// Print some info
 	log.Infof(log.Global, "QuantstopTerminal started.\n")
 	log.Infof(log.Global,
@@ -382,7 +387,7 @@ func (bot *Engine) GetSQL() (*sql.DB, error) {
 	if bot.DatabaseSubsystem.dbConn.SQL != nil {
 		return bot.DatabaseSubsystem.dbConn.SQL, nil
 	}
-	log.Errorln(log.Global, "database is nil!")
+	log.Errorln(log.Global, "GetSQL, database is nil!")
 	return nil, errors.New("engine cannot return nil database")
 }
 
