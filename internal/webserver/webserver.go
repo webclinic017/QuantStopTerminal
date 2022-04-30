@@ -7,6 +7,7 @@ import (
 	"github.com/quantstop/quantstopterminal/internal"
 	"github.com/quantstop/quantstopterminal/internal/log"
 	"github.com/quantstop/quantstopterminal/internal/webserver/router"
+	"github.com/quantstop/quantstopterminal/internal/webserver/websocket"
 	"github.com/quantstop/quantstopterminal/pkg/system/crypto"
 	"net/http"
 	"os"
@@ -22,7 +23,7 @@ type Webserver struct {
 	isDev            bool
 	HttpServer       *http.Server
 	mux              *router.Router
-	Hub              *Hub
+	Hub              *websocket.Hub
 	shutdownFinished chan struct{}
 }
 
@@ -41,13 +42,18 @@ func CreateWebserver(eng internal.IEngine, conf *Config, isDev bool) (*Webserver
 		return nil, err
 	}
 
+	hub, err := websocket.NewHub(eng)
+	if err != nil {
+		return nil, err
+	}
+
 	// Create server
 	server := &Webserver{
 		isDev:            isDev,
 		IEngine:          eng,
 		Config:           conf,
 		mux:              rtr,
-		Hub:              newHub(),
+		Hub:              hub,
 		shutdownFinished: make(chan struct{}),
 	}
 
@@ -69,8 +75,6 @@ func (s *Webserver) ListenAndServe(tls bool, configDir string) (err error) {
 		s.shutdownFinished = make(chan struct{})
 	}
 
-	go s.Hub.run()
-
 	// if dev mode, run node server
 	if s.isDev {
 		go s.StartNodeDevelopmentServer()
@@ -78,7 +82,7 @@ func (s *Webserver) ListenAndServe(tls bool, configDir string) (err error) {
 
 	if tls {
 		targetDir := crypto.GetTLSDir(configDir)
-		if err := crypto.CheckCerts(targetDir); err != nil {
+		if err = crypto.CheckCerts(targetDir); err != nil {
 			log.Errorf(log.Webserver, "checkCerts failed. err: %s\n", err)
 		}
 
