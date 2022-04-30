@@ -24,19 +24,19 @@
           <ul class="list-group list-group-flush">
             <li class="list-group-item d-flex justify-content-between align-items-start">
               <div class=" me-auto">Database</div>
-              <StatusIndicator :on="subsystems.database"></StatusIndicator>
+              <StatusIndicator :value="subsystems.database" :height=24 :width=24></StatusIndicator>
             </li>
             <li class="list-group-item d-flex align-items-center">
               <div class=" me-auto">Connection Monitor</div>
-              <StatusIndicator :on="subsystems.internet_monitor"></StatusIndicator>
+              <StatusIndicator :value="subsystems.internet_monitor" :height=24 :width=24></StatusIndicator>
             </li>
             <li class="list-group-item d-flex align-items-center">
               <div class=" me-auto">Timekeeper</div>
-              <StatusIndicator :on="subsystems.ntp_timekeeper"></StatusIndicator>
+              <StatusIndicator :value="subsystems.ntp_timekeeper" :height=24 :width=24></StatusIndicator>
             </li>
             <li class="list-group-item d-flex align-items-center">
               <div class=" me-auto">Active Trader</div>
-              <StatusIndicator :on="subsystems.strategy"></StatusIndicator>
+              <StatusIndicator :value="subsystems.strategy" :height=24 :width=24></StatusIndicator>
             </li>
           </ul>
         </div>
