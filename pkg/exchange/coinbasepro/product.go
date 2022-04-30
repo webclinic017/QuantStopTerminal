@@ -99,9 +99,9 @@ func (a *AggregatedBookEntry) UnmarshalJSON(b []byte) error {
 }
 
 type AggregatedBookEntry struct {
-	Price     float64 `json:"price"`
-	Size      float64 `json:"size"`
-	NumOrders int     `json:"num_orders"`
+	Price     string `json:"price"`
+	Size      string `json:"size"`
+	NumOrders int    `json:"num_orders"`
 }
 
 type OrderBook struct {
@@ -128,9 +128,9 @@ func (b *BookEntry) UnmarshalJSON(raw []byte) error {
 }
 
 type BookEntry struct {
-	Price   float64 `json:"price"`
-	Size    float64 `json:"size"`
-	OrderID string  `json:"order_id"`
+	Price   string `json:"price"`
+	Size    string `json:"size"`
+	OrderID string `json:"order_id"`
 }
 
 // HistoricRateFilter holds filters historic rates for a product by date and sets the granularity of the response.
@@ -336,15 +336,110 @@ func (c *Client) GetProductTrades(ctx context.Context, productID ProductID, pagi
 
 // GetHistoricRates retrieves historic rates, as Candles, for a Product. Rates grouped buckets based on requested Granularity.
 // If either one of the start or End fields are not provided then both fields will be ignored.
-// The Granularity is limited to a set of supported Timeslices, one of:
+// The Granularity is limited to a set of supported Time slices, one of:
 //   one minute, five minutes, fifteen minutes, one hour, six hours, or one day.
 func (c *Client) GetHistoricRates(ctx context.Context, productID ProductID, filter HistoricRateFilter) (HistoricRates, error) {
 	var history HistoricRates
-	return history, c.Get(ctx, fmt.Sprintf("/products/%s/candles/%s", productID, query(filter.Params())), &history)
+	err := c.Get(ctx, fmt.Sprintf("/products/%s/candles/%s", productID, query(filter.Params())), &history)
+	if err != nil {
+		return history, err
+	}
+
+	/*normalizedHistory := HistoricRates{nil}
+	var lastCandleTime Time
+	for index, candle := range history.Candles {
+		if index == 0 {
+			normalizedHistory.Candles = append(normalizedHistory.Candles, candle)
+			lastCandleTime = candle.Time
+			continue
+		}
+		_, _, _, _, min, _ := diff(time.Time(candle.Time), time.Time(lastCandleTime))
+		switch filter.Granularity {
+		case Timeslice1Minute:
+			if min > 1 {
+				candleTime := time.Time(candle.Time)
+				for i := 0; i < min; i++ {
+					newTime := candleTime.Add(time.Minute)
+					normalizedHistory.Candles = append(normalizedHistory.Candles, &Candle{
+						Close:  candle.Close,
+						High:   candle.Close,
+						Low:    candle.Close,
+						Open:   candle.Close,
+						Time: 	Time(newTime),
+						Volume: 0,
+					})
+					candleTime = newTime
+				}
+
+				continue
+			}
+			normalizedHistory.Candles = append(normalizedHistory.Candles, candle)
+		case Timeslice5Minutes:
+
+		case Timeslice15Minutes:
+
+		case Timeslice1Hour:
+
+		case Timeslice6Hours:
+
+		case Timeslice1Day:
+
+		}
+		normalizedHistory.Candles = append(normalizedHistory.Candles, candle)
+	}*/
+
+	return history, nil
 }
 
 // GetProductStats retrieves the 24hr stats for a Product. Volume is in base Currency units. Open, High, and Low are in quote Currency units.
 func (c *Client) GetProductStats(ctx context.Context, productID ProductID) (ProductStats, error) {
 	var stats ProductStats
 	return stats, c.Get(ctx, fmt.Sprintf("/products/%s/stats", productID), &stats)
+}
+
+func diff(a, b time.Time) (year, month, day, hour, min, sec int) {
+	if a.Location() != b.Location() {
+		b = b.In(a.Location())
+	}
+	if a.After(b) {
+		a, b = b, a
+	}
+	y1, M1, d1 := a.Date()
+	y2, M2, d2 := b.Date()
+
+	h1, m1, s1 := a.Clock()
+	h2, m2, s2 := b.Clock()
+
+	year = int(y2 - y1)
+	month = int(M2 - M1)
+	day = int(d2 - d1)
+	hour = int(h2 - h1)
+	min = int(m2 - m1)
+	sec = int(s2 - s1)
+
+	// Normalize negative values
+	if sec < 0 {
+		sec += 60
+		min--
+	}
+	if min < 0 {
+		min += 60
+		hour--
+	}
+	if hour < 0 {
+		hour += 24
+		day--
+	}
+	if day < 0 {
+		// days in month:
+		t := time.Date(y1, M1, 32, 0, 0, 0, 0, time.UTC)
+		day += 32 - t.Day()
+		month--
+	}
+	if month < 0 {
+		month += 12
+		year--
+	}
+
+	return
 }

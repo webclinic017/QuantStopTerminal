@@ -1,7 +1,25 @@
 <template>
   <div style="margin-top: 150px;">
     <div class="text-center">
-      <div class="qst-login-logo">QuantstopTerminal</div>
+      <div class="qst-login-logo">
+        <span>Q</span>
+        <span>u</span>
+        <span>a</span>
+        <span>n</span>
+        <span>t</span>
+        <span style="color:#d21515">s</span>
+        <span style="color:#d21515">t</span>
+        <span style="color:#d21515">o</span>
+        <span style="color:#d21515">p</span>
+        <span>T</span>
+        <span>e</span>
+        <span>r</span>
+        <span>m</span>
+        <span>i</span>
+        <span>n</span>
+        <span>a</span>
+        <span>l</span>
+      </div>
       <div class="qst-login-version">{{version.version}}</div>
     </div>
 

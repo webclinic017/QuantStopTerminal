@@ -7,6 +7,7 @@ require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/getlantern/systray v1.2.1
 	github.com/go-sql-driver/mysql v1.6.0
+	github.com/google/uuid v1.3.0 // indirect
 	github.com/gorilla/websocket v1.5.0
 	github.com/lib/pq v1.10.4
 	github.com/mitchellh/mapstructure v1.4.3

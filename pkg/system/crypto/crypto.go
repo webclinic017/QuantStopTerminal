@@ -144,24 +144,24 @@ func CheckCerts(certDir string) error {
 	keyFile := filepath.Join(certDir, "key.pem")
 
 	if !file.Exists(certFile) || !file.Exists(keyFile) {
-		log.Warnln(log.Global, "gRPC certificate/key file missing, recreating...")
+		log.Warnln(log.Global, "TLS certificate/key file missing, recreating...")
 		return genCert(certDir)
 	}
 
 	pemData, err := ioutil.ReadFile(certFile)
 	if err != nil {
-		return fmt.Errorf("unable to open TLS cert file: %s", err)
+		return fmt.Errorf("unable to open TLS certificate file: %s", err)
 	}
 
 	if err = verifyCert(pemData); err != nil {
 		if err != errCertExpired {
 			return err
 		}
-		log.Warnln(log.Global, "gRPC certificate has expired, regenerating...")
+		log.Warnln(log.Global, "TLS certificate has expired, regenerating...")
 		return genCert(certDir)
 	}
 
-	log.Infoln(log.Global, "gRPC TLS certificate and key files exist, will use them.")
+	log.Infoln(log.Global, "TLS certificate and key files exist, will use them.")
 	return nil
 }
 

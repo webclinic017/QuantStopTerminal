@@ -4,6 +4,8 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/base64"
+	"errors"
+	"github.com/quantstop/quantstopterminal/internal/log"
 )
 
 func NewAuth(key string, passphrase string, secret string) *Auth {
@@ -33,8 +35,14 @@ type Auth struct {
 // Sign creates a sha256 HMAC using the base64-decoded Secret key on the pre-hash string
 // `timestamp + method + requestPath + body` (where + represents string concatenation) and then base64 encoding the output.
 func (a *Auth) Sign(message string) (string, error) {
+
+	if a == nil {
+		return "", errors.New("coinbase auth is nil")
+	}
+
 	key, err := base64.StdEncoding.DecodeString(a.Secret)
 	if err != nil {
+		log.Debugf(log.TraderLogger, "auth error decode string: %v", err)
 		return "", err
 	}
 

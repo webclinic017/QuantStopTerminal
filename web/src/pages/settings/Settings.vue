@@ -43,9 +43,9 @@ export default {
 
 <style scoped>
 .nav-link.active {
-  border-right: 1px solid var(--theme-switch-border-color) !important;
-  border-left: 1px solid var(--theme-switch-border-color) !important;
-  border-top: 1px solid var(--theme-switch-border-color) !important;
+  border-right: 1px solid var(--border-color) !important;
+  border-left: 1px solid var(--border-color) !important;
+  border-top: 1px solid var(--border-color) !important;
   background-color: var(--background-color-primary) !important;
 }
 </style>

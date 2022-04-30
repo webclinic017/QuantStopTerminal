@@ -101,7 +101,7 @@ export default {
 .switch-label {
   align-items: center;
   background: var(--theme-switch-background-color);
-  border: calc(var(--element-size) * 0.025) solid var(--theme-switch-border-color);
+  border: calc(var(--element-size) * 0.025) solid var(--border-color);
   border-radius: var(--element-size);
   cursor: pointer;
   display: flex;
@@ -115,7 +115,7 @@ export default {
 }
 
 .switch-label:hover {
-  border: calc(var(--element-size) * 0.025) solid var(--theme-switch-border-color-hover);
+  border: calc(var(--element-size) * 0.025) solid var(--border-color-hover);
 }
 .switch-toggle {
   position: absolute;

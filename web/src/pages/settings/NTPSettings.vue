@@ -69,9 +69,9 @@ export default {
 
 <style scoped>
 .list-group {
-  border-right: 1px solid var(--theme-switch-border-color) !important;
-  border-left: 1px solid var(--theme-switch-border-color) !important;
-  border-bottom: 1px solid var(--theme-switch-border-color) !important;
+  border-right: 1px solid var(--border-color) !important;
+  border-left: 1px solid var(--border-color) !important;
+  border-bottom: 1px solid var(--border-color) !important;
   border-radius: 0 0 .25rem .25rem;
 }
 </style>

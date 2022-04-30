@@ -97,7 +97,7 @@ export default {
 
 /* Handle */
 ::-webkit-scrollbar-thumb {
-  border-color: var(--theme-switch-border-color);
+  border-color: var(--border-color);
   border-radius: 10px;
   background: var(--background-color-primary);
 }

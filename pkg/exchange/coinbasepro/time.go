@@ -10,12 +10,14 @@ import (
 // Timestamps
 //
 // The docs read:
-// Unless otherwise specified, all timestamps from API are returned in ISO 8601 with microseconds. Make sure you can
-// parse the following ISO 8601 format. Most modern languages and libraries will handle this without issues.
-// `2014-11-06T10:34:47.123456Z`
+// Unless otherwise specified, all timestamps from API are returned as ISO 8601 with microseconds.
+// Make sure you can parse the following ISO 8601 format.
+// Most modern languages and libraries will handle this without issues.
 //
-// As far as I can tell, this is misleading. There are several flavors of time/timestamp and little documentation of
-// when any one flavor appears.
+//     `2014-11-06T10:34:47.123456Z`
+//
+// As far as I can tell, this is misleading.
+// There are several flavors of time/timestamp and little documentation of when which one appears.
 
 type Time time.Time
 

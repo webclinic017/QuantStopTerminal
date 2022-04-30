@@ -151,12 +151,12 @@ export default {
 
   color: var(--text-primary-color) !important;
   background-color: var(--background-color-primary) !important;
-  border-right: 1px solid var(--theme-switch-border-color);
+  border-right: 1px solid var(--border-color);
 }
 #sidebarMenu {
   color: var(--text-primary-color) !important;
   background-color: var(--background-color-primary) !important;
-  border-right: 1px solid var(--theme-switch-border-color);
+  border-right: 1px solid var(--border-color);
 }
 </style>
 

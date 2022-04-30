@@ -128,7 +128,7 @@ export default {
 .toggle {
   cursor: pointer;
   background: var(--background-color-secondary);
-  border: 1px solid var(--theme-switch-border-color);
+  border: 1px solid var(--border-color);
   border-radius: 200px;
   padding: 0;
   transition: background 0.6s;

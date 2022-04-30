@@ -1,8 +1,11 @@
 package engine
 
 import (
+	"github.com/quantstop/quantstopterminal/internal/database/models"
 	"github.com/quantstop/quantstopterminal/internal/log"
 	"github.com/quantstop/quantstopterminal/internal/trader"
+	"github.com/quantstop/quantstopterminal/pkg/exchange"
+	"github.com/quantstop/quantstopterminal/pkg/exchange/coinbasepro"
 
 	//"github.com/quantstop/quantstopterminal/internal/strategy"
 	"sync"
@@ -18,6 +21,7 @@ func (s *TraderSubsystem) init(bot *Engine, name string) error {
 		return err
 	}
 	/*s.enabled = bot.Config*/
+
 	s.enabled = true
 	s.initialized = true
 	log.Debugln(log.TraderLogger, s.name+MsgSubsystemInitialized)
@@ -50,6 +54,28 @@ func (s *TraderSubsystem) run() error {
 	if err != nil {
 		return err
 	}
+
+	e := models.CryptoExchange{}
+	err = e.GetCryptoExchangeByName(db, "coinbasepro")
+	if err != nil {
+		log.Error(log.TraderLogger, err)
+		return err
+	}
+
+	//Create a client instance
+	exchange.Coinbasepro, err = coinbasepro.NewSandboxClient(
+		&coinbasepro.Auth{
+			Key:        e.AuthKey,
+			Passphrase: e.AuthPassphrase,
+			Secret:     e.AuthSecret,
+		},
+	)
+	if err != nil {
+		log.Error(log.TraderLogger, err)
+		return err
+	}
+
 	go trader.Run(db, s.bot.Webserver.Hub)
+
 	return nil
 }

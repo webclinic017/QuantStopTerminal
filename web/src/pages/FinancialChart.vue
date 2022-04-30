@@ -1,17 +1,60 @@
 <template>
-  <div class="qst-body chart">
+<div class="h-100" style="display: flex">
+
+  <!-- Chart -->
+  <div class="chart-container">
 
     <!-- Top Toolbar -->
     <div class="chart-top-bar">
-      <div class="logo"></div>
-      <span class="period false">Line</span>
+
+      <!-- Connection Light / Button -->
+      <div class="connection-status" @click="toggleConnectDataStream">
+        <StatusIndicator :value=dataConnected :height=15 :width=15></StatusIndicator>
+      </div>
+
+      <!-- Connection Status Message / Time -->
+      <div class="icon-wrapper connection-time">
+        <span v-if="!dataConnected" class="connection-message" style="color: red">
+          Disconnected <br>
+          *simulated data
+        </span>
+        <span v-if="dataConnected" class="connection-message" style="color: green">
+          {{ this.date }} <br>
+          {{ this.time }}
+        </span>
+      </div>
+
+      <!-- Exchange Select -->
+      <div class="icon-wrapper">
+        <Dropdown
+            :options="exchanges"
+            v-on:selected="onExchangeSelected"
+            v-on:filter="getExchangeValues"
+            :disabled="false"
+            placeholder="Please an exchange">
+        </Dropdown>
+      </div>
+
+      <!-- Product Select -->
+      <div class="icon-wrapper">
+        <Dropdown
+            :options="products"
+            v-on:selected="onProductSelected"
+            v-on:filter="getProductValues"
+            :disabled="false"
+            placeholder="Please a product">
+        </Dropdown>
+      </div>
+
+      <!-- Periods -->
+<!--      <span class="period false">Line</span>
       <span class="period false">1m</span>
       <span class="period selected">5m</span>
       <span class="period false">30m</span>
       <span class="period false">1H</span>
       <span class="period false">6H</span>
       <span class="period false">1D</span>
-      <span class="period false">1W</span>
+      <span class="period false">1W</span>-->
 
       <!-- Indicators -->
       <div class="icon-wrapper dropdown" >
@@ -55,18 +98,6 @@
             {{type.name}}
           </label></li>
         </ul>
-      </div>
-
-      <!-- Timezone -->
-      <div class="icon-wrapper">
-        <a type="button" class="d-flex align-items-center">
-          <svg viewBox="0 0 1024 1024">
-            <path d="M860.16 452.096c-9.216-100.352-54.784-193.536-129.536-261.632C655.36 121.856 558.08 83.456 456.192 83.456c-54.784 0-107.52 10.752-157.696 31.744-0.512 0-0.512 0.512-1.024 0.512s-0.512 0.512-1.024 0.512c-47.616 20.48-90.112 49.152-126.976 86.016-37.376 37.376-66.56 80.384-87.04 129.024-20.48 49.664-31.232 102.912-31.232 157.696 0 35.328 4.608 69.632 13.312 102.912 0 1.024 0.512 2.048 1.024 3.072 17.92 65.536 51.712 125.952 100.352 176.128 62.976 64.512 143.872 105.472 231.424 118.272 1.024 0 1.536 0.512 2.56 0.512 14.336 2.048 29.184 3.584 44.032 3.584h9.216c17.408 0 50.688-1.536 78.336-11.264 7.168-2.56 12.8-7.68 15.872-14.336s3.584-14.336 1.024-21.504c-4.096-11.264-14.848-18.944-26.624-18.944-3.072 0-6.656 0.512-9.728 1.536-20.48 7.168-48.128 8.192-59.392 8.192h-4.608c4.608-12.8 6.144-27.136 2.56-41.984-6.656-26.624-28.16-49.152-68.608-71.168l-16.896-9.216c-27.136-14.336-41.984-22.016-50.688-33.792-8.704-11.776-14.848-30.208-22.528-71.168-5.632-27.648-20.48-49.152-44.032-61.44-15.872-8.192-34.816-12.8-57.344-12.8-15.872 0-33.28 2.048-51.712 6.144-9.216 2.048-17.92 4.608-25.6 6.656-3.584-19.456-5.12-39.936-5.12-60.416 0-123.392 64-231.424 160.768-293.888 0.512 11.264 3.072 23.04 8.192 34.304 13.312 28.16 40.448 46.08 80.384 53.76 2.048 0.512 3.584 0.512 5.12 0.512h2.048c3.584 0 16.896 0.512 30.72 5.632 18.944 7.68 29.696 20.48 33.28 40.448 8.704 63.488 18.432 177.664 6.144 214.528-1.024 3.072-1.536 6.144-1.536 9.216 0 15.36 12.8 28.16 28.16 28.16 7.68 0 14.848-3.072 19.968-8.192s120.32-121.856 151.04-160.768c3.584-4.608 7.168-8.704 11.264-13.312 14.848-17.408 30.208-34.816 35.84-60.928 6.656-28.16 0-59.392-19.968-97.792-14.336-27.648-16.896-39.936-17.408-44.544 0.512-0.512 1.536-1.024 2.56-1.536 88.064 56.32 148.992 151.04 159.232 262.656 1.536 14.848 13.312 25.6 28.16 25.6h2.56c15.36-0.512 26.624-13.824 25.6-29.696zM190.464 592.896c12.8 0 23.04 2.048 30.72 6.144 8.192 4.608 12.8 11.264 14.848 22.528 8.704 43.52 16.384 72.704 33.28 94.72 16.384 21.504 37.376 32.256 69.12 49.152l1.024 0.512c4.608 2.56 10.24 5.12 15.36 8.192 32.256 17.408 39.424 29.184 40.96 34.816 1.536 5.632-2.048 13.824-6.656 22.016-123.392-23.552-222.208-111.104-262.144-227.328 18.432-5.12 42.496-10.752 63.488-10.752zM609.28 266.752c27.648 53.248 15.36 67.584-9.216 96.256-4.096 4.608-8.192 9.216-12.288 14.336-15.36 19.456-55.808 61.952-91.136 98.816 0-17.92-1.024-38.4-2.56-60.416-3.584-50.176-9.728-92.672-9.728-94.208v-1.536c-7.68-40.448-31.744-69.632-70.144-83.968-21.504-8.192-41.472-9.216-49.152-9.216C345.088 222.72 332.8 215.04 327.68 204.8c-6.144-12.288-2.048-30.208 2.048-41.472 39.424-15.36 81.92-24.064 126.464-24.064 48.128 0 94.208 9.728 136.192 27.136-3.072 5.632-5.632 12.288-6.656 20.48-2.048 19.968 5.12 44.544 23.552 79.872z"></path>
-            <path d="M715.264 477.696C600.576 477.696 506.88 570.88 506.88 686.08s93.184 208.384 208.384 208.384 208.384-93.184 208.384-208.384-93.696-208.384-208.384-208.384z m0 359.936c-83.456 0-152.064-68.096-152.064-152.064s68.096-152.064 152.064-152.064 152.064 68.096 152.064 152.064-68.608 152.064-152.064 152.064z"></path>
-            <path d="M735.744 693.76v-96.256c0-15.36-12.8-28.16-28.16-28.16s-28.16 12.8-28.16 28.16v108.032c0 7.68 3.072 14.336 8.192 19.968l50.688 51.2c5.12 5.12 12.288 8.192 19.968 8.192s14.336-3.072 19.968-8.192c5.12-5.12 8.192-12.288 8.192-19.968s-3.072-14.848-8.192-19.968l-42.496-43.008z"></path>
-          </svg>
-          <span>Timezone</span>
-        </a>
       </div>
 
       <!-- Style -->
@@ -262,13 +293,14 @@
                 <div class="accordion-body">Placeholder content for this accordion, which is intended to demonstrate the <code>.accordion-flush</code> class. This is the seventh item's accordion body. Nothing more exciting happening here in terms of content, but just filling up the space to make it look, at least at first glance, a bit more representative of how this would look in a real-world application.</div>
               </div>
             </div>
+
           </div>
 
         </div>
 
       </div>
 
-      <!-- Screenshot -->
+      <!-- Screenshot Button -->
       <div class="icon-wrapper">
         <a type="button" class="d-flex align-items-center">
           <svg viewBox="0 0 1024 1024">
@@ -280,21 +312,9 @@
         </a>
       </div>
 
-      <!-- Mark -->
-      <div class="icon-wrapper" style="border-right-width: 1px;">
-        <a type="button" class="d-flex align-items-center">
-          <div class="switch ">
-            <i class="switch-inner switch-inner-turn-on"></i>
-          </div>
-          <span>Mark</span>
-        </a>
-      </div>
-
-      <span style="color: rgb(239, 83, 80); padding-left: 16px;">* Chart showing simulated data</span>
-
     </div>
 
-    <!-- Chart Container -->
+    <!-- Chart Content -->
     <div class="chart-content">
 
       <!-- Drawing Tools -->
@@ -421,64 +441,64 @@
         <div class="icon-wrapper" v-on:click="setShapeType('circle')" style="padding: 2px;">
           <svg viewBox="0 0 59.94 59.94">
             <path d="M30.694,59.94c-1.078,0-1.967-0.857-1.998-1.941c-0.032-1.104,0.837-2.025,1.94-2.058c0.314-0.009,0.628-0.022,0.939-0.042
-          c1.12-0.084,2.051,0.771,2.119,1.873c0.068,1.103-0.771,2.052-1.873,2.119c-0.354,0.021-0.711,0.037-1.068,0.048
-          C30.733,59.94,30.714,59.94,30.694,59.94z M24.696,59.468c-0.121,0-0.244-0.011-0.368-0.034c-0.356-0.066-0.71-0.139-1.062-0.219
-          c-1.077-0.245-1.752-1.317-1.507-2.394c0.245-1.077,1.319-1.751,2.394-1.507c0.301,0.068,0.604,0.131,0.907,0.188
-          c1.086,0.202,1.803,1.246,1.6,2.332C26.481,58.796,25.64,59.468,24.696,59.468z M37.63,58.88c-0.872,0-1.673-0.574-1.923-1.455
-          c-0.302-1.063,0.314-2.168,1.378-2.47c0.299-0.085,0.595-0.176,0.89-0.271c1.054-0.339,2.179,0.233,2.521,1.284
-          c0.341,1.05-0.233,2.179-1.284,2.521c-0.342,0.111-0.687,0.216-1.034,0.314C37.995,58.855,37.81,58.88,37.63,58.88z M18.013,57.318
-          c-0.284,0-0.572-0.061-0.847-0.188c-0.327-0.153-0.651-0.312-0.972-0.477c-0.982-0.506-1.369-1.712-0.863-2.693
-          c0.505-0.981,1.711-1.368,2.693-0.863c0.275,0.142,0.555,0.278,0.837,0.41c1,0.468,1.432,1.659,0.964,2.659
-          C19.486,56.892,18.765,57.318,18.013,57.318z M44.087,56.122c-0.688,0-1.356-0.354-1.729-0.991
-          c-0.558-0.953-0.236-2.178,0.718-2.735c0.267-0.156,0.53-0.318,0.791-0.484c0.934-0.594,2.168-0.318,2.762,0.613
-          c0.593,0.932,0.318,2.168-0.613,2.762c-0.304,0.193-0.61,0.381-0.922,0.563C44.777,56.034,44.429,56.122,44.087,56.122z
-          M12.08,53.564c-0.449,0-0.9-0.15-1.273-0.458c-0.277-0.229-0.551-0.464-0.819-0.703c-0.825-0.734-0.898-1.998-0.163-2.823
-          c0.732-0.824,1.998-0.899,2.823-0.163c0.231,0.206,0.468,0.407,0.708,0.605c0.852,0.704,0.971,1.965,0.268,2.816
-          C13.227,53.317,12.655,53.564,12.08,53.564z M49.644,51.843c-0.514,0-1.026-0.196-1.417-0.589c-0.779-0.782-0.777-2.049,0.006-2.828
-          c0.222-0.221,0.439-0.445,0.654-0.674c0.757-0.804,2.021-0.843,2.827-0.087c0.805,0.756,0.844,2.022,0.087,2.827
-          c-0.244,0.26-0.493,0.516-0.746,0.768C50.666,51.649,50.155,51.843,49.644,51.843z M7.271,48.456c-0.617,0-1.227-0.284-1.618-0.821
-          c-0.211-0.29-0.418-0.585-0.618-0.881c-0.617-0.916-0.376-2.159,0.539-2.777c0.917-0.618,2.159-0.376,2.777,0.539
-          c0.173,0.257,0.351,0.511,0.534,0.762c0.65,0.893,0.455,2.144-0.438,2.795C8.093,48.331,7.679,48.456,7.271,48.456z M53.967,46.316
-          c-0.349,0-0.701-0.091-1.022-0.282c-0.949-0.566-1.259-1.794-0.693-2.742c0.16-0.269,0.315-0.539,0.466-0.813
-          c0.531-0.968,1.747-1.322,2.717-0.789c0.968,0.532,1.321,1.748,0.789,2.717c-0.174,0.315-0.353,0.627-0.536,0.935
-          C55.311,45.968,54.648,46.316,53.967,46.316z M3.882,42.312c-0.797,0-1.549-0.479-1.86-1.265c-0.132-0.332-0.259-0.669-0.379-1.008
-          c-0.369-1.041,0.175-2.185,1.216-2.554c1.039-0.369,2.184,0.174,2.554,1.216c0.104,0.294,0.214,0.584,0.328,0.873
-          c0.407,1.026-0.096,2.188-1.123,2.596C4.376,42.266,4.127,42.312,3.882,42.312z M56.779,39.885c-0.186,0-0.374-0.026-0.562-0.081
-          c-1.06-0.31-1.669-1.42-1.359-2.48c0.087-0.299,0.17-0.601,0.248-0.904c0.272-1.068,1.357-1.721,2.433-1.442
-          c1.069,0.272,1.716,1.362,1.442,2.433c-0.088,0.347-0.184,0.691-0.283,1.035C58.443,39.318,57.645,39.885,56.779,39.885z
-          M2.133,35.515c-0.992,0-1.853-0.738-1.981-1.748c-0.045-0.357-0.084-0.716-0.115-1.078c-0.097-1.101,0.718-2.07,1.818-2.166
-          c1.122-0.112,2.07,0.719,2.166,1.818c0.027,0.31,0.061,0.617,0.1,0.922c0.139,1.096-0.637,2.097-1.732,2.236
-          C2.302,35.51,2.217,35.515,2.133,35.515z M57.895,32.956c-0.023,0-0.047,0-0.071-0.001c-1.104-0.039-1.967-0.965-1.929-2.069
-          c0.011-0.311,0.017-0.622,0.017-0.935v-0.113c0-1.104,0.896-2,2-2s2,0.896,2,2v0.113c0,0.359-0.006,0.718-0.019,1.075
-          C59.855,32.106,58.968,32.956,57.895,32.956z M2.125,28.497c-0.082,0-0.164-0.005-0.247-0.015c-1.096-0.135-1.876-1.133-1.741-2.229
-          c0.044-0.356,0.094-0.711,0.149-1.062c0.172-1.092,1.198-1.837,2.286-1.665c1.092,0.172,1.837,1.195,1.665,2.286
-          c-0.048,0.308-0.092,0.617-0.13,0.929C3.982,27.754,3.12,28.497,2.125,28.497z M57.249,25.855c-0.918,0-1.745-0.636-1.951-1.57
-          c-0.067-0.303-0.14-0.605-0.217-0.904c-0.278-1.069,0.363-2.161,1.433-2.438c1.072-0.28,2.161,0.364,2.438,1.433
-          c0.091,0.348,0.175,0.697,0.252,1.051c0.237,1.078-0.444,2.146-1.523,2.383C57.536,25.84,57.391,25.855,57.249,25.855z M3.84,21.693
-          c-0.242,0-0.49-0.045-0.729-0.14c-1.028-0.403-1.535-1.563-1.131-2.592c0.132-0.337,0.27-0.671,0.413-1
-          c0.441-1.012,1.616-1.476,2.633-1.033c1.013,0.441,1.475,1.62,1.033,2.633c-0.124,0.284-0.242,0.571-0.356,0.861
-          C5.393,21.211,4.638,21.693,3.84,21.693z M54.887,19.249c-0.732,0-1.438-0.402-1.788-1.101c-0.139-0.275-0.283-0.546-0.433-0.814
-          c-0.536-0.966-0.188-2.184,0.778-2.72c0.966-0.534,2.183-0.187,2.72,0.778c0.175,0.315,0.345,0.635,0.507,0.957
-          c0.497,0.987,0.1,2.189-0.887,2.686C55.496,19.18,55.189,19.249,54.887,19.249z M7.206,15.532c-0.406,0-0.815-0.123-1.17-0.379
-          C5.14,14.505,4.94,13.255,5.587,12.36c0.211-0.292,0.428-0.58,0.65-0.865c0.682-0.871,1.938-1.022,2.808-0.343
-          c0.87,0.681,1.023,1.938,0.343,2.808c-0.191,0.245-0.377,0.493-0.559,0.744C8.437,15.245,7.826,15.532,7.206,15.532z M50.95,13.445
-          c-0.557,0-1.109-0.23-1.505-0.682c-0.205-0.233-0.413-0.461-0.625-0.686c-0.761-0.802-0.727-2.067,0.075-2.827
-          s2.068-0.727,2.827,0.075c0.249,0.262,0.492,0.528,0.73,0.801c0.729,0.831,0.645,2.095-0.186,2.822
-          C51.887,13.282,51.418,13.445,50.95,13.445z M12.002,10.404c-0.574,0-1.145-0.246-1.54-0.723C9.757,8.831,9.874,7.57,10.723,6.865
-          c0.275-0.229,0.555-0.451,0.837-0.67c0.871-0.676,2.127-0.518,2.806,0.356c0.677,0.873,0.518,2.129-0.356,2.806
-          c-0.247,0.191-0.491,0.387-0.731,0.586C12.904,10.253,12.452,10.404,12.002,10.404z M45.689,8.796c-0.389,0-0.781-0.113-1.126-0.349
-          c-0.257-0.175-0.516-0.345-0.778-0.51c-0.936-0.588-1.217-1.823-0.629-2.758c0.588-0.936,1.825-1.217,2.758-0.629
-          c0.306,0.192,0.607,0.39,0.905,0.594c0.912,0.623,1.146,1.867,0.523,2.779C46.956,8.492,46.328,8.796,45.689,8.796z M17.915,6.631
-          c-0.749,0-1.468-0.423-1.81-1.146c-0.472-0.999-0.045-2.191,0.954-2.663c0.323-0.152,0.649-0.3,0.978-0.44
-          c1.015-0.44,2.191,0.032,2.627,1.047c0.437,1.015-0.032,2.191-1.047,2.627c-0.285,0.123-0.568,0.251-0.849,0.384
-          C18.492,6.57,18.201,6.631,17.915,6.631z M39.439,5.605c-0.225,0-0.453-0.038-0.676-0.119c-0.293-0.104-0.589-0.205-0.888-0.301
-          c-1.052-0.336-1.633-1.461-1.297-2.514c0.336-1.052,1.459-1.634,2.514-1.297c0.344,0.109,0.685,0.226,1.022,0.348
-          c1.04,0.373,1.58,1.519,1.206,2.558C41.028,5.096,40.26,5.605,39.439,5.605z M24.58,4.454c-0.941,0-1.78-0.667-1.963-1.626
-          c-0.206-1.085,0.506-2.132,1.591-2.339c0.352-0.066,0.706-0.129,1.062-0.183c1.093-0.164,2.112,0.582,2.279,1.674
-          s-0.582,2.112-1.674,2.279c-0.309,0.048-0.614,0.101-0.919,0.159C24.83,4.442,24.704,4.454,24.58,4.454z M32.59,4.076
-          c-0.063,0-0.126-0.003-0.189-0.009c-0.309-0.029-0.618-0.053-0.931-0.07c-1.103-0.064-1.944-1.011-1.881-2.113
-          c0.064-1.103,1.004-1.936,2.113-1.881c0.359,0.021,0.718,0.049,1.073,0.082c1.1,0.104,1.907,1.079,1.804,2.179
-          C34.481,3.299,33.61,4.076,32.59,4.076z"
+        c1.12-0.084,2.051,0.771,2.119,1.873c0.068,1.103-0.771,2.052-1.873,2.119c-0.354,0.021-0.711,0.037-1.068,0.048
+        C30.733,59.94,30.714,59.94,30.694,59.94z M24.696,59.468c-0.121,0-0.244-0.011-0.368-0.034c-0.356-0.066-0.71-0.139-1.062-0.219
+        c-1.077-0.245-1.752-1.317-1.507-2.394c0.245-1.077,1.319-1.751,2.394-1.507c0.301,0.068,0.604,0.131,0.907,0.188
+        c1.086,0.202,1.803,1.246,1.6,2.332C26.481,58.796,25.64,59.468,24.696,59.468z M37.63,58.88c-0.872,0-1.673-0.574-1.923-1.455
+        c-0.302-1.063,0.314-2.168,1.378-2.47c0.299-0.085,0.595-0.176,0.89-0.271c1.054-0.339,2.179,0.233,2.521,1.284
+        c0.341,1.05-0.233,2.179-1.284,2.521c-0.342,0.111-0.687,0.216-1.034,0.314C37.995,58.855,37.81,58.88,37.63,58.88z M18.013,57.318
+        c-0.284,0-0.572-0.061-0.847-0.188c-0.327-0.153-0.651-0.312-0.972-0.477c-0.982-0.506-1.369-1.712-0.863-2.693
+        c0.505-0.981,1.711-1.368,2.693-0.863c0.275,0.142,0.555,0.278,0.837,0.41c1,0.468,1.432,1.659,0.964,2.659
+        C19.486,56.892,18.765,57.318,18.013,57.318z M44.087,56.122c-0.688,0-1.356-0.354-1.729-0.991
+        c-0.558-0.953-0.236-2.178,0.718-2.735c0.267-0.156,0.53-0.318,0.791-0.484c0.934-0.594,2.168-0.318,2.762,0.613
+        c0.593,0.932,0.318,2.168-0.613,2.762c-0.304,0.193-0.61,0.381-0.922,0.563C44.777,56.034,44.429,56.122,44.087,56.122z
+        M12.08,53.564c-0.449,0-0.9-0.15-1.273-0.458c-0.277-0.229-0.551-0.464-0.819-0.703c-0.825-0.734-0.898-1.998-0.163-2.823
+        c0.732-0.824,1.998-0.899,2.823-0.163c0.231,0.206,0.468,0.407,0.708,0.605c0.852,0.704,0.971,1.965,0.268,2.816
+        C13.227,53.317,12.655,53.564,12.08,53.564z M49.644,51.843c-0.514,0-1.026-0.196-1.417-0.589c-0.779-0.782-0.777-2.049,0.006-2.828
+        c0.222-0.221,0.439-0.445,0.654-0.674c0.757-0.804,2.021-0.843,2.827-0.087c0.805,0.756,0.844,2.022,0.087,2.827
+        c-0.244,0.26-0.493,0.516-0.746,0.768C50.666,51.649,50.155,51.843,49.644,51.843z M7.271,48.456c-0.617,0-1.227-0.284-1.618-0.821
+        c-0.211-0.29-0.418-0.585-0.618-0.881c-0.617-0.916-0.376-2.159,0.539-2.777c0.917-0.618,2.159-0.376,2.777,0.539
+        c0.173,0.257,0.351,0.511,0.534,0.762c0.65,0.893,0.455,2.144-0.438,2.795C8.093,48.331,7.679,48.456,7.271,48.456z M53.967,46.316
+        c-0.349,0-0.701-0.091-1.022-0.282c-0.949-0.566-1.259-1.794-0.693-2.742c0.16-0.269,0.315-0.539,0.466-0.813
+        c0.531-0.968,1.747-1.322,2.717-0.789c0.968,0.532,1.321,1.748,0.789,2.717c-0.174,0.315-0.353,0.627-0.536,0.935
+        C55.311,45.968,54.648,46.316,53.967,46.316z M3.882,42.312c-0.797,0-1.549-0.479-1.86-1.265c-0.132-0.332-0.259-0.669-0.379-1.008
+        c-0.369-1.041,0.175-2.185,1.216-2.554c1.039-0.369,2.184,0.174,2.554,1.216c0.104,0.294,0.214,0.584,0.328,0.873
+        c0.407,1.026-0.096,2.188-1.123,2.596C4.376,42.266,4.127,42.312,3.882,42.312z M56.779,39.885c-0.186,0-0.374-0.026-0.562-0.081
+        c-1.06-0.31-1.669-1.42-1.359-2.48c0.087-0.299,0.17-0.601,0.248-0.904c0.272-1.068,1.357-1.721,2.433-1.442
+        c1.069,0.272,1.716,1.362,1.442,2.433c-0.088,0.347-0.184,0.691-0.283,1.035C58.443,39.318,57.645,39.885,56.779,39.885z
+        M2.133,35.515c-0.992,0-1.853-0.738-1.981-1.748c-0.045-0.357-0.084-0.716-0.115-1.078c-0.097-1.101,0.718-2.07,1.818-2.166
+        c1.122-0.112,2.07,0.719,2.166,1.818c0.027,0.31,0.061,0.617,0.1,0.922c0.139,1.096-0.637,2.097-1.732,2.236
+        C2.302,35.51,2.217,35.515,2.133,35.515z M57.895,32.956c-0.023,0-0.047,0-0.071-0.001c-1.104-0.039-1.967-0.965-1.929-2.069
+        c0.011-0.311,0.017-0.622,0.017-0.935v-0.113c0-1.104,0.896-2,2-2s2,0.896,2,2v0.113c0,0.359-0.006,0.718-0.019,1.075
+        C59.855,32.106,58.968,32.956,57.895,32.956z M2.125,28.497c-0.082,0-0.164-0.005-0.247-0.015c-1.096-0.135-1.876-1.133-1.741-2.229
+        c0.044-0.356,0.094-0.711,0.149-1.062c0.172-1.092,1.198-1.837,2.286-1.665c1.092,0.172,1.837,1.195,1.665,2.286
+        c-0.048,0.308-0.092,0.617-0.13,0.929C3.982,27.754,3.12,28.497,2.125,28.497z M57.249,25.855c-0.918,0-1.745-0.636-1.951-1.57
+        c-0.067-0.303-0.14-0.605-0.217-0.904c-0.278-1.069,0.363-2.161,1.433-2.438c1.072-0.28,2.161,0.364,2.438,1.433
+        c0.091,0.348,0.175,0.697,0.252,1.051c0.237,1.078-0.444,2.146-1.523,2.383C57.536,25.84,57.391,25.855,57.249,25.855z M3.84,21.693
+        c-0.242,0-0.49-0.045-0.729-0.14c-1.028-0.403-1.535-1.563-1.131-2.592c0.132-0.337,0.27-0.671,0.413-1
+        c0.441-1.012,1.616-1.476,2.633-1.033c1.013,0.441,1.475,1.62,1.033,2.633c-0.124,0.284-0.242,0.571-0.356,0.861
+        C5.393,21.211,4.638,21.693,3.84,21.693z M54.887,19.249c-0.732,0-1.438-0.402-1.788-1.101c-0.139-0.275-0.283-0.546-0.433-0.814
+        c-0.536-0.966-0.188-2.184,0.778-2.72c0.966-0.534,2.183-0.187,2.72,0.778c0.175,0.315,0.345,0.635,0.507,0.957
+        c0.497,0.987,0.1,2.189-0.887,2.686C55.496,19.18,55.189,19.249,54.887,19.249z M7.206,15.532c-0.406,0-0.815-0.123-1.17-0.379
+        C5.14,14.505,4.94,13.255,5.587,12.36c0.211-0.292,0.428-0.58,0.65-0.865c0.682-0.871,1.938-1.022,2.808-0.343
+        c0.87,0.681,1.023,1.938,0.343,2.808c-0.191,0.245-0.377,0.493-0.559,0.744C8.437,15.245,7.826,15.532,7.206,15.532z M50.95,13.445
+        c-0.557,0-1.109-0.23-1.505-0.682c-0.205-0.233-0.413-0.461-0.625-0.686c-0.761-0.802-0.727-2.067,0.075-2.827
+        s2.068-0.727,2.827,0.075c0.249,0.262,0.492,0.528,0.73,0.801c0.729,0.831,0.645,2.095-0.186,2.822
+        C51.887,13.282,51.418,13.445,50.95,13.445z M12.002,10.404c-0.574,0-1.145-0.246-1.54-0.723C9.757,8.831,9.874,7.57,10.723,6.865
+        c0.275-0.229,0.555-0.451,0.837-0.67c0.871-0.676,2.127-0.518,2.806,0.356c0.677,0.873,0.518,2.129-0.356,2.806
+        c-0.247,0.191-0.491,0.387-0.731,0.586C12.904,10.253,12.452,10.404,12.002,10.404z M45.689,8.796c-0.389,0-0.781-0.113-1.126-0.349
+        c-0.257-0.175-0.516-0.345-0.778-0.51c-0.936-0.588-1.217-1.823-0.629-2.758c0.588-0.936,1.825-1.217,2.758-0.629
+        c0.306,0.192,0.607,0.39,0.905,0.594c0.912,0.623,1.146,1.867,0.523,2.779C46.956,8.492,46.328,8.796,45.689,8.796z M17.915,6.631
+        c-0.749,0-1.468-0.423-1.81-1.146c-0.472-0.999-0.045-2.191,0.954-2.663c0.323-0.152,0.649-0.3,0.978-0.44
+        c1.015-0.44,2.191,0.032,2.627,1.047c0.437,1.015-0.032,2.191-1.047,2.627c-0.285,0.123-0.568,0.251-0.849,0.384
+        C18.492,6.57,18.201,6.631,17.915,6.631z M39.439,5.605c-0.225,0-0.453-0.038-0.676-0.119c-0.293-0.104-0.589-0.205-0.888-0.301
+        c-1.052-0.336-1.633-1.461-1.297-2.514c0.336-1.052,1.459-1.634,2.514-1.297c0.344,0.109,0.685,0.226,1.022,0.348
+        c1.04,0.373,1.58,1.519,1.206,2.558C41.028,5.096,40.26,5.605,39.439,5.605z M24.58,4.454c-0.941,0-1.78-0.667-1.963-1.626
+        c-0.206-1.085,0.506-2.132,1.591-2.339c0.352-0.066,0.706-0.129,1.062-0.183c1.093-0.164,2.112,0.582,2.279,1.674
+        s-0.582,2.112-1.674,2.279c-0.309,0.048-0.614,0.101-0.919,0.159C24.83,4.442,24.704,4.454,24.58,4.454z M32.59,4.076
+        c-0.063,0-0.126-0.003-0.189-0.009c-0.309-0.029-0.618-0.053-0.931-0.07c-1.103-0.064-1.944-1.011-1.881-2.113
+        c0.064-1.103,1.004-1.936,2.113-1.881c0.359,0.021,0.718,0.049,1.073,0.082c1.1,0.104,1.907,1.079,1.804,2.179
+        C34.481,3.299,33.61,4.076,32.59,4.076z"
             />
           </svg>
         </div>
@@ -492,56 +512,115 @@
       </div>
 
       <!-- Chart -->
-      <div id="chart" class="chart-widget"
-        v-bind:style="{
-          backgroundColor: themeStore.theme === 'dark' ? chartStyle.themes.dark.chartBackgroundColor : chartStyle.themes.light.chartBackgroundColor
-        }"
-      />
+      <div id="chart" class="chart" v-bind:style="{backgroundColor: themeStore.theme === 'dark' ? chartStyle.themes.dark.chartBackgroundColor : chartStyle.themes.light.chartBackgroundColor}"/>
 
     </div>
 
-    <!-- Modal -->
-    <!--    <div class="modal fade" id="indicatorsModal" tabindex="-1" aria-labelledby="indicatorsModalLabel" aria-hidden="true">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="indicatorsModalLabel">Indicators</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-          <div class="modal-body">
+  </div>
 
-            <div class="list-group">
-              <label class="list-group-item" v-for="type in mainTechnicalIndicatorTypes">
-                <input
-                    :key="type.name"
-                    v-on:click="setCandleTechnicalIndicator(type)"
-                    class="form-check-input me-1"
-                    type="checkbox"
-                    v-model="type.checked"
-                >
-                {{type.name}}
-              </label>
-              <label class="list-group-item">
-                <input
-                    v-on:click="setCandleTechnicalIndicator(customEmojiIndicatorTypes)"
-                    class="form-check-input me-1"
-                    type="checkbox"
-                    v-model="customEmojiIndicatorTypes.checked"
-                >
-                Custom Indicator
-              </label>
-            </div>
+  <!-- Orderbook -->
+  <div class="orderbook">
 
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-            <button type="button" class="btn btn-primary">Save changes</button>
-          </div>
+    <div class="orderbook-header-container row p-0 m-0 flex-row justify-content-center">
+      <div class="orderbook-header d-flex align-items-center">
+        <h6 class="m-0">Orderbook</h6>
+      </div>
+    </div>
+
+    <div class="mid-market-container">
+        <span class="mid-market-price">
+          {{ midpoint }}
+        </span>
+        <span class="mid-market-price-text">
+          Mid Market Price
+        </span>
+    </div>
+
+    <div class="bid-ask-header-container row p-0 m-0 flex-row">
+      <div class="col-sm-6 col-sm-push-6 p-0">
+        <div class="bid-header d-flex justify-content-between">
+          <h6 class="l2-size-header">Size</h6>
+          <h6 class="l2-bid-header">Bid</h6>
         </div>
       </div>
-    </div>-->
+      <div class="col-sm-6 col-sm-pull-6 p-0">
+        <div class="ask-header d-flex justify-content-between">
+          <h6 class="l2-ask-header">Ask</h6>
+          <h6 class="l2-size-header">Size</h6>
+        </div>
+      </div>
+    </div>
+
+    <div class="orderbook-row-container row p-0 m-0 flex-row">
+      <div class="col-sm-6 col-sm-push-6 p-0">
+        <ul id="bids" ref="bids">
+          <li v-for="bid in sortHighestToLowest(bids)" class="bid">
+            <div class="d-flex justify-content-between">
+              <span class="size">{{ bid[1] }}</span>
+              <span class="amount">{{ bid[0] }}</span>
+            </div>
+          </li>
+        </ul>
+      </div>
+      <div class="col-sm-6 col-sm-pull-6 p-0">
+        <ul id="asks" ref="asks">
+          <li v-for="ask in sortLowestToHighest(asks)" class="ask">
+            <div class="d-flex justify-content-between">
+              <span class="amount">{{ ask[0] }}</span>
+              <span class="size">{{ ask[1] }}</span>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+
+
 
   </div>
+
+  <!-- Modal -->
+  <!--    <div class="modal fade" id="indicatorsModal" tabindex="-1" aria-labelledby="indicatorsModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="indicatorsModalLabel">Indicators</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+
+          <div class="list-group">
+            <label class="list-group-item" v-for="type in mainTechnicalIndicatorTypes">
+              <input
+                  :key="type.name"
+                  v-on:click="setCandleTechnicalIndicator(type)"
+                  class="form-check-input me-1"
+                  type="checkbox"
+                  v-model="type.checked"
+              >
+              {{type.name}}
+            </label>
+            <label class="list-group-item">
+              <input
+                  v-on:click="setCandleTechnicalIndicator(customEmojiIndicatorTypes)"
+                  class="form-check-input me-1"
+                  type="checkbox"
+                  v-model="customEmojiIndicatorTypes.checked"
+              >
+              Custom Indicator
+            </label>
+          </div>
+
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-primary">Save changes</button>
+        </div>
+      </div>
+    </div>
+  </div>-->
+
+</div>
 </template>
 <script>
 import {dispose, init} from "klinecharts";
@@ -552,6 +631,9 @@ import ColorPickerInput from "../components/ColorPickerInput";
 import {chartStyle} from "../store/chartStyleStore";
 import {emojiTechnicalIndicator} from "../components/klinechart/indicators/emojiIndicator.js"
 import { checkCoordinateOnSegment } from "klinecharts/lib/shape/shapeHelper"
+import StatusIndicator from "../components/StatusIndicator";
+import jwtInterceptor from "../shared/jwt.interceptor";
+import Dropdown from "../components/Dropdown";
 const rect = {
   name: 'rect',
   totalStep: 3,
@@ -637,9 +719,13 @@ const circle = {
     return []
   }
 }
+
+
 export default {
   name: 'Chart',
   components: {
+    Dropdown,
+    StatusIndicator,
     ColorPickerInput,
     ToggleSwitch
   },
@@ -703,7 +789,24 @@ export default {
         /* Custom Shapes */
         { key: 'rect', text: 'custom rectangle' },
         { key: 'circle', text: 'custom circle' }
-      ]
+      ],
+
+      dataConnected: false,
+      simTimer: undefined,
+      simTimout: 1000,
+      chartPeriodTimerFunc: undefined,
+      chartPeriod: 60000, /*1min*/
+      heartbeat: {},
+      asks: [],
+      bids: [],
+      midpoint: "",
+      spread: "",
+      bookInitialized: false,
+
+      selectedExchange: '',
+      exchanges: [],
+      selectedProduct: '',
+      products: []
     }
   },
   watch: {
@@ -716,11 +819,33 @@ export default {
     },
 
   },
+  computed: {
+    date() {
+      let date = new Date(this.heartbeat.time)
+      let year = date.getFullYear();
+      let month = date.getMonth()+1;
+      let dt = date.getDate();
 
+      if (dt < 10) {
+        dt = '0' + dt;
+      }
+      if (month < 10) {
+        month = '0' + month;
+      }
+      //console.log(year+'-' + month + '-'+dt);
+      return (year+'-' + month + '-'+dt)
+    },
+    time() {
+      let date = new Date(this.heartbeat.time);
+      return date.getHours() + ':' + date.getMinutes() + ':' + date.getSeconds() + ':' + date.getMilliseconds()
+    }
+  },
   created() {
     chartStyle.getStyle()
+    window.addEventListener("resize", this.handleWindowResize);
   },
   mounted: function () {
+    this.getExchanges()
     this.kLineChart = init('chart')
     this.setTheme(themeStore.theme)
     this.kLineChart.addShapeTemplate([rect, circle])
@@ -732,20 +857,14 @@ export default {
     this.subTechnicalIndicatorTypes.forEach((item) => {
       this.setSubTechnicalIndicator(item)
     })
-    const updateData = () => {
-      setTimeout(() => {
-        const dataList = this.kLineChart.getDataList()
-        const lastData = dataList[dataList.length - 1]
-        const newData = generatedKLineDataList(lastData.timestamp, lastData.close, 1)[0]
-        newData.timestamp += 60 * 1000
-        this.kLineChart.updateData(newData)
-        updateData(this.kLineChart)
-      }, 1000)
-    }
+
     this.kLineChart.applyNewData(generatedKLineDataList())
-    updateData()
+    this.startSimulator()
+
   },
   methods: {
+
+    /* Chart functions */
     setChartType: function (type) {
       this.kLineChart.setStyleOptions({
         candle: {
@@ -843,18 +962,504 @@ export default {
       chartStyle.props.grid.horizontal.show = enabled
       this.saveStyleOptions()
     },
+    handleWindowResize(e) {
+      this.kLineChart.resize()
+    },
+
+    /* Data stream and simulator functions */
+    onExchangeSelected(selection) {
+      this.selectedExchange = selection;
+      this.getProducts(selection)
+      //console.log(selection.name + " has been selected");
+    },
+    getExchangeValues(keyword) {
+      //console.log("You could refresh options by querying the API with " + keyword);
+    },
+    onProductSelected(selection) {
+      this.selectedProduct = selection;
+      if (this.dataConnected) {
+        this.socketSendSubReq()
+        this.getCandles()
+        /*this.socketSendUnsubReq()
+        setTimeout(() => {
+          this.socketSendSubReq()
+          this.getCandles()
+        }, 30);*/
+
+      }
+    },
+    getProductValues(keyword) {
+      //console.log("You could refresh options by querying the API with " + keyword);
+    },
+    toggleConnectDataStream() {
+      if (this.dataConnected) {
+        this.disconnectWebsocket()
+        this.kLineChart.applyNewData(generatedKLineDataList())
+        this.stopChartTimer()
+        this.startSimulator()
+      } else {
+        this.stopSimulator()
+        this.kLineChart.clearData()
+        this.connectWebsocket()
+        this.startChartTimer()
+      }
+    },
+    startSimulator() {
+      this.simTimer = setInterval(() => {
+        console.log("simulator updating data")
+        const dataList = this.kLineChart.getDataList()
+        const lastData = dataList[dataList.length - 1]
+        const newData = generatedKLineDataList(lastData.timestamp, lastData.close, 1)[0]
+        newData.timestamp += 60 * 1000
+        this.kLineChart.updateData(newData)
+      }, this.simTimout);
+    },
+    stopSimulator() {
+      clearInterval(this.simTimer);
+    },
+    connectWebsocket() {
+      this.socket = new WebSocket("ws://localhost:8080/api/ws");
+      this.socket.onopen = () => {
+        this.dataConnected = true;
+
+        this.socketSendSubReq()
+
+
+        this.socket.onmessage = ({data}) => {
+
+          // stupid hack for coinbase's shitty api sending multiple json objects in one message
+          // todo: idk maybe this is on us, i dont think so because we are sending raw bytes in and out
+          let message;
+          let messages;
+          let isMultiple = false
+          try {
+            message = JSON.parse(data)
+          } catch(e) {
+            try {
+              messages = data.split(/(?!})(?={)/).map(function(v, i) { return JSON.parse(v); });
+              isMultiple = true
+            } catch (e) {
+              console.log("error parsing message: " + e.toString())
+            }
+          }
+          if (isMultiple) {
+            messages.forEach(msg => {
+              this.handleMessage(msg)
+            });
+          } else {
+            this.handleMessage(message)
+          }
+
+
+        };
+
+        this.socket.onerror = ({error}) => {
+          console.log("error on websocket: " + error.toString())
+        };
+
+      };
+    },
+    disconnectWebsocket() {
+      this.socketSendUnsubReq()
+      this.socket.close();
+      this.asks = []
+      this.bids = []
+      this.dataConnected = false;
+    },
+    socketSendSubReq() {
+      let subRequest = {
+        "action": "subscribe",
+        "exchange_id": this.selectedExchange.id,
+        "message": this.selectedProduct.id
+      }
+      this.socket.send(JSON.stringify(subRequest));
+      this.getCandles()
+    },
+    socketSendUnsubReq() {
+      let unsubRequest = {
+        "action": "unsubscribe",
+        "exchange_id": this.selectedExchange.id,
+        "message": this.selectedProduct.id
+      }
+      this.socket.send(JSON.stringify(unsubRequest));
+    },
+    async getExchanges() {
+      const response = await jwtInterceptor.get("/api/exchanges", {
+        withCredentials: true,
+        credentials: "include",
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest' // CSRF prevention
+        },
+      });
+      if (response && response.data) {
+        this.handleMessage(response.data)
+      }
+    },
+    async getCandles() {
+      /*let payload = {
+        exchange_id: "coinbasepro",
+        product_id: "BTC-USD",
+        granularity: 60
+      }*/
+      const response = await jwtInterceptor.get("/api/exchanges/" + this.selectedExchange.id + "/products/" + this.selectedProduct.id + "/candles", {
+        params: {
+          granularity: 60
+        },
+        withCredentials: true,
+        credentials: "include",
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest' // CSRF prevention
+        },
+      });
+      if (response && response.data) {
+        this.handleMessage(response.data)
+      }
+    },
+    async getProducts(selection) {
+
+      const response = await jwtInterceptor.get("/api/exchanges/" + selection.id + "/products", {
+        withCredentials: true,
+        credentials: "include",
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest' // CSRF prevention
+        },
+      });
+      if (response && response.data) {
+        this.handleMessage(response.data)
+      }
+    },
+
+    /* Websocket functions */
+    handleMessage(message) {
+      switch (message.type) {
+        case "welcome":
+          console.log(message.message)
+          break;
+        case "error":
+          console.log(message.message)
+          break;
+        case "l2update":
+          this.handleL2Update(message)
+          break;
+        case "heartbeat":
+          this.handleHeartbeat(message)
+          break;
+        case "match":
+          this.handleMatch(message)
+          break;
+        case "snapshot":
+          this.handleSnapshot(message)
+          break;
+        case "getProductBook":
+          this.handleGetProductBook(message)
+          break;
+        case "getProductCandles":
+          this.handleGetProductCandles(message)
+          break;
+        case "getProducts":
+          this.handleGetProducts(message)
+          break;
+        case "getExchanges":
+          this.handleGetExchanges(message)
+          break;
+      }
+    },
+    handleL2Update(message) {
+      /*
+      Response object format
+      {
+        "type": "l2update",
+        "product_id": "BTC-USD",
+        "time": "2022-04-29T14:00:48.180681Z",
+        "changes": [
+            [
+                "sell",
+                "38974.72",
+                "0.00000000"
+            ]
+        ]
+      }*/
+      if (!this.bookInitialized) {
+        return;
+      }
+      message.changes.forEach(change => {
+        this.update_book(change, change[0]);
+      });
+    },
+    handleHeartbeat(message) {
+      /*
+      Response object format
+      {
+        "type": "heartbeat",
+        "sequence": 541837244,
+        "last_trade_id": 39067179,
+        "product_id": "BTC-USD",
+        "time": "2022-04-29T14:00:48.994274Z"
+      }*/
+      this.heartbeat = message
+    },
+    handleMatch(message) {
+      /*
+      Response object format
+      {
+        "type": "match",
+        "trade_id": 10,
+        "sequence": 50,
+        "maker_order_id": "ac928c66-ca53-498f-9c13-a110027a60e8",
+        "taker_order_id": "132fb6ae-456b-4654-b4e0-d681ac05cea1",
+        "time": "2014-11-07T08:19:27.028459Z",
+        "product_id": "BTC-USD",
+        "size": "5.23512",
+        "price": "400.23",
+        "side": "sell"
+      }*/
+
+      const dataList = this.kLineChart.getDataList()
+      const lastData = dataList[dataList.length - 1]
+
+      // if the new message is within the same timeframe (period)
+      // then we must apply this new data with the last timestamp
+      // to keep the chart on the same candle
+      let msgTime = Date.parse(message.time)
+      let isP = this.isPeriod(msgTime, "1m")
+      if (isP) {
+        msgTime = lastData.timestamp
+      }
+      const kLineModel = {
+        open: message.price,
+        low: message.price,
+        high: message.price,
+        close: message.price,
+        volume: message.size,
+        timestamp: msgTime
+      }
+      kLineModel.turnover = (kLineModel.open + kLineModel.close + kLineModel.high + kLineModel.low) / 4 * kLineModel.volume
+      dataList.unshift(kLineModel)
+      this.kLineChart.updateData(kLineModel)
+    },
+    handleGetProductBook(message) {
+      /*
+      Response object format
+      {
+        "type": "getProductBook",
+        "book": {
+          "asks": [
+            {
+              "price": "38801.69",
+              "size": "2.8877351",
+              "num_orders": 1
+            },
+          ]
+          "bids": [
+            {
+              "price": "38360.08",
+              "size": "0.0003",
+              "num_orders": 1
+            },
+          ]
+          "sequence": 541837230
+        },
+      }*/
+      message.book.bids.forEach(bid => {
+        this.bids.push([bid.price, bid.size]);
+      });
+      message.book.asks.forEach(ask => {
+        this.asks.push([ask.price, ask.size]);
+      });
+      this.bookInitialized = true
+      this.calculate_midpoint()
+    },
+    handleSnapshot(message) {
+      message.bids.forEach(bid => {
+        this.bids.push([bid[0], bid[1]]);
+      });
+      message.asks.forEach(ask => {
+        this.asks.push([ask[0], ask[1]]);
+      });
+      this.bookInitialized = true
+      this.calculate_midpoint()
+    },
+    handleGetProductCandles(message) {
+      this.kLineChart.clearData()
+
+      const dataList = []
+      message.candles.Candles.forEach(candle => {
+        const kLineModel = {
+          open: candle.open,
+          low: candle.low,
+          high: candle.high,
+          close: candle.close,
+          volume: candle.volume,
+          timestamp: Date.parse(candle.time)
+        }
+        kLineModel.turnover = (kLineModel.open + kLineModel.close + kLineModel.high + kLineModel.low) / 4 * kLineModel.volume
+        dataList.unshift(kLineModel)
+      })
+
+
+      this.kLineChart.applyNewData(dataList)
+    },
+    handleGetProducts(message) {
+      /*
+      {
+      "base_currency":"LINK",
+      "base_increment":0,
+      "base_max_size":0,
+      "base_min_size":0,
+      "display_name": "LINK/USDC",
+      "id":"LINK-USDC",
+      "max_market_funds":0,
+      "min_market_funds":0,
+      "quote_currency":"USDC",
+      "quote_increment":0,
+      "status":"online",
+      "status_message":"",
+      "cancel_only":false,
+      "limit_only":false,
+      "post_only":false,
+      "trading_disabled":false
+      } */
+      this.products = message.products
+    },
+    handleGetExchanges(message) {
+      this.exchanges = message.exchanges
+    },
+    calculate_midpoint() {
+      if (this.bookInitialized) {
+        let latestBidArr = this.bids.slice(0)[0]
+        let latestAskArr = this.asks.slice(0)[0]
+        let latestBid = parseFloat(latestBidArr[0])
+        let latestAsk = parseFloat(latestAskArr[0])
+        this.midpoint = ((latestBid + latestAsk) / 2).toFixed(3)
+      }
+    },
+    sortHighestToLowest(bids) {
+      return bids.sort((x, y) => parseFloat(y[0]) - parseFloat(x[0]))
+    },
+    sortLowestToHighest(asks) {
+      return asks.sort((x, y) => parseFloat(x[0]) - parseFloat(y[0]))
+    },
+    update_book(data, side) {
+      if (!this.bookInitialized) {
+        return;
+      }
+      const price = parseFloat(data[1]);
+      const amount = parseFloat(data[2]);
+
+      let arr = this.asks
+      if (side === "buy") {
+        arr = this.bids
+      }
+
+      const zeroString = parseFloat("0.00000000")
+      const index = arr.findIndex(element => element[0] === price);
+
+      if (index > -1) {                   // If the index matches a price in the list then it is an update message
+        if (amount === zeroString) {      // If the amount is zero
+          arr.splice(index, 1)  // remove the order
+        } else {                          // otherwise
+          arr[index] = [price, amount];   // update matching position in the book
+        }
+      }
+      else {                              // If the index is -1 then it is a new price that came in
+        if (amount !== 0) {               // If the amount is not zero
+          arr.push([price, amount]);      // Insert new price
+          //arr.splice(10, 1);            // Delete the 11th entry
+        }
+      }
+      this.calculate_midpoint()
+    },
+
+    startChartTimer() {
+
+      // get seconds remaining until next minute
+      let time = new Date(), secondsRemaining = (60 - time.getSeconds()) * 1000 - time.getMilliseconds();
+
+      this.chartPeriodTimerFunc = setInterval(() => {
+        const dataList = this.kLineChart.getDataList()
+        const lastData = dataList[dataList.length - 1]
+        const kLineModel = {
+          open: lastData.close,
+          low: lastData.close,
+          high: lastData.close,
+          close: lastData.close,
+          volume: 0,
+          timestamp: Date.now()
+        }
+        kLineModel.turnover = (kLineModel.open + kLineModel.close + kLineModel.high + kLineModel.low) / 4 * kLineModel.volume
+        dataList.unshift(kLineModel)
+        this.kLineChart.updateData(kLineModel)
+        setInterval(this.chartPeriodTimerFunc, this.chartPeriod);
+      }, secondsRemaining);
+    },
+    stopChartTimer() {
+      clearInterval(this.chartPeriodTimerFunc);
+    },
+    isPeriod(date, period) {
+      let res = false
+      let seconds = Math.floor((new Date() - date) / 1000);
+      let interval = seconds / 60;
+
+      switch (period) {
+        case "1m":
+          res = interval <= 1;
+          break;
+        case "5m":
+          interval = seconds / 300;
+          res = interval <= 1;
+          break;
+        case "15m":
+          interval = seconds / 900;
+          res = interval <= 1;
+          break;
+        case "30m":
+          interval = seconds / 1800;
+          res = interval <= 1;
+          break;
+        case "1h":
+          interval = seconds / 3600;
+          res = interval <= 1;
+          break;
+        case "4h":
+          interval = seconds / 14400;
+          res = interval <= 1;
+          break;
+        case "1d":
+          interval = seconds / 86400;
+          res = interval <= 1;
+          break;
+        case "1w":
+          interval = seconds / 604800;
+          res = interval <= 1;
+          break;
+        default:
+
+      }
+
+      return res
+    }
+
 
   },
+
   destroyed: function () {
-    dispose('chart-type-k-line')
+    window.removeEventListener("resize", this.handleWindowResize);
+    this.stopChartTimer()
+    this.stopSimulator()
+    this.disconnectWebsocket()
+    dispose('chart')
   }
 }
 </script>
-
 <style scoped>
 
-.chart {
-  position: relative;
+.chart-container {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  height: calc(80%);
+  width: calc(75%);
+  border-bottom: 1px solid var(--border-color) !important;
 }
 
 .chart-top-bar {
@@ -864,7 +1469,7 @@ export default {
   height: 38px;
   font-size: 14px;
   color: #717484;
-  border-bottom: 1px solid var(--theme-switch-border-color);
+  border-bottom: 1px solid var(--border-color);
   box-sizing: border-box;
 }
 
@@ -872,28 +1477,40 @@ export default {
   display: flex;
   flex-direction: row;
   height: calc(100% - 38px);
-  position: relative;
 }
 
-
-.chart-widget {
-  width: calc(100% - 52px);
+#chart {
+  display: block !important;
+  width: calc(100%) !important;
   height: 100%;
 }
 
-.chart-top-bar .logo {
+.connection-status {
   display: flex;
   flex-direction: row;
   align-items: center;
-  width: 52px;
+  justify-content: center;
   height: 38px;
-  border-right: 1px solid var(--theme-switch-border-color);
+  min-width: 49px !important;
   box-sizing: border-box;
+  border-right: 0 solid var(--border-color);
+  padding: 0;
+  cursor: pointer;
+}
+.connection-time {
+  text-align: center !important;
+
+  border-right: 1px solid var(--border-color) !important;
+}
+.connection-time:hover {
+  cursor: default !important;
+}
+.connection-message {
+  margin: 5px !important;
+  min-width: 75px;
+  font-size: 10px;
 }
 
-.chart-top-bar .logo+.period {
-  margin-left: 8px;
-}
 
 .chart-top-bar .period {
   padding: 2px 6px;
@@ -902,7 +1519,6 @@ export default {
   margin-right: 6px;
   cursor: pointer;
 }
-
 .chart-top-bar .icon-wrapper {
   display: flex;
   flex-direction: row;
@@ -910,36 +1526,35 @@ export default {
   justify-content: center;
   height: 38px;
   box-sizing: border-box;
-  border-left: 1px solid var(--theme-switch-border-color);
-  border-right: 0 solid var(--theme-switch-border-color);
+  border-left: 1px solid var(--border-color);
+  border-right: 0 solid var(--border-color);
   padding: 0;
   cursor: pointer;
 }
-
 .chart-top-bar .icon-wrapper a {
   padding: 0 12px;
   height: 100%;
   text-decoration: none !important;
 }
-
 .chart-top-bar .icon-wrapper svg {
   width: 20px;
   height: 20px;
   fill: #717484;
 }
-
 .chart-top-bar .icon-wrapper span {
   display: inline-block;
   margin-left: 4px;
 }
+
+
 .chart-tools-bar {
   display: flex;
   flex-direction: column;
   align-items: center;
   box-sizing: border-box;
   height: 100%;
-  width: 52px;
-  border-right: 1px solid var(--theme-switch-border-color);
+  min-width: 50px !important;
+  border-right: 1px solid var(--border-color);
 }
 .chart-tools-bar .icon-wrapper {
   display: flex;
@@ -952,7 +1567,6 @@ export default {
   cursor: pointer;
   border-radius: 4px;
 }
-
 .chart-tools-bar .icon-wrapper svg {
   width: 36px;
   height: 36px;
@@ -961,6 +1575,7 @@ export default {
 .chart-tools-bar .icon-wrapper svg:hover {
   background-color: var(--background-color-secondary) !important;
 }
+
 .divider {
   display: flex;
   flex-direction: row;
@@ -973,22 +1588,19 @@ export default {
   width: 100%;
   border-radius: 0;
   opacity: 1!important;
-  color: var(--theme-switch-border-color) !important;
-  background-color: var(--theme-switch-border-color) !important;
+  color: var(--border-color) !important;
+  background-color: var(--border-color) !important;
   border: none !important;
 }
-
 .list-group-item {
   border: none !important;
 }
 .list-group-item:hover {
   cursor: pointer !important;
 }
-
 .dropdown-menu {
   padding: 10px !important;
 }
-
 
 
 .accordion {
@@ -997,7 +1609,7 @@ export default {
 .accordion-item, .accordion-button {
   color: var(--text-primary-color) !important;
   background-color: var(--background-color-primary) !important;
-  border-color: var(--theme-switch-border-color) !important;
+  border-color: var(--border-color) !important;
 }
 .accordion-button {
   position: relative;
@@ -1021,7 +1633,7 @@ export default {
   cursor: default !important;
 }
 .accordion-divider {
-  border-bottom: 1px solid var(--theme-switch-border-color) !important;
+  border-bottom: 1px solid var(--border-color) !important;
 }
 .accordion-body {
   padding: 0 0 0 10px !important;
@@ -1035,12 +1647,17 @@ export default {
 }
 .form-select {
   width: 50% !important;
-  border: 1px solid var(--theme-switch-border-color) !important;
+  border: 1px solid var(--border-color) !important;
   background-color: var(--background-color-primary) !important;
   cursor: pointer !important;
 }
 .form-select:focus {
-  border: 1px solid var(--theme-switch-border-color) !important;
+  border: 1px solid var(--border-color) !important;
+}
+#exchange {
+  color: var(--text-primary-color) !important;
+  min-width: 100px !important;
+  width: 100% !important;
 }
 button:focus, select:focus, input:focus {
   border: none !important;
@@ -1075,10 +1692,158 @@ button:focus, select:focus, input:focus {
 .form-check-input:checked {
   background-color: #0d6efd !important;
   border-color: #0d6efd !important;
-  border: 1px solid var(--theme-switch-border-color) !important;
+  border: 1px solid var(--border-color) !important;
 }
 .form-check-input, .form-check-input:before, .form-check-input:after, .form-check-input:focus {
-  border: 1px solid var(--theme-switch-border-color) !important;
+  border: 1px solid var(--border-color) !important;
 }
 
+.orderbook {
+  margin: 0;
+  padding: 0;
+  height: calc(80%);
+  max-width: 400px;
+  width: calc(25%);
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  grid-area: order-book / order-book / order-book / order-book;
+  grid-row-start: order-book;
+  grid-column-start: order-book;
+  grid-row-end: order-book;
+  grid-column-end: order-book;
+  overflow-y: auto;
+  border-left: 1px solid var(--border-color) !important;
+  border-bottom: 1px solid var(--border-color) !important;
+}
+.orderbook-header {
+  color: var(--text-primary-color) !important;
+  text-align: center !important;
+  height: 37px;
+  width: auto;
+  margin: 0;
+}
+.orderbook-header-container {
+  border-bottom: 1px solid var(--border-color) !important;
+}
+.orderbook-row-container {
+  background-color: var(--orderbook-background-color) !important;
+}
+#bids {
+  color: green !important;
+  margin: 0;
+  padding: 0;
+  position: relative;
+  overflow: hidden;
+}
+#asks {
+  color: red !important;
+  margin: 0;
+  padding: 0 2px 0 2px;
+  position: relative;
+  overflow: hidden;
+}
+
+.mid-market-container {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  justify-content: center;
+  align-items: center;
+  min-height: 75px;
+}
+.mid-market-price {
+  font-size: 18px;
+  color: var(--text-primary-color);
+}
+.mid-market-price-text {
+  font-size: 12px;
+  color: gray;
+}
+
+.bid-ask-header-container {
+  border-bottom: 1px solid var(--border-color) !important;
+  border-top: 1px solid var(--border-color) !important;
+}
+.ask-header {
+  padding: 0 2px 0 2px;
+}
+.bid-header {
+  padding: 0 2px 0 2px;
+}
+.ask {
+  color: red !important;
+  font-size: 12px !important;
+  background-color: var(--orderbook-background-color) !important;
+}
+.bid {
+  color: green !important;
+  font-size: 12px !important;
+  background-color: var(--orderbook-background-color) !important;
+}
+.size {
+  color: gray;
+  font-size: 12px !important;
+}
+.ask:hover, .bid:hover {
+  background-color: var(--background-color-secondary) !important;
+  cursor: pointer !important;
+}
+.l2-size-header {
+  color: gray;
+  margin: 0;
+}
+
+.l2-ask-header {
+  color: red;
+  margin: 0;
+}
+.l2-bid-header {
+  color: green;
+  margin: 0;
+}
+
+.logs-container {
+  height: calc(20% - 5px);
+  overflow: auto;
+}
+#logs {
+  margin-top: 5px;
+  padding: 5px;
+  overflow: hidden !important;
+}
+
+
+.red {
+  color: red;
+}
+.green {
+  color: green;
+}
+
+/* width */
+::-webkit-scrollbar {
+  width: 0px;
+}
+
+
+
+/* Track */
+::-webkit-scrollbar-track {
+  background: var(--background-color-secondary);
+  box-shadow: inset 0 0 5px grey;
+  border-radius: 10px;
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+  border-color: var(--border-color);
+  border-radius: 10px;
+  background: var(--background-color-primary);
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
 </style>

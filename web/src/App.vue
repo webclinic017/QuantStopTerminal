@@ -14,7 +14,7 @@
 
   <!--  Main container and row, full height minus header height  -->
   <div class="container-fluid qst-body m-0 p-0">
-    <div class="row qst-body m-0 p-0">
+    <div class="row h-100 m-0 p-0">
 
       <!--  Sidebar Navigation / Logged in only  -->
       <div v-if="getUserProfile.id !== 0" class="sidebar-container">
@@ -22,7 +22,7 @@
       </div>
 
       <!--  App View  -->
-      <div id="routerView" :class="getUserProfile.id !== 0 ? 'col-md-9 ms-sm-auto col-lg-10 p-0 m-0 qst-body' : ''">
+      <div id="routerView" :class="getUserProfile.id !== 0 ? 'col-md-9 ms-sm-auto col-lg-10 p-0 m-0 h-100' : ''">
         <router-view />
       </div>
 
@@ -79,12 +79,14 @@ export default {
   --text-primary-color: #222;
   --element-size: 4rem;
   --theme-switch-background-color: #f1f1f1; /* Theme switch background color */
-  --theme-switch-border-color: rgb(60 60 60 / 29%);
-  --theme-switch-border-color-hover: rgba(59, 59, 59, 0.29);
+  --border-color: rgb(60 60 60 / 29%);
+  --border-color-hover: rgba(59, 59, 59, 0.29);
   --table-border-hover: rgba(65, 64, 64, 0.29);
 
   --slider-color-left: #b7b7b7;
   --slider-color-right: #fafafa;
+
+  --orderbook-background-color: #ffffff;
 }
 
 /* Define styles for the root window with dark - mode preference */
@@ -94,15 +96,18 @@ export default {
   --accent-color: #3f3f3f;
   --text-primary-color: rgb(255 255 255 / 87%);
   --theme-switch-background-color: #2f2f2f; /* Theme switch background color */
-  --theme-switch-border-color: rgb(84 84 84 / 65%);
-  --theme-switch-border-color-hover: rgba(196, 193, 193, 0.29);
+  --border-color: rgb(84 84 84 / 65%);
+  --border-color-hover: rgba(196, 193, 193, 0.29);
   --table-border-hover: rgba(65, 64, 64, 0.29);
 
   --slider-color-left: #8c8c8c;
   --slider-color-right: #2d2d30;
+
+  --orderbook-background-color: #141414;
 }
 
 body {
+  font-family: Segoe UI,serif !important;
   font-size: .875rem;
   background-color: var(--background-color-primary) !important;
 }
@@ -127,12 +132,21 @@ ul {
   padding-inline-start: 40px;
 
 }
-
+li {
+  color: var(--text-primary-color) !important;
+  background-color: var(--background-color-primary) !important;
+}
 input, select {
   color: var(--text-primary-color) !important;
   background-color: var(--background-color-primary) !important;
 }
 
+input {
+  border-color: var(--border-color) !important;
+}
+input:hover {
+  border-color: var(--border-color-hover) !important;
+}
 
 
 .feather {
@@ -235,23 +249,23 @@ input, select {
 .card {
   color: var(--text-primary-color) !important;
   background-color: var(--background-color-primary) !important;
-  border-color: var(--theme-switch-border-color) !important;
+  border-color: var(--border-color) !important;
 }
 .card-header {
   color: var(--text-primary-color) !important;
   background-color: var(--background-color-secondary) !important;
-  border-color: var(--theme-switch-border-color) !important;
+  border-color: var(--border-color) !important;
 }
 .list-group-item {
   color: var(--text-primary-color) !important;
   background-color: var(--background-color-primary) !important;
-  border-color: var(--theme-switch-border-color) !important;
+  border-color: var(--border-color) !important;
 }
 
 .modal-header, .modal-body, .modal-footer, .dropdown-menu {
   color: var(--text-primary-color) !important;
   background-color: var(--background-color-primary) !important;
-  border-color: var(--theme-switch-border-color) !important;
+  border-color: var(--border-color) !important;
 }
 
 

@@ -5,9 +5,13 @@ Coinbasepro developer documentation: https://docs.cloud.coinbase.com/exchange/do
 */
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
+	"github.com/gorilla/websocket"
 	"github.com/quantstop/quantstopterminal/pkg/exchange/base"
 	"golang.org/x/sync/errgroup"
+	"log"
 	"strings"
 )
 
@@ -52,9 +56,15 @@ const (
 	coinbaseproTrailingVolume          = "users/self/trailing-volume"
 )
 
+var (
+	newline = []byte{'\n'}
+	space   = []byte{' '}
+)
+
 type Client struct {
 	base.HttpAPI
 	base.Websocket
+	Conn *websocket.Conn
 }
 
 func query(params []string) string {
@@ -75,6 +85,7 @@ func NewClient(auth *Auth) (*Client, error) {
 		&base.WebsocketDialer{
 			URL: apiClient.feedURL.String(),
 		},
+		&websocket.Conn{},
 	}, nil
 }
 
@@ -88,6 +99,7 @@ func NewSandboxClient(auth *Auth) (*Client, error) {
 		&base.WebsocketDialer{
 			URL: apiClient.feedURL.String(),
 		},
+		&websocket.Conn{},
 	}, nil
 }
 
@@ -97,60 +109,108 @@ func (c *Client) Close() error {
 
 // Watch provides a feed of real-time market data updates for orders and trades.
 func (c *Client) Watch(ctx context.Context, subscriptionRequest SubscriptionRequest, feed Feed) (capture error) {
-	wsConn, err := c.Websocket.Dial()
+	var err error
+	c.Conn, err = c.Websocket.Dial()
 	if err != nil {
 		return err
 	}
 	// subscription request must be sent within 5 seconds of open or socket will auto-close
-	err = wsConn.WriteJSON(subscriptionRequest)
+	err = c.Conn.WriteJSON(subscriptionRequest)
 
 	if err != nil {
 		return err
 	}
-	return c.watch(ctx, wsConn, feed)
+	return c.watch(ctx, feed)
 }
 
 type jsonReader interface {
 	ReadJSON(v interface{}) error
 }
 
-func (c *Client) watch(ctx context.Context, r jsonReader, feed Feed) (capture error) {
-	messages := make(chan interface{})
+func (c *Client) watch(ctx context.Context, feed Feed) (capture error) {
+
+	messages := make(chan []byte)
 	wg, ctx := errgroup.WithContext(ctx)
+
+	// read messages from coinbase
 	wg.Go(func() error {
 		defer close(messages)
 		for {
 			select {
 			case <-ctx.Done():
 				return ctx.Err()
-				// TODO: Does this prevent blocking?
-			case messages <- func() interface{} {
-				// TODO: Does message have a real structure
-				var message interface{}
-				err := r.ReadJSON(&message)
+			case messages <- func() []byte {
+				_, message, err := c.Conn.ReadMessage()
 				if err != nil {
-					return err
+					if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+						log.Printf("coinbase websocket read error: %v", err)
+					}
 				}
-				//log.Debugf(log.TraderLogger, "receive message on socket. %v", message)
+				message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
 				return message
 			}():
 			}
 		}
 	})
 
+	// testing
 	wg.Go(func() error {
 		for message := range messages {
 			select {
 			case <-ctx.Done():
 				return ctx.Err()
-			case feed.Messages <- message:
-				//logrus.Debug("publish message on channel")
-				//log.Debugln(log.TraderLogger, "publish message on channel")
-				//log.Debugf(log.TraderLogger, "publishing message on channel. %v", message)
 			default:
+				var messageInterface map[string]interface{}
+				if err := json.Unmarshal(message, &messageInterface); err != nil {
+					return err
+				}
+
+				msgType := MessageType(messageInterface["type"].(string))
+				switch msgType {
+				case MessageTypeError:
+					/*errMsg := Error{}
+					if err := json.Unmarshal(message, &errMsg); err != nil {
+						return err
+					}
+					feed.Error <- errMsg*/
+				case MessageTypeL2Update:
+					l2up := L2UpdateMessage{}
+					if err := json.Unmarshal(message, &l2up); err != nil {
+						return err
+					}
+					feed.Level2 <- l2up
+				case MessageTypeSnapshot:
+					l2snap := L2SnapshotMessage{}
+					if err := json.Unmarshal(message, &l2snap); err != nil {
+						return err
+					}
+					feed.Level2Snap <- l2snap
+				case MessageTypeHeartbeat:
+					hbMsg := HeartbeatMessage{}
+					if err := json.Unmarshal(message, &hbMsg); err != nil {
+						return err
+					}
+					feed.Heartbeat <- hbMsg
+				case MessageTypeMatch:
+					match := MatchMessage{}
+					if err := json.Unmarshal(message, &match); err != nil {
+						return err
+					}
+					feed.Matches <- match
+				case MessageTypeSubscriptions:
+					/*match := SubscriptionResponse{}
+					if err := json.Unmarshal(message, &match); err != nil {
+						return err
+					}
+					feed.Matches <- match*/
+				case MessageTypeTicker:
+
+				}
 			}
 		}
 		return nil
 	})
+
 	return wg.Wait()
+
 }

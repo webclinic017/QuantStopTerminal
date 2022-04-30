@@ -1,10 +1,14 @@
 package webserver
 
 import (
+	"github.com/quantstop/quantstopterminal/internal"
+	"github.com/quantstop/quantstopterminal/internal/database/models"
 	"github.com/quantstop/quantstopterminal/internal/log"
 	"github.com/quantstop/quantstopterminal/internal/webserver/errors"
 	"github.com/quantstop/quantstopterminal/internal/webserver/handlers"
+	"github.com/quantstop/quantstopterminal/internal/webserver/middleware"
 	"github.com/quantstop/quantstopterminal/internal/webserver/router"
+	"github.com/quantstop/quantstopterminal/internal/webserver/websocket"
 	"github.com/quantstop/quantstopterminal/internal/webserver/write"
 	"net/http"
 	"runtime/debug"
@@ -13,7 +17,7 @@ import (
 func (s *Webserver) ConfigureRouter(isDev bool) {
 
 	log.Debugln(log.Webserver, "Setting up middleware ... ")
-	//s.router.Use(middlewares.HttpRequestLogger())
+	//s.mux.RegisterMiddleware()
 
 	log.Debugln(log.Webserver, "Setting up error handlers ... ")
 	s.mux.MethodNotAllowed = write.Error(errors.BadRequestMethod)
@@ -44,7 +48,11 @@ func (s *Webserver) ConfigureRouter(isDev bool) {
 	// User routes
 	s.mux.POST("/api/signup", handlers.Signup, router.Public)
 	s.mux.GET("/api/user", handlers.Whoami, router.User)
-	/*s.mux.PUT("/user/password", handlers.UpdatePassword, router.User)*/
+
+	/* Exchange routes */
+	s.mux.GET("/api/exchanges", handlers.GetExchanges, router.User)
+	s.mux.GET("/api/exchanges/([^/]+)/products", handlers.GetProducts, router.User)
+	s.mux.GET("/api/exchanges/([^/]+)/products/([^/]+)/candles", handlers.GetCandles, router.User)
 
 	// Admin routes
 	s.mux.GET("/api/get-users", handlers.GetAllUsers, router.Admin)
@@ -54,7 +62,20 @@ func (s *Webserver) ConfigureRouter(isDev bool) {
 
 	log.Debugln(log.Webserver, "Setting up websocket handler ... ")
 	s.mux.WebsocketHandler = func(writer http.ResponseWriter, request *http.Request) {
-		serveWs(s.Hub, writer, request)
+		authHandler := router.AuthRoute(
+			s,
+			func(bot internal.IEngine, user *models.User, w http.ResponseWriter, r *http.Request) http.HandlerFunc {
+				return func(writer http.ResponseWriter, request *http.Request) {
+					websocket.ServeWs(s.Hub, writer, request)
+				}
+			},
+			writer,
+			request,
+			router.User,
+		)
+		logHandler := middleware.HttpRequestLogger(authHandler)
+		logHandler(writer, request)
+
 	}
 
 }
