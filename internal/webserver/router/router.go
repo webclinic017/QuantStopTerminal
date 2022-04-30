@@ -18,13 +18,14 @@ import (
 // Inspiration and core design from https://benhoyt.com/writings/go-routing/
 
 type Router struct {
-	isDev            bool
-	DB               *sql.DB
-	Bot              internal.IEngine
-	Routes           []Route
-	MethodNotAllowed http.HandlerFunc
-	NotFound         http.HandlerFunc
-	WebsocketHandler http.HandlerFunc
+	isDev              bool
+	DB                 *sql.DB
+	Bot                internal.IEngine
+	Routes             []Route
+	middlewareHandlers []http.HandlerFunc
+	MethodNotAllowed   http.HandlerFunc
+	NotFound           http.HandlerFunc
+	WebsocketHandler   http.HandlerFunc
 	// Function to handle panics recovered from http handlers.
 	// Used to keep the server from crashing because of un-recovered panics.
 	PanicHandler func(http.ResponseWriter, *http.Request, interface{})
@@ -33,6 +34,13 @@ type Router struct {
 // ctxKey context key for request context
 type ctxKey struct{}
 
+// GetField is a helper function for handlers to get parameters from url
+func GetField(r *http.Request, index int) string {
+	fields := r.Context().Value(ctxKey{}).([]string)
+	return fields[index]
+}
+
+// New returns a pointer to a new Router
 func New(isDev bool, eng internal.IEngine) (*Router, error) {
 
 	db, err := eng.GetSQL()
@@ -106,6 +114,11 @@ func (r *Router) Handle(httpMethod, pattern string, handler AuthHandler, authTyp
 	return route
 }
 
+// RegisterMiddleware takes a handle function and adds it to the array of middleware handlers
+func (r *Router) RegisterMiddleware(handler http.HandlerFunc) {
+	r.middlewareHandlers = append(r.middlewareHandlers, handler)
+}
+
 // wrap does all the middleware together
 func (r *Router) wrap(h AuthHandler, authType AuthType) http.HandlerFunc {
 	return func(response http.ResponseWriter, request *http.Request) {
@@ -140,26 +153,27 @@ func (r *Router) recover(w http.ResponseWriter, req *http.Request) {
 
 // ServeHTTP implements the http.handler interface
 func (r *Router) ServeHTTP(response http.ResponseWriter, request *http.Request) {
-	//log.Debugln(log.Webserver, request.URL.Path)
-	if request.URL.Path == "/api/ws" {
-		r.WebsocketHandler.ServeHTTP(response, request)
-		return
-	}
 
 	var head string
 
 	// shift head and tail to get below "api/" part of the path
 	head, _ = utils.ShiftPath(request.URL.Path)
+
+	// looking for filesystem (frontend)
 	if head != "api" && !r.isDev {
-		wfs := web.GetFileSystem()
-		httpFS := http.FS(wfs)
-		serveFileContents(response, request, httpFS)
+		serveFileContents(response, request)
 		return
 	}
 
 	// defer panic
 	if r.PanicHandler != nil {
 		defer r.recover(response, request)
+	}
+
+	// handle websocket route
+	if request.URL.Path == "/api/ws" {
+		r.WebsocketHandler(response, request)
+		return
 	}
 
 	// allow holds requests with invalid methods
@@ -172,9 +186,7 @@ func (r *Router) ServeHTTP(response http.ResponseWriter, request *http.Request) 
 		matches := route.regex.FindStringSubmatch(request.URL.Path)
 		if len(matches) > 0 {
 
-			// match found but request method doesn't match,
-			// Note: let requests for OPTIONS pass
-			// todo: options method goes through cors handler better to have it here i think
+			// match found but request method doesn't match
 			if request.Method != route.method && request.Method != http.MethodOptions {
 				// add it to the array defined earlier
 				allow = append(allow, route.method)
@@ -190,7 +202,6 @@ func (r *Router) ServeHTTP(response http.ResponseWriter, request *http.Request) 
 
 	// return method not allowed for requests to path with invalid method
 	if len(allow) > 0 {
-
 		r.MethodNotAllowed(response, request)
 		return
 	}
@@ -199,11 +210,10 @@ func (r *Router) ServeHTTP(response http.ResponseWriter, request *http.Request) 
 	r.NotFound(response, request)
 }
 
-func (r *Router) ExecuteMiddleware() {
+func serveFileContents(w http.ResponseWriter, r *http.Request) {
 
-}
-
-func serveFileContents(w http.ResponseWriter, r *http.Request, files http.FileSystem) {
+	wfs := web.GetFileSystem()
+	httpFS := http.FS(wfs)
 
 	path := r.URL.Path
 	if path == "/" {
@@ -220,7 +230,7 @@ func serveFileContents(w http.ResponseWriter, r *http.Request, files http.FileSy
 	}
 
 	// Open the file and return its contents using http.ServeContent
-	index, err := files.Open(path)
+	index, err := httpFS.Open(path)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		fmt.Fprintf(w, "%s not found", path)
