@@ -61,8 +61,9 @@ func main() {
 		version.IsRelease = false
 		version.IsDevelopment = true
 	}
-
-	version.Version = BuildFlagVersion
+	if BuildFlagVersion != "" {
+		version.Version = BuildFlagVersion
+	}
 
 	// Parse runtime flags into Version
 	flag.BoolVar(&version.IsDaemon, "daemon", false, "run as a background service")
