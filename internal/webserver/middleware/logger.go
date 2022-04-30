@@ -25,7 +25,6 @@ type HTTPReqInfo struct {
 
 func HttpRequestLogger(handlerFunc http.HandlerFunc) http.HandlerFunc {
 	return func(response http.ResponseWriter, request *http.Request) {
-		//log.Println("Middleware chain | 2 | HttpRequestLogger")
 		reqInfo := &HTTPReqInfo{
 			method:    request.Method,
 			uri:       request.URL.String(),
