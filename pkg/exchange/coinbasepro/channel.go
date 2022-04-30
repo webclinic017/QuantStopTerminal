@@ -32,15 +32,38 @@ const (
 type MessageType string
 
 const (
-	MessageTypeError MessageType = "error"
-	MessageTypeOpen  MessageType = "open"
+	MessageTypeError    MessageType = "error"
+	MessageTypeOpen     MessageType = "open"
+	MessageTypeDone     MessageType = "done"
+	MessageTypeChange   MessageType = "change"
+	MessageTypeActivate MessageType = "activate"
+	MessageTypeAuction  MessageType = "auction"
 	// MessageTypeSubscribe messages are sent to the server and indicate which channels and products to receive.
-	MessageTypeSubscribe   MessageType = "subscribe"
-	MessageTypeUnsubscribe MessageType = "unsubscribe"
+	MessageTypeSubscribe     MessageType = "subscribe"
+	MessageTypeUnsubscribe   MessageType = "unsubscribe"
+	MessageTypeSubscriptions MessageType = "subscriptions"
+	MessageTypeL2Update      MessageType = "l2update"
+	MessageTypeTicker        MessageType = "ticker"
+	MessageTypeSnapshot      MessageType = "snapshot"
+	MessageTypeMatch         MessageType = "match"
+	MessageTypeHeartbeat     MessageType = "heartbeat"
+	MessageTypeStatus        MessageType = "status"
+	MessageTypeReceived      MessageType = "received"
 )
 
 // A SubscriptionRequest describes the products and channels to be provided by the feed.
 type SubscriptionRequest struct {
+	Type       MessageType   `json:"type"` // must be 'subscribe'
+	ProductIDs []ProductID   `json:"product_ids"`
+	Channels   []interface{} `json:"channels"`
+}
+
+type SubscriptionResponse struct {
+	Type     MessageType `json:"type"`
+	Channels []Channel   `json:"channels"`
+}
+
+type UnsubscriptionRequest struct {
 	Type       MessageType   `json:"type"` // must be 'subscribe'
 	ProductIDs []ProductID   `json:"product_ids"`
 	Channels   []interface{} `json:"channels"`
@@ -64,6 +87,21 @@ func NewSubscriptionRequest(productIDs []ProductID, channelNames []ChannelName, 
 	}
 	return SubscriptionRequest{
 		Type:       MessageTypeSubscribe,
+		ProductIDs: productIDs,
+		Channels:   channels,
+	}
+}
+
+func NewUnsubscriptionRequest(productIDs []ProductID, channelNames []ChannelName, productChannels []Channel) UnsubscriptionRequest {
+	channels := make([]interface{}, 0, len(channelNames)+len(productChannels))
+	for _, channelName := range channelNames {
+		channels = append(channels, channelName)
+	}
+	for _, productChannel := range productChannels {
+		channels = append(channels, productChannel)
+	}
+	return UnsubscriptionRequest{
+		Type:       MessageTypeUnsubscribe,
 		ProductIDs: productIDs,
 		Channels:   channels,
 	}
