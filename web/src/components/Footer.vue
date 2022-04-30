@@ -48,6 +48,6 @@ export default {
 .qst-footer {
   color: var(--text-primary-color) !important;
   background-color: var(--background-color-primary) !important;
-  border-top: 1px solid var(--theme-switch-border-color);
+  border-top: 1px solid var(--border-color);
 }
 </style>

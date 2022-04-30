@@ -88,11 +88,11 @@ export default {
   z-index: 9;
 }
 .form-control {
-  border: 1px solid var(--theme-switch-border-color) !important;
+  border: 1px solid var(--border-color) !important;
   background-color: var(--background-color-primary) !important;
 }
 .form-control:focus {
-  border: 1px solid var(--theme-switch-border-color) !important;
+  border: 1px solid var(--border-color) !important;
 }
 button:focus, select:focus, input:focus {
   border: none !important;

@@ -167,7 +167,7 @@ export default {
 table {
   color: var(--text-primary-color) !important;
   background-color: var(--background-color-secondary) !important;
-  border-color: var(--theme-switch-border-color) !important;
+  border-color: var(--border-color) !important;
   border-collapse: collapse;
   margin: 0;
   padding: 0;
@@ -178,7 +178,7 @@ table {
 table tr {
   color: var(--text-primary-color) !important;
   background-color: var(--background-color-secondary);
-  border: 1px solid var(--theme-switch-border-color);
+  border: 1px solid var(--border-color);
   padding: .35em;
 }
 table tr:hover {
@@ -192,7 +192,7 @@ table td {
   /*text-align: center;*/
   color: var(--text-primary-color) !important;
   background-color: var(--background-color-secondary) !important;
-  border: 1px solid var(--theme-switch-border-color) !important;
+  border: 1px solid var(--border-color) !important;
 }
 table th {
   font-size: .85em;

@@ -4,7 +4,25 @@
 
     <div class="container-fluid p-0">
 
-      <router-link to="/" class="navbar-brand col-md-3 col-lg-2 me-0 px-3">QuantstopTerminal</router-link>
+      <router-link to="/" class="navbar-brand col-md-3 col-lg-2 me-0 px-3">
+        <span>Q</span>
+        <span>u</span>
+        <span>a</span>
+        <span>n</span>
+        <span>t</span>
+        <span style="color:#d21515">s</span>
+        <span style="color:#d21515">t</span>
+        <span style="color:#d21515">o</span>
+        <span style="color:#d21515">p</span>
+        <span>T</span>
+        <span>e</span>
+        <span>r</span>
+        <span>m</span>
+        <span>i</span>
+        <span>n</span>
+        <span>a</span>
+        <span>l</span>
+      </router-link>
 
       <button ref="qstNavToggle" class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".qst-collapse" aria-controls="sidebarMenu headerMenu" aria-expanded="false" aria-label="Toggle navigation">
         <svg class="m-auto" id="menu-bars" viewBox="0 0 20 20" width="20" height="20" fill="currentColor">
@@ -107,7 +125,7 @@ export default {
 .qst-header-nav {
   color: var(--text-primary-color) !important;
   background-color: var(--background-color-primary) !important;
-  border-bottom: 1px solid var(--theme-switch-border-color);
+  border-bottom: 1px solid var(--border-color);
 }
 .navbar-brand {
   padding-top: 0.75rem;
