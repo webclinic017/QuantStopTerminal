@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/mitchellh/mapstructure"
+	"github.com/quantstop/quantstopterminal/internal/log"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -81,6 +83,7 @@ func (a *APIClient) do(ctx context.Context, method string, relativePath string, 
 	uri, err := a.baseURL.Parse(relativePath)
 	//println("Request URL:" + uri.String())
 	if err != nil {
+		log.Debugf(log.TraderLogger, "error parsing url: %v", err)
 		return nil, err
 	}
 	//fmt.Printf("%s %s\n", method, relativePath)
@@ -88,6 +91,7 @@ func (a *APIClient) do(ctx context.Context, method string, relativePath string, 
 	if content != nil {
 		err = json.NewEncoder(&b).Encode(content)
 		if err != nil {
+			log.Debugf(log.TraderLogger, "error encoding content: %v", err)
 			return nil, err
 		}
 	}
@@ -95,32 +99,48 @@ func (a *APIClient) do(ctx context.Context, method string, relativePath string, 
 	msg := fmt.Sprintf("%s%s%s%s", timestamp, method, relativePath, b.Bytes())
 	signature, err := a.auth.Sign(msg)
 	if err != nil {
+		log.Debugf(log.TraderLogger, "error signing content: %v", err)
 		return nil, err
 	}
 	req, err := http.NewRequestWithContext(ctx, method, uri.String(), &b)
 	if err != nil {
+		log.Debugf(log.TraderLogger, "error creating new request: %v", err)
 		return nil, err
 	}
 	a.addHeaders(req, timestamp, signature)
 	resp, err = a.httpClient.Do(req)
 	if err != nil {
+		log.Debugf(log.TraderLogger, "error doing request: %v", err)
 		return nil, err
 	}
 	if resp.StatusCode >= 300 {
 		coinbaseErr := Error{StatusCode: resp.StatusCode}
 		decoder := json.NewDecoder(resp.Body)
 		if err = decoder.Decode(&coinbaseErr); err != nil {
+			log.Debugf(log.TraderLogger, "error decoding coinbase error: %v", err)
 			return nil, err
 		}
+		log.Debugf(log.TraderLogger, "coinbase error: %v", err)
 		return nil, coinbaseErr
 	}
-	defer func() { Capture(&capture, resp.Body.Close()) }()
+	/*defer func() { Capture(&capture, resp.Body.Close()) }()
+
 	if result != nil {
 		decoder := json.NewDecoder(resp.Body)
-		if err = decoder.Decode(result); err != nil {
-			return nil, err
-		}
-	}
+		//for {
+			if decodeErr := decoder.Decode(&result); decodeErr == io.EOF {
+				//break
+			} else if decodeErr != nil {
+				log.Debugf(log.TraderLogger, "error decoding response: %v", err)
+				return nil, decodeErr
+			}
+		//}
+	}*/
+
+	defer resp.Body.Close()
+	body, _ := ioutil.ReadAll(resp.Body)
+	err = json.Unmarshal(body, &result)
+
 	return resp, err
 }
 
