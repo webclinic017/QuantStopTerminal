@@ -1,6 +1,6 @@
 import { reactive } from 'vue'
 
-export const defaultTextColorDark = '#929AA5'
+export const defaultTextColorDark = '#808080FF'
 export const defaultGridColorDark = '#292929'
 export const defaultAxisLineColorDark = '#333333'
 export const defaultCrossTextBackgroundColorDark = '#373a40'
@@ -80,7 +80,7 @@ export const chartStyle = reactive({
                     color: '#D9D9D9',
                     textMargin: 5,
                     textSize: 10,
-                    textFamily: 'Helvetica Neue',
+                    textFamily: 'Segoe UI',
                     textWeight: 'normal'
                 },
                 low: {
@@ -88,7 +88,7 @@ export const chartStyle = reactive({
                     color: '#D9D9D9',
                     textMargin: 5,
                     textSize: 10,
-                    textFamily: 'Helvetica Neue',
+                    textFamily: 'Segoe UI',
                     textWeight: 'normal',
                 },
                 last: {
@@ -111,7 +111,7 @@ export const chartStyle = reactive({
                         paddingRight: 2,
                         paddingBottom: 2,
                         color: '#FFFFFF',
-                        family: 'Helvetica Neue',
+                        family: 'Segoe UI',
                         weight: 'normal',
                         borderRadius: 2
                     }
@@ -140,7 +140,7 @@ export const chartStyle = reactive({
                 },
                 text: {
                     size: 12,
-                    family: 'Helvetica Neue',
+                    family: 'Segoe UI',
                     weight: 'normal',
                     color: '#D9D9D9',
                     marginLeft: 8,
@@ -175,7 +175,7 @@ export const chartStyle = reactive({
                     show: true,
                     color: '#ffffff',
                     size: 12,
-                    family: 'Helvetica Neue',
+                    family: 'Segoe UI',
                     weight: 'normal',
                     paddingLeft: 3,
                     paddingTop: 2,
@@ -194,8 +194,8 @@ export const chartStyle = reactive({
                 defaultValue: 'n/a',
                 text: {
                     size: 12,
-                    family: 'Helvetica Neue',
-                    weight: 'normal',
+                    family: 'Segoe UI',
+                    weight: '400',
                     color: '#D9D9D9',
                     marginTop: 6,
                     marginRight: 8,
@@ -214,9 +214,10 @@ export const chartStyle = reactive({
             },
             tickText: {
                 show: true,
-                color: '#D9D9D9',
-                family: 'Helvetica Neue',
-                weight: 'normal',
+                color: '#808080FF',
+                family: 'Segoe UI',
+                weight: '400',
+                lineHeight: 1.5,
                 size: 12,
                 paddingTop: 3,
                 paddingBottom: 6
@@ -243,9 +244,10 @@ export const chartStyle = reactive({
             },
             tickText: {
                 show: true,
-                color: '#D9D9D9',
-                family: 'Helvetica Neue',
-                weight: 'normal',
+                color: '#808080FF',
+                family: 'Segoe UI',
+                weight: '400',
+                lineHeight: 1.5,
                 size: 12,
                 paddingLeft: 3,
                 paddingRight: 6
@@ -279,7 +281,7 @@ export const chartStyle = reactive({
                     show: true,
                     color: '#D9D9D9',
                     size: 12,
-                    family: 'Helvetica Neue',
+                    family: 'Segoe UI',
                     weight: 'normal',
                     paddingLeft: 2,
                     paddingRight: 2,
@@ -305,7 +307,7 @@ export const chartStyle = reactive({
                     show: true,
                     color: '#D9D9D9',
                     size: 12,
-                    family: 'Helvetica Neue',
+                    family: 'Segoe UI',
                     weight: 'normal',
                     paddingLeft: 2,
                     paddingRight: 2,
@@ -368,7 +370,7 @@ export const chartStyle = reactive({
                 style: 'fill',
                 color: '#2196F3',
                 size: 12,
-                family: 'Helvetica Neue',
+                family: 'Segoe UI',
                 weight: 'normal',
                 offset: [0, 0]
             }
@@ -401,7 +403,7 @@ export const chartStyle = reactive({
                 color: '#FFFFFF',
                 backgroundColor: '#2196F3',
                 size: 12,
-                family: 'Helvetica Neue',
+                family: 'Segoe UI',
                 weight: 'normal',
                 paddingLeft: 2,
                 paddingRight: 2,
@@ -416,7 +418,7 @@ export const chartStyle = reactive({
                 color: '#FFFFFF',
                 backgroundColor: '#2196F3',
                 size: 12,
-                family: 'Helvetica Neue',
+                family: 'Segoe UI',
                 weight: 'normal',
                 paddingLeft: 2,
                 paddingRight: 2,
@@ -476,134 +478,6 @@ export const chartStyle = reactive({
         this.props.crosshair.vertical.line.color = crossLineColor
         this.props.crosshair.vertical.text.backgroundColor = crossTextBackgroundColor
 
-        /*return {
-            grid: {
-                show: true,
-                horizontal: {
-                    // 'solid'|'dash'
-                    style: 'dash',
-                    color: gridColor
-                },
-                vertical: {
-                    // 'solid'|'dash'
-                    style: 'dash',
-                    color: gridColor
-                }
-            },
-            candle: {
-                priceMark: {
-                    high: {
-                        color: textColor
-                    },
-                    low: {
-                        color: textColor
-                    }
-                },
-                tooltip: {
-                    text: {
-                        color: textColor
-                    },
-                    labels: ['T: ', 'O: ', 'C: ', 'H: ', 'L: ', 'V: ']
-                }
-            },
-            technicalIndicator: {
-                margin: {
-                    top: 0.2,
-                    bottom: 0.1
-                },
-                bar: {
-                    upColor: '#26A69A',
-                    downColor: '#EF5350',
-                    noChangeColor: '#888888'
-                },
-                line: {
-                    size: 1,
-                    colors: ['#FF9600', '#9D65C9', '#2196F3', '#E11D74', '#01C5C4']
-                },
-                circle: {
-                    upColor: '#26A69A',
-                    downColor: '#EF5350',
-                    noChangeColor: '#888888'
-                },
-                lastValueMark: {
-                    show: true,
-                    text: {
-                        show: true,
-                        color: '#ffffff',
-                        size: 12,
-                        family: 'Helvetica Neue',
-                        weight: 'normal',
-                        paddingLeft: 3,
-                        paddingTop: 2,
-                        paddingRight: 3,
-                        paddingBottom: 2,
-                        borderRadius: 2
-                    }
-                },
-                tooltip: {
-                    // 'always' | 'follow_cross' | 'none'
-                    showRule: 'always',
-                    // 'standard' | 'rect'
-                    showType: 'standard',
-                    showName: true,
-                    showParams: true,
-                    defaultValue: 'n/a',
-                    text: {
-                        size: 12,
-                        family: 'Helvetica Neue',
-                        weight: 'normal',
-                        color: textColor,
-                        marginTop: 6,
-                        marginRight: 8,
-                        marginBottom: 0,
-                        marginLeft: 8
-                    }
-                }
-            },
-            xAxis: {
-                axisLine: {
-                    color: axisLineColor
-                },
-                tickLine: {
-                    color: axisLineColor
-                },
-                tickText: {
-                    color: textColor
-                }
-            },
-            yAxis: {
-                axisLine: {
-                    color: axisLineColor
-                },
-                tickLine: {
-                    color: axisLineColor
-                },
-                tickText: {
-                    color: textColor
-                }
-            },
-            separator: {
-                color: axisLineColor
-            },
-            crosshair: {
-                horizontal: {
-                    line: {
-                        color: crossLineColor
-                    },
-                    text: {
-                        backgroundColor: crossTextBackgroundColor
-                    }
-                },
-                vertical: {
-                    line: {
-                        color: crossLineColor
-                    },
-                    text: {
-                        backgroundColor: crossTextBackgroundColor
-                    }
-                }
-            }
-        }*/
     },
 
     getStyle() {
