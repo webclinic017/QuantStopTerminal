@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -210,6 +211,15 @@ func (bot *Engine) Run() error {
 		err = bot.Webserver.ListenAndServe(true, bot.Config.ConfigDir)
 		if err != nil {
 			err = fmt.Errorf("unexpected error from ListenAndServe: %w", err)
+			log.Error(log.Global, err)
+		}
+	}()
+
+	go func() {
+		err = bot.Webserver.Hub.Run(context.TODO())
+		if err != nil {
+			log.Error(log.Global, err)
+			return
 		}
 	}()
 
