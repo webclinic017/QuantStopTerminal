@@ -1,37 +1,40 @@
 package websocket
 
 import (
-	"context"
 	"database/sql"
 	"encoding/json"
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
+	"github.com/quantstop/qsx"
+	"github.com/quantstop/qsx/coinbasepro"
+	"github.com/quantstop/qsx/core"
 	"github.com/quantstop/quantstopterminal/internal"
+	"github.com/quantstop/quantstopterminal/internal/database/models"
 	"github.com/quantstop/quantstopterminal/internal/log"
 	"github.com/quantstop/quantstopterminal/internal/webserver/write"
-	"github.com/quantstop/quantstopterminal/pkg/exchange"
-	"github.com/quantstop/quantstopterminal/pkg/exchange/coinbasepro"
-	"golang.org/x/sync/errgroup"
 	"net/http"
+	"sync"
 )
 
-// constant for 3 type actions
 const (
 	publish     = "publish"
 	subscribe   = "subscribe"
 	unsubscribe = "unsubscribe"
+	getClients  = "getClients"
+	getSubs     = "getSubs"
 )
 
 // Hub maintains the set of active clients and broadcasts messages to the
 // clients.
 type Hub struct {
-	db *sql.DB
+	db       *sql.DB
+	Shutdown chan struct{}
 
 	// Registered clients.
 	clients map[*Client]bool
 
 	// Client subscriptions
-	Subscriptions []Subscription
+	Subscriptions []*Subscription
 
 	// Register requests from the clients.
 	Register chan *Client
@@ -41,9 +44,9 @@ type Hub struct {
 }
 
 type Subscription struct {
-	Exchange string
-	Clients  []*Client
-	SubChan  chan []byte
+	ExchangeClient core.Qsx
+	Client         *Client
+	Shutdown       chan struct{}
 }
 
 // Message is the type for a valid message from a client
@@ -58,7 +61,7 @@ type MessageResponse struct {
 	Message string `json:"message"`
 }
 
-func NewHub(eng internal.IEngine) (*Hub, error) {
+func NewHub(eng internal.IEngine, shutdown chan struct{}) (*Hub, error) {
 	db, err := eng.GetSQL()
 	if err != nil {
 		return nil, err
@@ -66,79 +69,36 @@ func NewHub(eng internal.IEngine) (*Hub, error) {
 	return &Hub{
 		db:            db,
 		clients:       make(map[*Client]bool),
-		Subscriptions: make([]Subscription, 0),
+		Subscriptions: make([]*Subscription, 0),
 		Register:      make(chan *Client),
 		Unregister:    make(chan *Client),
+		Shutdown:      shutdown,
 	}, nil
 }
 
-func (h *Hub) Run(ctx context.Context) error {
+func (h *Hub) Run() {
 
-	wg, ctx := errgroup.WithContext(ctx)
-
-	wg.Go(func() error {
+	go func() {
 		for {
 			select {
-			case <-ctx.Done():
-				return ctx.Err()
+			case <-h.Shutdown:
+				return
 			case client := <-h.Register:
 				h.clients[client] = true
 			case client := <-h.Unregister:
 				if _, ok := h.clients[client]; ok {
-					h.Unsubscribe(client, "", true)
-					h.RemoveClient(client)
+					h.Unsubscribe(client)
 					delete(h.clients, client)
 					close(client.send)
 				}
-			default:
-				// if there are subscriptions, send any messages on the SubChan, to clients
-				if len(h.Subscriptions) != 0 {
-					// loop through subscriptions
-					for subIndex, sub := range h.Subscriptions {
-						// if no clients close subscription, and continue to next subscription
-						if len(sub.Clients) == 0 {
-							h.Subscriptions = append(h.Subscriptions[:subIndex], h.Subscriptions[subIndex+1:]...)
-							continue
-						}
-						// otherwise, publish any messages on the SubChan to subscribed clients
-						select {
-						case message := <-sub.SubChan:
-							h.Publish(sub.Exchange, message)
-						}
-
-					}
-				}
 			}
-
 		}
-	})
-
-	return wg.Wait()
+	}()
 
 }
 
 func (h *Hub) Send(client *Client, message []byte) {
 	client.send <- message
-}
-
-func (h *Hub) RemoveClient(client *Client) {
-	// Read all subs
-	for _, sub := range h.Subscriptions {
-		// Read all clients
-		for i := 0; i < len(sub.Clients); i++ {
-			if client.ID == (sub.Clients)[i].ID {
-				// If found, remove client
-				if i == len(sub.Clients)-1 {
-					// if it's stored as the last element, crop the array length
-					sub.Clients = (sub.Clients)[:len(sub.Clients)-1]
-				} else {
-					// if it's stored in between elements, overwrite the element and reduce iterator to prevent out-of-bound
-					sub.Clients = append((sub.Clients)[:i], (sub.Clients)[i+1:]...)
-					i--
-				}
-			}
-		}
-	}
 }
 
 func (h *Hub) ProcessMessage(client *Client, messageType int, payload []byte) *Hub {
@@ -155,11 +115,11 @@ func (h *Hub) ProcessMessage(client *Client, messageType int, payload []byte) *H
 		h.Send(client, res)
 		return h
 	}
-	log.Debugf(log.Webserver, "Client Message: %v", m)
+	log.Debugf(log.Webserver, "Coinbasepro Message: %v", m)
 
 	switch m.Action {
 	case publish:
-		h.Publish(m.ExchangeID, []byte(m.Message))
+		//h.Publish(m.ExchangeID, []byte(m.Message))
 		break
 
 	case subscribe:
@@ -167,7 +127,15 @@ func (h *Hub) ProcessMessage(client *Client, messageType int, payload []byte) *H
 		break
 
 	case unsubscribe:
-		h.Unsubscribe(client, m.ExchangeID, false)
+		h.Unsubscribe(client)
+		break
+
+	case getClients:
+
+		break
+
+	case getSubs:
+
 		break
 
 	default:
@@ -186,207 +154,169 @@ func (h *Hub) ProcessMessage(client *Client, messageType int, payload []byte) *H
 	return h
 }
 
-func (h *Hub) Publish(topic string, message []byte) {
-	var clients []*Client
-
-	// get list of clients subscribed to topic
-	for _, sub := range h.Subscriptions {
-		if sub.Exchange == topic {
-			clients = append(clients, sub.Clients...)
-		}
-	}
-
-	// send to clients
-	for _, client := range clients {
-		h.Send(client, message)
-	}
-}
-
 func (h *Hub) Subscribe(client *Client, exchange string, product string) {
-	exist := false
 
-	// find existing topics
+	log.Debugf(log.Webserver, "Websocket Hub | Coinbasepro %v requested a subscription to %v for %v", client.ID, exchange, product)
+
+	// check for existing subscription
 	for _, sub := range h.Subscriptions {
-		// if found, add client
-		if sub.Exchange == exchange {
-			exist = true
-			sub.Clients = append(sub.Clients, client)
+		// if found, unsubscribe and create new subscription with new request
+		if sub.Client.ID == client.ID {
+			h.Unsubscribe(client)
 		}
 	}
 
-	// else, add new topic & add client to that topic
-	if !exist {
-		newClient := []*Client{
-			client,
-		}
+	// create new subscription & add client to that subscription
+	newSubscription := &Subscription{
+		Client:   client,
+		Shutdown: make(chan struct{}),
+	}
+	h.Subscriptions = append(h.Subscriptions, newSubscription)
 
-		newTopic := Subscription{
-			Exchange: exchange,
-			Clients:  newClient,
-			SubChan:  make(chan []byte),
-		}
-
-		h.Subscriptions = append(h.Subscriptions, newTopic)
-
-		switch exchange {
-		case "coinbasepro":
-			h.RunCoinbaseproWebsocket(newTopic.SubChan, product)
-		}
+	// run the exchange service
+	switch exchange {
+	case "coinbasepro":
+		go h.RunSubscriptionService(newSubscription, product, client)
 
 	}
+
 }
 
-func (h *Hub) Unsubscribe(client *Client, exch string, unsubAll bool) {
-	// Read all topics
+func (h *Hub) Unsubscribe(client *Client) {
+	log.Debugf(log.Webserver, "Websocket Hub | Coinbasepro %v requested unsubscribe", client.ID)
 	for subIndex, sub := range h.Subscriptions {
-		if !unsubAll && sub.Exchange == exch {
-			// Read all topics' client
-			for i := 0; i < len(sub.Clients); i++ {
-				if client.ID == (sub.Clients)[i].ID {
-					// If found, remove client
-					if i == len(sub.Clients)-1 {
-						// if it's stored as the last element, crop the array length
-						sub.Clients = (sub.Clients)[:len(sub.Clients)-1]
-					} else {
-						// if it's stored in between elements, overwrite the element and reduce iterator to prevent out-of-bound
-						sub.Clients = append((sub.Clients)[:i], (sub.Clients)[i+1:]...)
-						i--
-					}
-				}
-			}
-		} else {
-			// Read all topics' client
-			for i := 0; i < len(sub.Clients); i++ {
-				if client.ID == (sub.Clients)[i].ID {
-					// If found, remove client
-					if i == len(sub.Clients)-1 {
-						// if it's stored as the last element, crop the array length
-						sub.Clients = (sub.Clients)[:len(sub.Clients)-1]
-					} else {
-						// if it's stored in between elements, overwrite the element and reduce iterator to prevent out-of-bound
-						sub.Clients = append((sub.Clients)[:i], (sub.Clients)[i+1:]...)
-						i--
-					}
-				}
-			}
-		}
-
-		// if that was last client
-		if len(sub.Clients) == 0 {
+		if sub.Client.ID == client.ID {
+			close(sub.Shutdown)
 			h.Subscriptions = append(h.Subscriptions[:subIndex], h.Subscriptions[subIndex+1:]...)
-			channelNames := []coinbasepro.ChannelName{
-				coinbasepro.ChannelNameHeartbeat,
-				coinbasepro.ChannelNameLevel2,
-				coinbasepro.ChannelNameMatches,
-			}
-			unsubReq := coinbasepro.NewUnsubscriptionRequest([]coinbasepro.ProductID{}, channelNames, []coinbasepro.Channel{})
-			err := exchange.Coinbasepro.Conn.WriteJSON(unsubReq)
-			if err != nil {
-				log.Error(log.Webserver, err)
-			}
 		}
 	}
 }
 
-func (h *Hub) RunCoinbaseproWebsocket(msgChan chan []byte, product string) {
+func (h *Hub) RunSubscriptionService(sub *Subscription, product string, client *Client) {
 
-	ctx := context.TODO()
+	log.Debugf(log.Webserver, "Websocket Hub | Coinbasepro %v subscription service starting ...", client.ID)
+
+	e := models.CryptoExchange{}
+	err := e.GetCryptoExchangeByName(h.db, "coinbasepro")
+	if err != nil {
+		log.Error(log.TraderLogger, err)
+		return
+	}
+
+	//Create a client instance
+	sub.ExchangeClient, err = qsx.NewExchange("coinbasepro", &core.Config{
+		Auth: &core.Auth{
+			Key:        e.AuthKey,
+			Passphrase: e.AuthPassphrase,
+			Secret:     e.AuthSecret,
+			Token:      nil,
+		},
+		Sandbox: false,
+	})
+
+	if err != nil {
+		log.Error(log.TraderLogger, err)
+		return
+	}
 
 	// create a new subscription request
-	prods := []coinbasepro.ProductID{coinbasepro.ProductID(product)}
-	channelNames := []coinbasepro.ChannelName{
-		coinbasepro.ChannelNameHeartbeat,
-		coinbasepro.ChannelNameLevel2,
-	}
-	channels := []coinbasepro.Channel{
-		coinbasepro.Channel{
-			Name:       coinbasepro.ChannelNameMatches,
-			ProductIDs: []coinbasepro.ProductID{coinbasepro.ProductID(product)},
-		},
-	}
-	subReq := coinbasepro.NewSubscriptionRequest(prods, channelNames, channels)
+
 	feed := coinbasepro.NewFeed()
-	wg, ctx := errgroup.WithContext(ctx)
 
-	// start api client feed
-	wg.Go(func() error {
-		return exchange.Coinbasepro.Watch(ctx, subReq, feed)
-	})
+	wg := sync.WaitGroup{}
+	wg.Add(4)
 
-	// testing - Loop on Heartbeat channel
-	wg.Go(func() error {
+	// Start api client feed
+	err = sub.ExchangeClient.WatchFeed(sub.Shutdown, &wg, product, feed)
+	if err != nil {
+		return
+	}
+
+	// Loop on Heartbeat channel
+	go func() {
+		defer wg.Done()
 		for message := range feed.Heartbeat {
 			select {
-			case <-ctx.Done():
-				return ctx.Err()
+			case <-sub.Shutdown:
+				log.Debugf(log.Webserver, "HUB | Coinbasepro %v subscription feed.Heartbeat service shutdown requested ...", client.ID)
+				return
 			default:
 				res, err := json.Marshal(message)
 				if err != nil {
 					log.Error(log.TraderLogger, err)
 				}
-				msgChan <- res
-				log.Debugf(log.TraderLogger, "%s | %s", message.Type, message.Time.String())
+				client.send <- res
+				//log.Debugf(log.TraderLogger, "%s | %s", message.Type, message.Time.String())
+				continue
 			}
 		}
-		return nil
-	})
+	}()
 
-	// testing - Loop on L2Channel channel
-	wg.Go(func() error {
+	// Loop on L2Channel channel
+	go func() {
+		defer wg.Done()
 		for message := range feed.Level2 {
 			select {
-			case <-ctx.Done():
-				return ctx.Err()
+			case <-sub.Shutdown:
+				log.Debugf(log.Webserver, "HUB | Coinbasepro %v subscription feed.Level2 service shutdown requested ...", client.ID)
+				return
 			default:
 				res, err := json.Marshal(message)
 				if err != nil {
 					log.Error(log.TraderLogger, err)
 				}
-				msgChan <- res
-				log.Debugf(log.TraderLogger, "%s | %s", message.Type, message.Time.String())
+				client.send <- res
+				//log.Debugf(log.TraderLogger, "%s | %s", message.Type, message.Time.String())
+				continue
 			}
 		}
-		return nil
-	})
+	}()
 
-	// testing - Loop on L2ChannelSnapshot channel
-	wg.Go(func() error {
+	// Loop on L2ChannelSnapshot channel
+	go func() {
+		defer wg.Done()
 		for message := range feed.Level2Snap {
 			select {
-			case <-ctx.Done():
-				return ctx.Err()
+			case <-sub.Shutdown:
+				log.Debugf(log.Webserver, "HUB | Coinbasepro %v subscription feed.Level2Snap service shutdown requested ...", client.ID)
+				return
 			default:
 				res, err := json.Marshal(message)
 				if err != nil {
 					log.Error(log.TraderLogger, err)
 				}
-				msgChan <- res
-				log.Debugf(log.TraderLogger, "%s | %s", message.Type, message.ProductId)
+				client.send <- res
+				//log.Debugf(log.TraderLogger, "%s | %s", message.Type, message.ProductId)
+				continue
 			}
 		}
-		return nil
-	})
+	}()
 
-	// testing - Loop on Matches channel
-	wg.Go(func() error {
+	// Loop on Matches channel
+	go func() {
+		defer wg.Done()
 		for message := range feed.Matches {
 			select {
-			case <-ctx.Done():
-				return ctx.Err()
+			case <-sub.Shutdown:
+				log.Debugf(log.Webserver, "HUB | Coinbasepro %v subscription feed.Matches service shutdown requested ...", client.ID)
+				return
 			default:
 				res, err := json.Marshal(message)
 				if err != nil {
 					log.Error(log.TraderLogger, err)
 				}
-				msgChan <- res
-				log.Debugf(log.TraderLogger, "%s | %s", message.Type, message.Time.String())
+				client.send <- res
+				//log.Debugf(log.TraderLogger, "%s | %s", message.Type, message.Time.String())
+				continue
 			}
 		}
-		return nil
-	})
+	}()
+	log.Debugf(log.Webserver, "Websocket Hub | Coinbasepro %v subscription service started.", client.ID)
+	// Wait for all go-routines to finish
+	wg.Wait()
+	<-sub.Shutdown
 
-	_ = wg.Wait()
-	return
+	log.Debugf(log.Webserver, "Websocket Hub | Coinbasepro %v subscription service shutdown.", client.ID)
 }
 
 var upgrader = websocket.Upgrader{
@@ -418,7 +348,7 @@ func ServeWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
 	// greet the new client
 	msgRes := MessageResponse{
 		Type:    "welcome",
-		Message: "QuantstopTerminal Websocket Server: Welcome! Your ID is " + client.ID,
+		Message: "Welcome to QuantstopTerminal Websocket Server: Your ID is " + client.ID,
 	}
 	res, err := json.Marshal(msgRes)
 	if err != nil {
@@ -427,6 +357,8 @@ func ServeWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	hub.Send(client, res)
+
+	log.Debugf(log.Webserver, "HUB | %v clients connected.", len(hub.clients))
 
 	// Allow collection of memory referenced by the caller by doing all work in new goroutines.
 	go client.writePump()

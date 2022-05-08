@@ -2,16 +2,14 @@ package handlers
 
 import (
 	"context"
+	"github.com/quantstop/qsx/core"
 	"github.com/quantstop/quantstopterminal/internal"
 	"github.com/quantstop/quantstopterminal/internal/database/models"
 	"github.com/quantstop/quantstopterminal/internal/log"
 	"github.com/quantstop/quantstopterminal/internal/webserver/errors"
 	"github.com/quantstop/quantstopterminal/internal/webserver/router"
 	"github.com/quantstop/quantstopterminal/internal/webserver/write"
-	"github.com/quantstop/quantstopterminal/pkg/exchange"
-	"github.com/quantstop/quantstopterminal/pkg/exchange/coinbasepro"
 	"net/http"
-	"strconv"
 )
 
 type getExchangesResponse struct {
@@ -19,127 +17,81 @@ type getExchangesResponse struct {
 	Exchanges []SupportedExchange `json:"exchanges"`
 }
 
-// todo: move this to an exchange manager
 type SupportedExchange struct {
 	ID string `json:"id"`
 }
 
-var SupportedExchanges = []SupportedExchange{
-	{"coinbasepro"},
-	{"yfinance"},
-}
-
 func GetExchanges(bot internal.IEngine, user *models.User, w http.ResponseWriter, r *http.Request) http.HandlerFunc {
+
+	var supportedExchanges []SupportedExchange
+	for _, e := range bot.GetSupportedExchangesList() {
+		supportedExchanges = append(supportedExchanges, SupportedExchange{ID: e})
+	}
 
 	res := getExchangesResponse{
 		Type:      "getExchanges",
-		Exchanges: SupportedExchanges,
+		Exchanges: supportedExchanges,
 	}
 
 	return write.JSON(res)
 }
 
 type getCandleResponse struct {
-	Type                      string `json:"type"`
-	coinbasepro.HistoricRates `json:"candles"`
+	Type          string        `json:"type"`
+	HistoricRates []core.Candle `json:"candles"`
 }
 
 // GetCandles
-/* Historic rates for a product.
-   Rates are returned in grouped buckets.
-   Candle schema is of the form [timestamp, price_low, price_high, price_open, price_close]
-   Request: GET("/api/exchanges/([^/]+)/products/([^/]+)/candles")
-   Params:
-	- granularity (string, required) {60, 300, 900, 3600, 21600, 86400}
-	- start (string, optional)
-	- end (string, optional)
-*/
+// Historic rates for a product.
+// Rates are returned in grouped buckets.
+// Candle schema is of the form [timestamp, price_low, price_high, price_open, price_close]
+// Request: GET "/api/exchanges/([^/]+)/products/([^/]+)/candles"
+// Params:
+// - granularity (string, required) {60, 300, 900, 3600, 21600, 86400}
+// - start (string, optional)
+// - end (string, optional)
+// Example: GET "/api/exchanges/coinbase/products/BTC-USD/candles?granularity=5?"
 func GetCandles(bot internal.IEngine, user *models.User, w http.ResponseWriter, r *http.Request) http.HandlerFunc {
 
 	exchangeName := router.GetField(r, 0)
 	productName := router.GetField(r, 1)
+	granularity := r.URL.Query().Get("granularity")
 
-	granularity, _ := strconv.ParseInt(r.URL.Query().Get("granularity"), 0, 0)
-	if granularity != 0 {
-		// ... process it, will be the first (only) if multiple were given
-		// note: if they pass in like ?param1=&param2= param1 will also be "" :|
-		// todo: process params
+	historicalCandles, err := bot.GetExchange(exchangeName).GetHistoricalCandles(context.TODO(), productName, granularity)
+	if err != nil {
+		log.Debugln(log.Webserver, "error getting candles: %v", err)
+		return write.Error(errors.InternalError)
 	}
-
-	switch exchangeName {
-	case "coinbasepro":
-		// todo: maybe something like this, where each exchange client implements the interface?
-		//bot.GetExchange(coinbase).GetProduct()
-		if exchange.Coinbasepro == nil {
-			log.Debugln(log.Webserver, "error: products.handler coinbase client is nil")
-		}
-		candles, err := exchange.Coinbasepro.GetHistoricRates(
-			context.TODO(),
-			coinbasepro.ProductID(productName),
-			coinbasepro.HistoricRateFilter{
-				Granularity: coinbasepro.Timeslice(granularity),
-			},
-		)
-		if err != nil {
-			log.Debugf(log.Webserver, "error getting candles: %v", err)
-		}
-		resp := getCandleResponse{
-			Type:          "getProductCandles",
-			HistoricRates: candles,
-		}
-		return write.JSON(resp)
+	resp := getCandleResponse{
+		Type:          "getProductCandles",
+		HistoricRates: historicalCandles,
 	}
+	return write.JSON(resp)
 
-	return write.Error(errors.InternalError)
-}
-
-type getProductRequest struct {
-	ExchangeID string `json:"exchange_id"`
 }
 
 type getProductResponse struct {
-	Type     string                `json:"type"`
-	Products []coinbasepro.Product `json:"products"`
+	Type     string         `json:"type"`
+	Products []core.Product `json:"products"`
 }
 
-// GetProducts handles GET requests for "/api/exchanges/([^/]+)/products/" example: GET "/api/exchanges/coinbase/products
+// GetProducts
+// Supported Currency Pairs for an Exchange.
+// Request: GET "/api/exchanges/([^/]+)/products"
+// Params:
+// Example: GET "/api/exchanges/coinbase/products
 func GetProducts(bot internal.IEngine, user *models.User, w http.ResponseWriter, r *http.Request) http.HandlerFunc {
 
-	/*decoder := json.NewDecoder(r.Body)
-	req := getProductRequest{}
-	err := decoder.Decode(&req)
-	if err != nil || &req == nil {
-		return write.Error(errors.NoJSONBody)
-	}*/
+	exchangeName := router.GetField(r, 0)
 
-	//id, _ := strconv.Atoi(router.GetField(r, 0))
-	slug := router.GetField(r, 0)
-	name := ""
-
-	for _, e := range SupportedExchanges {
-		if e.ID == slug {
-			name = e.ID
-			break
-		}
+	products, err := bot.GetExchange(exchangeName).ListProducts(context.TODO())
+	if err != nil {
+		log.Debugf(log.Webserver, "error getting products: %v", err)
 	}
-
-	switch name {
-	case "coinbasepro":
-		// todo: maybe something like this, where each exchange client implements the interface?
-		//bot.GetExchange(coinbase).GetProduct()
-		if exchange.Coinbasepro == nil {
-			log.Debugln(log.Webserver, "error: products.handler coinbase client is nil")
-		}
-		products, err := exchange.Coinbasepro.ListProducts(context.TODO())
-		if err != nil {
-			log.Debugf(log.Webserver, "error getting candles: %v", err)
-		}
-		resp := getProductResponse{
-			Type:     "getProducts",
-			Products: products,
-		}
-		return write.JSON(resp)
+	resp := getProductResponse{
+		Type:     "getProducts",
+		Products: products,
 	}
+	return write.JSON(resp)
 
-	return write.Error(errors.InternalError)
 }

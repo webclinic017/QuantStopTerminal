@@ -8,6 +8,7 @@ import Exchanges from "./pages/Exchanges";
 import TestWebsocket from "./pages/TestWebsocket";
 import { createRouter, createWebHistory } from "vue-router";
 import store from "./store/index";
+import {userStore} from "./store/userStore";
 
 const routes = [
     { path: "/", component: Home, meta: { requiredAuth: true } },
@@ -27,9 +28,13 @@ export const routeConfig = createRouter({
 });
 
 routeConfig.beforeEach(async (to, from, next) => {
+
+    //let userProfile = userStore.getUserProfile()
     let userProfile = store.getters["auth/getUserProfile"];
     let isAuthenticated = localStorage.getItem("isAuthenticated");
     if (userProfile.id !== 0 && isAuthenticated) {
+        //await userStore.getUserProfile()
+        //userProfile = userStore.getUserProfile()
         await store.dispatch("auth/userProfile");
         userProfile = store.getters["auth/getUserProfile"];
     }

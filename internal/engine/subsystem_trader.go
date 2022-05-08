@@ -1,13 +1,7 @@
 package engine
 
 import (
-	"github.com/quantstop/quantstopterminal/internal/database/models"
 	"github.com/quantstop/quantstopterminal/internal/log"
-	"github.com/quantstop/quantstopterminal/internal/trader"
-	"github.com/quantstop/quantstopterminal/pkg/exchange"
-	"github.com/quantstop/quantstopterminal/pkg/exchange/coinbasepro"
-
-	//"github.com/quantstop/quantstopterminal/internal/strategy"
 	"sync"
 )
 
@@ -50,7 +44,7 @@ func (s *TraderSubsystem) stop() error {
 }
 
 func (s *TraderSubsystem) run() error {
-	db, err := s.bot.GetSQL()
+	/*db, err := s.bot.GetSQL()
 	if err != nil {
 		return err
 	}
@@ -62,20 +56,19 @@ func (s *TraderSubsystem) run() error {
 		return err
 	}
 
-	//Create a client instance
-	exchange.Coinbasepro, err = coinbasepro.NewSandboxClient(
-		&coinbasepro.Auth{
-			Key:        e.AuthKey,
-			Passphrase: e.AuthPassphrase,
-			Secret:     e.AuthSecret,
-		},
+	ex, err := exchange.GetExchange(base.CoinbasePro, base.NewAuth(
+		e.AuthKey,
+		e.AuthPassphrase,
+		e.AuthSecret,
+	),
 	)
-	if err != nil {
-		log.Error(log.TraderLogger, err)
-		return err
-	}
+	log.Debugln(log.TraderLogger, ex.GetName())
+	log.Debugln(log.TraderLogger, ex.Test())
 
-	go trader.Run(db, s.bot.Webserver.Hub)
+
+
+
+	go trader.Run(db, s.bot.Webserver.Hub)*/
 
 	return nil
 }

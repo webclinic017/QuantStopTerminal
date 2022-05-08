@@ -59,13 +59,11 @@ func (c *Client) readPump() {
 	for {
 		messageType, p, err := c.conn.ReadMessage()
 		if err != nil {
-			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				log.Printf("error: %v", err)
-			}
+			log.Printf("websocket client %s error: %v", c.ID, err)
 			break
 		}
 		p = bytes.TrimSpace(bytes.Replace(p, newline, space, -1))
-		go c.hub.ProcessMessage(c, messageType, p)
+		c.hub.ProcessMessage(c, messageType, p)
 	}
 }
 

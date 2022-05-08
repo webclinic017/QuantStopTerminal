@@ -42,7 +42,9 @@ func CreateWebserver(eng internal.IEngine, conf *Config, isDev bool) (*Webserver
 		return nil, err
 	}
 
-	hub, err := websocket.NewHub(eng)
+	var shutdown = make(chan struct{})
+
+	hub, err := websocket.NewHub(eng, shutdown)
 	if err != nil {
 		return nil, err
 	}
@@ -54,7 +56,7 @@ func CreateWebserver(eng internal.IEngine, conf *Config, isDev bool) (*Webserver
 		Config:           conf,
 		mux:              rtr,
 		Hub:              hub,
-		shutdownFinished: make(chan struct{}),
+		shutdownFinished: shutdown,
 	}
 
 	server.ConfigureRouter(isDev)
@@ -74,6 +76,9 @@ func (s *Webserver) ListenAndServe(tls bool, configDir string) (err error) {
 	if s.shutdownFinished == nil {
 		s.shutdownFinished = make(chan struct{})
 	}
+
+	// run websocket server
+	go s.Hub.Run()
 
 	// if dev mode, run node server
 	if s.isDev {

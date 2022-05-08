@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"github.com/quantstop/qsx/core"
 	"github.com/quantstop/quantstopterminal/internal/config"
 	"github.com/quantstop/quantstopterminal/internal/webserver"
 	"sync"
@@ -10,7 +11,7 @@ import (
 type Engine struct {
 	*Version
 	Config              *config.Config
-	SubsystemRegistry   *ServiceRegistry
+	SubsystemRegistry   *SubsystemRegistry
 	DatabaseSubsystem   *DatabaseSubsystem
 	NTPCheckerSubsystem *NTPCheckerSubsystem
 	TraderSubsystem     *TraderSubsystem
@@ -19,6 +20,7 @@ type Engine struct {
 	SentimentAnalyzer   *SentimentAnalyzerSubsystem
 	SubsystemWG         sync.WaitGroup
 	Uptime              time.Time
+	Exchanges           map[string]core.Qsx
 }
 
 const (

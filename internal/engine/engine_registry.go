@@ -7,23 +7,23 @@ import (
 	"sync"
 )
 
-// ServiceRegistry provides a useful pattern for managing services.
+// SubsystemRegistry provides a useful pattern for managing services.
 // It allows for ease of dependency management and ensures services
 // dependent on others use the same references in memory.
-type ServiceRegistry struct {
+type SubsystemRegistry struct {
 	services     map[reflect.Type]iSubsystem // map of types to iSubsystem.
 	serviceTypes []reflect.Type              // keep an ordered slice of registered service types.
 }
 
-// NewServiceRegistry starts a registry instance for convenience
-func NewServiceRegistry() *ServiceRegistry {
-	return &ServiceRegistry{
+// NewSubsystemRegistry starts a registry instance for convenience
+func NewSubsystemRegistry() *SubsystemRegistry {
+	return &SubsystemRegistry{
 		services: make(map[reflect.Type]iSubsystem),
 	}
 }
 
-// RegisterService appends a service constructor function to the service registry
-func (s *ServiceRegistry) RegisterService(service iSubsystem) error {
+// RegisterSubsystem appends a service constructor function to the service registry
+func (s *SubsystemRegistry) RegisterSubsystem(service iSubsystem) error {
 	kind := reflect.TypeOf(service)
 	if _, exists := s.services[kind]; exists {
 		return fmt.Errorf("subsystem already exists: %v", kind)
@@ -34,15 +34,14 @@ func (s *ServiceRegistry) RegisterService(service iSubsystem) error {
 }
 
 // StartAll initialized each service in order of registration.
-func (s *ServiceRegistry) StartAll(wg *sync.WaitGroup) {
+func (s *SubsystemRegistry) StartAll(wg *sync.WaitGroup) {
 	log.Debugf(log.SubsystemLogger, "Starting %d subsystems: %v", len(s.serviceTypes), s.serviceTypes)
 
-	// Loop through all services
+	// Loop through all subsystems
 	for _, kind := range s.serviceTypes {
 		if s.services[kind].isEnabled() && s.services[kind].isInitialized() {
-			// Make sure service is enabled, and initialized, then try starting
+			// Make sure subsystem is enabled, and initialized, then try starting
 			log.Debugf(log.SubsystemLogger, "Starting subsystem type %v", kind)
-			//if err := StartSubsystem(s.services[kind], wg); err != nil {
 			if err := s.services[kind].start(wg); err != nil {
 				log.Errorf(log.SubsystemLogger, "Unable to start subsystem %v : %v", kind, err)
 			}
@@ -52,7 +51,7 @@ func (s *ServiceRegistry) StartAll(wg *sync.WaitGroup) {
 }
 
 // Start takes in a command string, and wait group, attempts to find the service by its name, and then start
-func (s *ServiceRegistry) Start(name string, wg *sync.WaitGroup) error {
+func (s *SubsystemRegistry) Start(name string, wg *sync.WaitGroup) error {
 
 	found := false
 
@@ -82,7 +81,7 @@ func (s *ServiceRegistry) Start(name string, wg *sync.WaitGroup) error {
 
 // StopAll ends every service in reverse order of registration,
 // logging a panic if any of them fail to stop.
-func (s *ServiceRegistry) StopAll() {
+func (s *SubsystemRegistry) StopAll() {
 	for i := len(s.serviceTypes) - 1; i >= 0; i-- {
 		kind := s.serviceTypes[i]
 		service := s.services[kind]
@@ -92,10 +91,10 @@ func (s *ServiceRegistry) StopAll() {
 	}
 }
 
-// FetchService takes in a struct pointer and sets the value of that pointer
+// FetchSubsystem takes in a struct pointer and sets the value of that pointer
 // to a service currently stored in the service registry. This ensures the input argument is
 // set to the right pointer that refers to the originally registered service.
-func (s *ServiceRegistry) FetchService(service interface{}) error {
+func (s *SubsystemRegistry) FetchSubsystem(service interface{}) error {
 	if reflect.TypeOf(service).Kind() != reflect.Ptr {
 		return fmt.Errorf("input must be of pointer type, received value type instead: %T", service)
 	}

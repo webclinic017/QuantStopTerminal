@@ -70,6 +70,7 @@
 import { mapGetters, mapActions, mapMutations } from "vuex";
 import StatusIndicator from "../components/StatusIndicator";
 import jwtInterceptor from "../shared/jwt.interceptor";
+import {websocket} from "../websocket/websocket";
 export default {
   name: "Home",
   components: {StatusIndicator},
@@ -88,6 +89,15 @@ export default {
       secs: 0,*/
       uptime: "0d 0h 0m 0s"
     }
+  },
+  mounted() {
+    websocket.createWebsocket()
+    /*this.$bus.on("message", msg => {
+      console.log(msg)
+    })
+    this.$bus.on("error", msg => {
+      console.log(msg)
+    })*/
   },
   methods: {
     ...mapActions("public", {

@@ -69,26 +69,36 @@ export default {
     }
   },
   created() {
-    this.$emit('selected', this.selected);
+    //this.$emit('selected', this.selected);
   },
   computed: {
     filteredOptions() {
       const filtered = [];
-      const regOption = new RegExp(this.searchFilter, 'ig');
+      const regOption = new RegExp(this.searchFilter, 'id');
       for (const option of this.options) {
         if (this.searchFilter.length < 1 || option.id.match(regOption)){
           if (filtered.length < this.maxItem) filtered.push(option);
         }
       }
-      return filtered;
-    }
+      return filtered.sort((a, b) => {
+        if (a.id < b.id)
+          return -1;
+        if (a.id > b.id)
+          return 1;
+        return 0;
+      });
+
+    },
+
   },
   methods: {
     selectOption(option) {
-      this.selected = option;
-      this.optionsShown = false;
-      this.searchFilter = this.selected.id;
-      this.$emit('selected', this.selected);
+      if (!this.disabled) {
+        this.selected = option;
+        this.optionsShown = false;
+        this.searchFilter = this.selected.id;
+        this.$emit('selected', this.selected);
+      }
     },
     showOptions(){
       if (!this.disabled) {
@@ -97,18 +107,20 @@ export default {
       }
     },
     exit() {
-      if (!this.selected.id) {
-        this.selected = {};
-        this.searchFilter = '';
-      } else {
-        this.searchFilter = this.selected.id;
+      if (!this.disabled) {
+        if (!this.selected.id) {
+          this.selected = {};
+          this.searchFilter = '';
+        } else {
+          this.searchFilter = this.selected.id;
+        }
+        this.$emit('selected', this.selected);
+        this.optionsShown = false;
       }
-      //this.$emit('selected', this.selected);
-      this.optionsShown = false;
     },
     // Selecting when pressing Enter
     keyMonitor: function(event) {
-      if (event.key === "Enter" && this.filteredOptions[0]) {
+      if (event.key === "Enter" && this.filteredOptions[0] && !this.disabled) {
         this.selectOption(this.filteredOptions[0]);
       }
 
@@ -116,12 +128,14 @@ export default {
   },
   watch: {
     searchFilter() {
-      if (this.filteredOptions.length === 0) {
-        this.selected = {};
-      } else {
-        this.selected = this.filteredOptions[0];
+      if (!this.disabled) {
+        if (this.filteredOptions.length === 0) {
+          this.selected = {};
+        } else {
+          this.selected = this.filteredOptions[0];
+        }
+        this.$emit('filter', this.searchFilter);
       }
-      this.$emit('filter', this.searchFilter);
     }
   }
 };
@@ -129,6 +143,9 @@ export default {
 
 
 <style scoped>
+input {
+  all: unset;
+}
 .dropdown {
   position: relative;
   display: block;
@@ -136,25 +153,38 @@ export default {
 }
 .dropdown .dropdown-input {
   background: var(--background-color-primary);
-  cursor: pointer;
+  cursor: text !important;
   border: 1px solid var(--border-color);
   border-radius: 3px;
   color: #333;
   display: block;
-  font-size: .8em;
   padding: 6px;
   min-width: 50px;
   max-width: 250px;
 }
 .dropdown .dropdown-input:hover {
-   background: var(--background-color-secondary);
+  background: var(--background-color-secondary) !important;
+  border: 1px solid var(--border-color-hover) !important;
+}
+.dropdown .dropdown-input:focus {
+  background: var(--background-color-secondary) !important;
+  border: 1px solid var(--border-color-hover) !important;
+}
+.dropdown .dropdown-input:focus-visible {
+  background: var(--background-color-secondary) !important;
+  border: 1px solid var(--border-color-hover) !important;
+}
+:focus-visible {
+  background: var(--background-color-secondary) !important;
+  border: 1px solid var(--border-color-hover) !important;
 }
 
 .dropdown .dropdown-content {
   position: absolute;
   background-color: var(--background-color-primary);
-  min-width: 48px;
-  max-width: 248px;
+  width: 100% !important;
+  /*min-width: 48px;
+  max-width: 248px;*/
   max-height: 248px;
   border: 1px solid var(--border-color);
   box-shadow: 0px -8px 34px 0px rgba(0, 0, 0, 0.05);
@@ -163,8 +193,6 @@ export default {
 }
 .dropdown .dropdown-content .dropdown-item {
   color: var(--text-primary-color);
-  font-size: .7em;
-  line-height: 1em;
   padding: 8px;
   text-decoration: none;
   display: block;
@@ -173,9 +201,32 @@ export default {
 .dropdown .dropdown-content .dropdown-item:hover {
    background-color: var(--background-color-secondary);
 }
-
-
 .dropdown:hover .dropdown-content {
   display: block;
 }
+
+/* dropdown scrollbar width */
+::-webkit-scrollbar {
+  width: 1px;
+}
+
+/* dropdown scrollbar track */
+::-webkit-scrollbar-track {
+  background: var(--background-color-secondary);
+  box-shadow: inset 0 0 5px grey;
+  border-radius: 10px;
+}
+
+/* dropdown scrollbar handle */
+::-webkit-scrollbar-thumb {
+  border-color: var(--border-color);
+  border-radius: 10px;
+  background: var(--background-color-primary);
+}
+
+/* dropdown scrollbar handle on hover */
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
 </style>
