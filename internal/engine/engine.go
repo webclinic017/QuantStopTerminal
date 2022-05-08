@@ -1,11 +1,13 @@
 package engine
 
 import (
-	"context"
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/quantstop/qsx"
+	"github.com/quantstop/qsx/core"
 	"github.com/quantstop/quantstopterminal/internal/config"
+	"github.com/quantstop/quantstopterminal/internal/database/models"
 	"github.com/quantstop/quantstopterminal/internal/log"
 	"github.com/quantstop/quantstopterminal/internal/webserver"
 	"github.com/quantstop/quantstopterminal/pkg/system"
@@ -55,7 +57,7 @@ func (bot *Engine) Initialize() error {
 	defer engineMutex.Unlock()
 
 	// Create new subsystem registry
-	bot.SubsystemRegistry = NewServiceRegistry()
+	bot.SubsystemRegistry = NewSubsystemRegistry()
 
 	// Initialize database subsystem
 	if err := bot.initDatabaseSubsystem(); err != nil {
@@ -82,6 +84,8 @@ func (bot *Engine) Initialize() error {
 		return err
 	}
 
+	bot.Exchanges = make(map[string]core.Qsx)
+
 	return nil
 }
 
@@ -95,7 +99,7 @@ func (bot *Engine) initDatabaseSubsystem() error {
 	}
 
 	// Register database subsystem
-	if err := bot.SubsystemRegistry.RegisterService(bot.DatabaseSubsystem); err != nil {
+	if err := bot.SubsystemRegistry.RegisterSubsystem(bot.DatabaseSubsystem); err != nil {
 		log.Errorf(log.Global, "Database subsystem unable to register: %v", err)
 		return err
 	}
@@ -114,7 +118,7 @@ func (bot *Engine) initNtpMonitorSubsystem() error {
 		}
 
 		// Register ntp checker subsystem
-		if err := bot.SubsystemRegistry.RegisterService(bot.NTPCheckerSubsystem); err != nil {
+		if err := bot.SubsystemRegistry.RegisterSubsystem(bot.NTPCheckerSubsystem); err != nil {
 			log.Errorf(log.Global, "NTP subsystem unable to register: %v", err)
 			return err
 		}
@@ -134,7 +138,7 @@ func (bot *Engine) initStrategySubsystem() error {
 	}
 
 	// Register strategy subsystem
-	if err := bot.SubsystemRegistry.RegisterService(bot.TraderSubsystem); err != nil {
+	if err := bot.SubsystemRegistry.RegisterSubsystem(bot.TraderSubsystem); err != nil {
 		log.Errorf(log.Global, "Trader subsystem unable to register: %v", err)
 		return err
 	}
@@ -154,7 +158,7 @@ func (bot *Engine) initInternetMonitorSubsystem() error {
 		}
 
 		// Register internet checker subsystem
-		if err := bot.SubsystemRegistry.RegisterService(bot.InternetSubsystem); err != nil {
+		if err := bot.SubsystemRegistry.RegisterSubsystem(bot.InternetSubsystem); err != nil {
 			log.Errorf(log.Global, "Internet checker subsystem unable to register: %v", err)
 			return err
 		}
@@ -174,7 +178,7 @@ func (bot *Engine) initSentimentAnalyzerSubsystem() error {
 	}
 
 	// Register strategy subsystem
-	if err := bot.SubsystemRegistry.RegisterService(bot.SentimentAnalyzer); err != nil {
+	if err := bot.SubsystemRegistry.RegisterSubsystem(bot.SentimentAnalyzer); err != nil {
 		log.Errorf(log.Global, "Sentiment Analyzer subsystem unable to register: %v", err)
 		return err
 	}
@@ -196,7 +200,7 @@ func (bot *Engine) Run() error {
 	// Set the current uptime to now
 	bot.Uptime = time.Now()
 
-	// Start all subsystems
+	// Start all subsystems in order of registration
 	bot.SubsystemRegistry.StartAll(&bot.SubsystemWG)
 
 	// Everything good, create and run webserver
@@ -206,7 +210,8 @@ func (bot *Engine) Run() error {
 	if err != nil {
 		return err
 	}
-	// run api server
+
+	// Run the webserver (starts up both the http and websocket servers)
 	go func() {
 		err = bot.Webserver.ListenAndServe(true, bot.Config.ConfigDir)
 		if err != nil {
@@ -215,14 +220,12 @@ func (bot *Engine) Run() error {
 		}
 	}()
 
-	go func() {
-		err = bot.Webserver.Hub.Run(context.TODO())
-		if err != nil {
-			log.Error(log.Global, err)
-			return
-		}
-	}()
+	// Instantiate all exchanges that are supported
+	if err = bot.initExchanges(); err != nil {
+		return err
+	}
 
+	// Run the trading subsystem
 	err = bot.TraderSubsystem.run()
 	if err != nil {
 		return err
@@ -257,6 +260,35 @@ func (bot *Engine) Stop() {
 		fmt.Printf("Failed to close logger. Error: %v\n", err)
 	}
 
+}
+
+func (bot *Engine) initExchanges() (err error) {
+
+	// todo: need to get all exchanges in db, then init each one, if any
+
+	e := models.CryptoExchange{}
+	err = e.GetCryptoExchangeByName(bot.DatabaseSubsystem.dbConn.SQL, "coinbasepro")
+	if err != nil {
+		log.Error(log.Global, err)
+		return err
+	}
+
+	ex, err := qsx.NewExchange("coinbasepro", &core.Config{
+		Auth: &core.Auth{
+			Key:        e.AuthKey,
+			Passphrase: e.AuthPassphrase,
+			Secret:     e.AuthSecret,
+			Token:      nil,
+		},
+		Sandbox: false,
+	})
+	if err != nil {
+		log.Error(log.Global, err)
+		return err
+	}
+
+	bot.Exchanges["coinbasepro"] = ex
+	return nil
 }
 
 // GetUptime returns the time since the bot last started
@@ -414,4 +446,20 @@ func (bot *Engine) SetSystemConfig(apiUrl string, maxProcs string) error {
 		return err
 	}
 	return nil
+}
+
+func (bot *Engine) GetExchange(name string) core.Qsx {
+	switch name {
+	case "coinbasepro":
+		return bot.Exchanges["coinbasepro"]
+	}
+	return nil
+}
+
+func (bot *Engine) GetSupportedExchangesList() []string {
+	var list []string
+	for _, e := range bot.Exchanges {
+		list = append(list, string(e.GetName()))
+	}
+	return list
 }
