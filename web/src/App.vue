@@ -34,6 +34,7 @@
     <Footer />
   </div>-->
 
+
 </template>
 
 <script>
@@ -56,7 +57,7 @@ export default {
     }),
 
   },
-  mounted () {
+  mounted() {
     /*document.body.classList.add('d-flex', 'flex-column', 'h-100')*/
     document.body.classList.add('h-100')
     document.documentElement.classList.add('h-100')
@@ -147,7 +148,9 @@ input {
 input:hover {
   border-color: var(--border-color-hover) !important;
 }
-
+.form-control {
+  border: 1px solid var(--border-color) !important;
+}
 
 .feather {
   width: 16px;
