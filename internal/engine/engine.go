@@ -206,7 +206,7 @@ func (bot *Engine) Run() error {
 	// Everything good, create and run webserver
 	// This is done here, because the webserver depends upon the instantiated bot and database connection
 	var err error
-	bot.Webserver, err = webserver.CreateWebserver(bot, bot.Config.Webserver, bot.IsDevelopment)
+	bot.Webserver, err = webserver.CreateWebserver(bot, bot.Config.Webserver, bot.Version.IsDevelopment)
 	if err != nil {
 		return err
 	}
