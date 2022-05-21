@@ -2,7 +2,7 @@ package websocket
 
 import (
 	"bytes"
-	"log"
+	"github.com/quantstop/quantstopterminal/internal/log"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -59,7 +59,7 @@ func (c *Client) readPump() {
 	for {
 		messageType, p, err := c.conn.ReadMessage()
 		if err != nil {
-			log.Printf("websocket client %s error: %v", c.ID, err)
+			log.Errorf(log.Webserver, "websocket client %s error: %v", c.ID, err)
 			break
 		}
 		p = bytes.TrimSpace(bytes.Replace(p, newline, space, -1))
