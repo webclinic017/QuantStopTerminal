@@ -36,7 +36,7 @@ tasks:
     desc: Removes build artifacts for windows-amd64 (64-bit)
     dir: ./builds/windows-amd64
     cmds:
-      - rm qst.exe qst-{{.VERSION}}-x64.msi qstcli.exe
+      - rm qst.exe qst-{{.VERSION}}-x64.msi
 
   # 32-Bit build tasks ------------------------------------------------------------------------------------------------
 
@@ -66,4 +66,4 @@ tasks:
     desc: Removes build artifacts for windows-386 (32-bit)
     dir: ./builds/windows-386
     cmds:
-      - rm qst.exe qst-{{.VERSION}}-x86.msi qstcli.exe
+      - rm qst.exe qst-{{.VERSION}}-x86.msi
