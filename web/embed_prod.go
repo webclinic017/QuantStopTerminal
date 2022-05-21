@@ -5,7 +5,6 @@ package web
 
 import (
 	"embed"
-	"fmt"
 	"io/fs"
 )
 
@@ -19,8 +18,7 @@ func init() {
 	}
 }
 
-func GetFileSystem() fs.FS {
-	fmt.Println("Filesystem served by embed package")
-	sfs, _ := fs.Sub(webFs, "dist")
-	return sfs
+func GetFileSystem() (fs.FS, error) {
+	sfs, err := fs.Sub(webFs, "dist")
+	return sfs, err
 }
