@@ -1,11 +1,15 @@
-
-import { reactive } from 'vue'
+import {reactive} from 'vue'
 import axios from "axios";
 import jwtInterceptor from "../shared/jwt.interceptor";
-
+const defaultUserProfile = {
+    id: 0,
+    username: "",
+    roles: "",
+}
 export const userStore = reactive({
     loginStatus: "",
     registerExchangeStatus: "",
+    isAuthed: false,
     userProfile: {
         id: 0,
         username: "",
@@ -20,19 +24,28 @@ export const userStore = reactive({
     getRegisterExchangeStatus() {
         return this.registerExchangeStatus;
     },
+    getIsAuthed() {
+        if (localStorage.getItem('isAuthenticated')) {
+            try {
+                this.isAuthed = JSON.parse(localStorage.getItem('isAuthenticated'));
+            } catch(e) {
+                localStorage.removeItem('isAuthenticated');
+            }
+        } else {
+            // first time no local storage saved yet, save the defaults
+            this.setIsAuthed(this.isAuthed)
+        }
+        return this.userProfile;
+    },
     getUserProfile() {
-        console.log('getting userProfile from localStorage ...');
         if (localStorage.getItem('userProfile')) {
             try {
-                let p = JSON.parse(localStorage.getItem('userProfile'))
-                this.userProfile = p;
+                this.userProfile = JSON.parse(localStorage.getItem('userProfile'));
             } catch(e) {
-                console.log('error getting chartStyle: ' + e);
                 localStorage.removeItem('userProfile');
             }
         } else {
             // first time no local storage saved yet, save the defaults
-            console.log('no userProfile has been saved, saving defaults ...');
             this.setUserProfile(this.userProfile)
         }
         return this.userProfile;
@@ -47,6 +60,10 @@ export const userStore = reactive({
     },
     setRegisterExchangeStatus(data) {
         this.registerExchangeStatus = data;
+    },
+    setIsAuthed(data) {
+        this.isAuthed = data
+        localStorage.setItem("isAuthenticated", data);
     },
     setUserProfile(data) {
         this.userProfile = {
@@ -91,7 +108,7 @@ export const userStore = reactive({
             this.setRegisterExchangeStatus("failed")
         }
     },
-    async actionGetUserProfile({ commit }) {
+    async actionGetUserProfile() {
         const response = await jwtInterceptor.get("/api/user", {
             withCredentials: true,
             credentials: "include",
@@ -102,10 +119,12 @@ export const userStore = reactive({
 
         if (response && response.data) {
             this.setUserProfile(response.data)
+        } else {
+            this.setUserProfile(defaultUserProfile)
         }
     },
     async actionLogout() {
-        const response = await axios.delete("/api/session", {
+        await axios.delete("/api/session", {
             withCredentials: true,
             credentials: "include",
             headers: {
@@ -113,18 +132,9 @@ export const userStore = reactive({
             },
         });
 
-        if (response && response.data) {
-            this.setLogout(true)
-            localStorage.removeItem("isAuthenticated");
-            let p = {
-                id: 0,
-                username: "",
-                roles: "",
-            }
-            this.setUserProfile(p)
-        } else {
-            this.setLogout(false)
-        }
+        this.setLogout(true)
+        this.setIsAuthed(false)
+        this.setUserProfile(defaultUserProfile)
     },
 
 

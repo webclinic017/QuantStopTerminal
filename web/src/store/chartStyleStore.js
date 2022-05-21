@@ -481,27 +481,22 @@ export const chartStyle = reactive({
     },
 
     getStyle() {
-        console.log('getting chartStyle from localStorage ...');
         if (localStorage.getItem('chartStyle')) {
             try {
                 let p = JSON.parse(localStorage.getItem('chartStyle'))
                 this.props = p.props;
                 this.themes = p.themes;
             } catch(e) {
-                console.log('error getting chartStyle: ' + e);
                 localStorage.removeItem('chartStyle');
             }
         } else {
             // first time no local storage saved yet, save the defaults
-            console.log('no chartStyle has been saved, saving defaults ...');
             this.saveStyle()
         }
         return this.props
     },
 
     saveStyle() {
-
-        console.log('saving chartStyle to localStorage ...');
         try {
             let p = {
                 themes: this.themes,
@@ -509,11 +504,8 @@ export const chartStyle = reactive({
             }
             localStorage.setItem('chartStyle', JSON.stringify(p));
         } catch(e) {
-            console.log('error setting chartStyle: ' + e);
             localStorage.removeItem('chartStyle');
         }
-
-
     },
 })
 

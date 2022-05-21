@@ -10,7 +10,7 @@
         <div class="col-auto">
           <ToggleSwitch
               id="ntp_enable"
-              :value="subsystems.ntp_timekeeper"
+              :value="this.value"
               @input="setNtp"
               :width="100"
               :height="50"
@@ -26,20 +26,18 @@
 
 <script>
 import ToggleSwitch from "../../components/ToggleSwitch";
-import {mapGetters} from "vuex";
-import * as api from "../../shared/api"
 import jwtInterceptor from "../../shared/jwt.interceptor";
 export default {
   name: "NTPSettings",
   components: {ToggleSwitch},
   props: {
-    subStatus: false
+    value:{
+      type: Boolean,
+      required: true,
+      default: false
+    },
   },
-  computed: {
-    ...mapGetters("public", {
-      subsystems: "getSubStatus",
-    }),
-  },
+
   methods: {
     async setNtp(value) {
       //console.log(value)
@@ -57,7 +55,7 @@ export default {
         },
       }).then(function (response) {
         // handle success
-        console.log(response);
+        //console.log(response);
       }).catch(function (error) {
         // handle error
         //console.log(error);

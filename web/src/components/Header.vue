@@ -34,17 +34,17 @@
 
       <div class="qst-collapse collapse navbar-collapse w-100" id="headerMenu">
 
-        <input v-if="getUserProfile.id !== 0" class="form-control w-100 me-3" type="text" placeholder="Search" aria-label="Search">
+        <input v-if="this.userStore.isAuthed" class="form-control w-100 me-3" type="text" placeholder="Search" aria-label="Search">
 
 
         <div class="nav-item m-auto me-3 theme-button d-inline-flex justify-content-end">
           <theme-button @custom-change="toggleTheme" />
         </div>
 
-        <div class="nav-item dropdown m-auto me-3 user-dropdown d-inline-flex justify-content-end" v-if="getUserProfile.id !== 0">
+        <div class="nav-item dropdown m-auto me-3 user-dropdown d-inline-flex justify-content-end" v-if="this.userStore.isAuthed">
           <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
             <img src="//ssl.gstatic.com/accounts/ui/avatar_2x.png" alt="" width="32" height="32" class="rounded-circle me-2">
-            <strong>{{ getUserProfile.username }}</strong>
+            <strong>{{ this.userStore.userProfile.username }}</strong>
           </a>
           <ul class="qst-user-dropdown dropdown-menu dropdown-menu-end text-small shadow" aria-labelledby="userDropdown">
             <li><router-link to="/settings" class="dropdown-item">Settings</router-link></li>
@@ -64,54 +64,38 @@
 </template>
 
 <script>
-import {mapActions, mapGetters, mapMutations} from "vuex";
+import {userStore} from "../store/userStore";
 import ThemeButton from "./ThemeButton.vue"
 export default {
   name: "Header",
   components: {
     ThemeButton,
   },
+  data() {
+    return {
+      userStore
+    }
+  },
   emits: ['customChange2'],
   computed: {
-    ...mapGetters("auth", {
-      getUserProfile: "getUserProfile",
-      getLogout: "getLogout",
-    }),
-    showAdminBoard() {
-      if (this.getUserProfile && this.getUserProfile['roles']) {
-        return this.getUserProfile['roles'].includes('admin');
-      }
 
+    showAdminBoard() {
+      if (this.userStore.userProfile && this.userStore.userProfile.roles) {
+        return this.userStore.userProfile.roles.includes('admin');
+      }
       return false;
     },
     showModeratorBoard() {
-      if (this.getUserProfile && this.getUserProfile['roles']) {
-        return this.getUserProfile['roles'].includes('moderator');
+      if (this.userStore.userProfile && this.userStore.userProfile.roles) {
+        return this.userStore.userProfile.roles.includes('moderator');
       }
-
       return false;
     }
   },
   methods: {
-    ...mapActions("auth", {
-      userLogout: "userLogout",
-    }),
-    ...mapMutations("auth", {
-      setLogout: "setLogout",
-      setUserProfile: "setUserProfile",
-    }),
     async logOut() {
-      await this.userLogout();
-      if (this.getLogout) {
-        const resetUser = {
-          id: 0,
-          username: "",
-          roles: null,
-        };
-        this.setUserProfile(resetUser);
-        this.setLogout(false);
-        await this.$router.push("/");
-      }
+      await this.userStore.actionLogout();
+      await this.$router.push("/login")
     },
     toggleTheme() {
       //console.log("toggle theme from header")

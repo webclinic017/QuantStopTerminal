@@ -96,9 +96,9 @@
 </template>
 
 <script>
-import {mapActions, mapGetters} from "vuex";
 import { Form, Field, ErrorMessage } from "vee-validate";
 import * as yup from "yup";
+import axios from "axios";
 export default {
   name: "Exchanges",
   components: {
@@ -122,31 +122,9 @@ export default {
       schema,
     };
   },
-  computed: {
-    /*...mapGetters("admin", {
-      users: "getUsers",
-    }),*/
-    ...mapGetters("auth", {
-      getRegisterExchangeApiStatus: "getRegisterExchangeApiStatus",
-    }),
-  },
+
   methods: {
-    /*...mapActions("admin", {
-      actionGetUsers: "getAllUsers",
-    }),*/
-    /*async getAll() {
-      await this.actionGetUsers().then(
-          (res) => {
-            //this.subsystems = res
-          },
-          (error) => {
-            this.message = error.toString() + " | " + error.response.data.error;
-          }
-      );
-    },*/
-    ...mapActions("auth", {
-      actionRegisterExchangeApi: "registerExchangeApi",
-    }),
+
     async register(exchange) {
       this.loading = true;
       const payload = {
@@ -156,18 +134,23 @@ export default {
         authSecret: exchange.authSecret,
         currency: exchange.currency
       };
-      await this.actionRegisterExchangeApi(payload).then(
-          () => {
-            this.message = "Success!"
-            this.successful = true;
-            this.loading = false;
-          },
-          (error) => {
-            this.loading = false;
-            this.successful = false;
-            this.message = error.toString() + " | " + error.response.data.error;
-          }
-      );
+      const response = await axios.post("/api/exchange", payload, {
+        withCredentials: true,
+        credentials: "include",
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest' // CSRF prevention
+        },
+      });
+      if (response && response.data) {
+        this.message = "Success!"
+        this.successful = true;
+        this.loading = false;
+      } else {
+        this.loading = false;
+        this.successful = false;
+        //this.message = error.toString() + " | " + error.response.data.error;
+      }
+
     },
   },
   beforeMount() {

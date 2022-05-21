@@ -25,7 +25,7 @@
     </li>
   </ul>
   <div class="tab-content" id="myTabContent">
-    <div class="tab-pane fade show active" id="home" role="tabpanel" aria-labelledby="home-tab"><NTPSettings></NTPSettings></div>
+    <div class="tab-pane fade show active" id="home" role="tabpanel" aria-labelledby="home-tab"><NTPSettings :value="this.subsystemsStore.subsystems.ntp_timekeeper"></NTPSettings></div>
     <div class="tab-pane fade" id="profile" role="tabpanel" aria-labelledby="profile-tab">Database</div>
     <div class="tab-pane fade" id="contact" role="tabpanel" aria-labelledby="contact-tab"><SystemSettings></SystemSettings></div>
   </div>
@@ -35,9 +35,15 @@
 <script>
 import NTPSettings from "./NTPSettings";
 import SystemSettings from "./SystemSettings";
+import jwtInterceptor from "../../shared/jwt.interceptor";
+import {subsystemsStore} from "../../store/subsystemsStore";
 export default {
   name: "Settings",
-  components: {SystemSettings, NTPSettings}
+  data: () => ({
+    subsystemsStore,
+  }),
+  components: {SystemSettings, NTPSettings},
+
 }
 </script>
 

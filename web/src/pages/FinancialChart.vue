@@ -14,11 +14,11 @@
 
         <!-- Connection Status Message / Time -->
         <div class="icon-wrapper connection-time">
-          <span v-if="!dataConnected" class="connection-message" style="color: red">
+          <span v-if="!dataConnected" class="connection-message red">
             Disconnected <br>
-            *simulated data
+            *unsupported
           </span>
-          <span v-if="dataConnected" class="connection-message" style="color: green">
+          <span v-if="dataConnected" class="connection-message green">
             {{ this.date }} <br>
             {{ this.time }}
           </span>
@@ -1630,13 +1630,10 @@ button:focus, select:focus, input:focus {
 .bold {
   font-weight: bold;
 }
-
 .selected {
   color: var(--text-primary-color) !important;
 }
-.period:hover {
-  color: var(--text-primary-color) !important;
-}
+
 #chartPeriodSelect {
   border: none !important;
 }
@@ -1644,25 +1641,6 @@ button:focus, select:focus, input:focus {
   background-color: var(--background-color-secondary) !important;
 }
 
-#periodSelector {
-  width: 20rem;
-  min-height: 3rem;
-  text-align: center;
-  display:flex;
-  flex-direction:row;
-  flex-wrap:wrap;
-  align-items:center;
-  justify-content:center;
-  margin-left: auto;
-  margin-right: auto;
-  margin-top: 2rem;
 
-  border-radius:5px;
-  overflow:hidden;
-  -webkit-box-shadow: 0px 0px 17px 0px rgba(50, 50, 50, 0.58);
-  -moz-box-shadow:    0px 0px 17px 0px rgba(50, 50, 50, 0.58);
-  box-shadow:         0px 0px 17px 0px rgba(50, 50, 50, 0.58);
-  padding-bottom:2rem;
-}
 
 </style>

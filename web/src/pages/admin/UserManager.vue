@@ -81,9 +81,11 @@
 </template>
 
 <script>
-import {mapActions, mapGetters} from "vuex";
+import {userStore} from "../../store/userStore";
 import { Form, Field, ErrorMessage } from "vee-validate";
 import * as yup from "yup";
+import jwtInterceptor from "../../shared/jwt.interceptor";
+import axios from "axios";
 export default {
   name: "UserManager",
   components: {
@@ -105,37 +107,35 @@ export default {
           .max(40, "Must be maximum 40 characters!"),
     });
     return {
+      userStore,
+      users: [
+
+      ],
       successful: false,
       loading: false,
       message: "",
       schema,
     };
   },
-  computed: {
-    ...mapGetters("admin", {
-      users: "getUsers",
-    }),
-    ...mapGetters("auth", {
-      getRegisterApiStatus: "getRegisterApiStatus",
-    }),
-  },
+
   methods: {
-    ...mapActions("admin", {
-      actionGetUsers: "getAllUsers",
-    }),
+
     async getAll() {
-      await this.actionGetUsers().then(
-          (res) => {
-            //this.subsystems = res
-          },
-          (error) => {
-            this.message = error.toString() + " | " + error.response.data.error;
-          }
-      );
+      let response = await jwtInterceptor.get("/api/get-users", {
+        withCredentials: true,
+        credentials: "include",
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest' // CSRF prevention
+        },
+      });
+
+      if (response && response.data) {
+        this.users = response.data
+      } else {
+
+      }
     },
-    ...mapActions("auth", {
-      actionRegisterApi: "registerApi",
-    }),
+
     async register(user) {
       this.loading = true;
       const payload = {
@@ -143,7 +143,7 @@ export default {
         email: user.email,
         password: user.password
       };
-      await this.actionRegisterApi(payload).then(
+      /*await this.actionRegisterApi(payload).then(
           () => {
             this.message = "Success!"
             this.successful = true;
@@ -154,7 +154,8 @@ export default {
             this.successful = false;
             this.message = error.toString() + " | " + error.response.data.error;
           }
-      );
+      );*/
+
     },
   },
   beforeMount() {

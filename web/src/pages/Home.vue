@@ -24,19 +24,19 @@
           <ul class="list-group list-group-flush">
             <li class="list-group-item d-flex justify-content-between align-items-start">
               <div class=" me-auto">Database</div>
-              <StatusIndicator :value="subsystems.database" :height=24 :width=24></StatusIndicator>
+              <StatusIndicator :value="this.subsystemsStore.subsystems.database" :height=24 :width=24></StatusIndicator>
             </li>
             <li class="list-group-item d-flex align-items-center">
               <div class=" me-auto">Connection Monitor</div>
-              <StatusIndicator :value="subsystems.internet_monitor" :height=24 :width=24></StatusIndicator>
+              <StatusIndicator :value="this.subsystemsStore.subsystems.internet_monitor" :height=24 :width=24></StatusIndicator>
             </li>
             <li class="list-group-item d-flex align-items-center">
               <div class=" me-auto">Timekeeper</div>
-              <StatusIndicator :value="subsystems.ntp_timekeeper" :height=24 :width=24></StatusIndicator>
+              <StatusIndicator :value="this.subsystemsStore.subsystems.ntp_timekeeper" :height=24 :width=24></StatusIndicator>
             </li>
             <li class="list-group-item d-flex align-items-center">
               <div class=" me-auto">Active Trader</div>
-              <StatusIndicator :value="subsystems.strategy" :height=24 :width=24></StatusIndicator>
+              <StatusIndicator :value="this.subsystemsStore.subsystems.active_trader" :height=24 :width=24></StatusIndicator>
             </li>
           </ul>
         </div>
@@ -67,54 +67,27 @@
 </template>
 
 <script>
-import { mapGetters, mapActions, mapMutations } from "vuex";
+import {userStore} from "../store/userStore";
 import StatusIndicator from "../components/StatusIndicator";
 import jwtInterceptor from "../shared/jwt.interceptor";
 import {websocket} from "../websocket/websocket";
+import {subsystemsStore} from "../store/subsystemsStore";
 export default {
   name: "Home",
   components: {StatusIndicator},
-  computed: {
-    ...mapGetters("public", {
-      subsystems: "getSubStatus",
-    }),
-    ...mapGetters("auth", {
-      getUserProfile: "getUserProfile",
-    }),
-  },
-  data () {
-    return {
-      /*hours: 0,
-      mins: 0,
-      secs: 0,*/
-      uptime: "0d 0h 0m 0s"
-    }
-  },
-  mounted() {
+  data: () => ({
+    userStore,
+    subsystemsStore,
+    uptime: "0d 0h 0m 0s"
+  }),
+  created() {
+    this.subsystemsStore.actionSubsystems()
+    this.getUptime()
     websocket.createWebsocket()
-    /*this.$bus.on("message", msg => {
-      console.log(msg)
-    })
-    this.$bus.on("error", msg => {
-      console.log(msg)
-    })*/
   },
+
   methods: {
-    ...mapActions("public", {
-      actionSubStatus: "getSubsystemStatus",
-    }),
-    async getAll() {
-      this.loading = true;
-      await this.actionSubStatus().then(
-        (res) => {
-          //this.subsystems = res
-        },
-        (error) => {
-          this.loading = false;
-          this.message = error.toString() + " | " + error.response.status;
-        }
-      );
-    },
+
     async getUptime() {
       const response = await jwtInterceptor.get("/api/uptime", {
         withCredentials: true,
@@ -124,7 +97,6 @@ export default {
         },
       });
       if (response && response.data) {
-
         this.uptime = response.data
         /*if (response.data.includes("h")) {
           this.hours = response.data.substring(0, response.data.indexOf("h"));
@@ -139,9 +111,6 @@ export default {
       }
     },
   },
-  beforeMount() {
-    this.getAll();
-    this.getUptime();
-  },
+
 };
 </script>
