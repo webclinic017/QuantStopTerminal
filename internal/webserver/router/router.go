@@ -11,7 +11,6 @@ import (
 	"github.com/quantstop/quantstopterminal/web"
 	"net/http"
 	"regexp"
-	"strings"
 )
 
 // Simple RegExp based Http Router
@@ -212,22 +211,26 @@ func (r *Router) ServeHTTP(response http.ResponseWriter, request *http.Request) 
 
 func serveFileContents(w http.ResponseWriter, r *http.Request) {
 
-	wfs := web.GetFileSystem()
+	wfs, err := web.GetFileSystem()
+	if err != nil {
+		log.Errorf(log.Webserver, "error getting file system: %v", err)
+	}
 	httpFS := http.FS(wfs)
 
 	path := r.URL.Path
 	if path == "/" {
 		path = "index.html"
 	}
+	log.Debugf(log.Webserver, "requesting file system at: %v", r.URL.Path)
 
 	// Restrict only to instances where the browser is looking for html, css, or javascript files
-	if !strings.Contains(r.Header.Get("Accept"), "text/html") ||
+	/*if !strings.Contains(r.Header.Get("Accept"), "text/html") ||
 		!strings.Contains(r.Header.Get("Accept"), "text/css") ||
 		!strings.Contains(r.Header.Get("Accept"), "text/javascript") {
 		w.WriteHeader(http.StatusNotFound)
 		fmt.Fprint(w, "404 not found")
 		return
-	}
+	}*/
 
 	// Open the file and return its contents using http.ServeContent
 	index, err := httpFS.Open(path)
