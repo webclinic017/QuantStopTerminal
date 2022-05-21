@@ -174,11 +174,7 @@ func (h *Hub) Subscribe(client *Client, exchange string, product string) {
 	h.Subscriptions = append(h.Subscriptions, newSubscription)
 
 	// run the exchange service
-	switch exchange {
-	case "coinbasepro":
-		go h.RunSubscriptionService(newSubscription, product, client)
-
-	}
+	go h.RunSubscriptionService(newSubscription, exchange, product, client)
 
 }
 
@@ -192,19 +188,19 @@ func (h *Hub) Unsubscribe(client *Client) {
 	}
 }
 
-func (h *Hub) RunSubscriptionService(sub *Subscription, product string, client *Client) {
+func (h *Hub) RunSubscriptionService(sub *Subscription, exchange, product string, client *Client) {
 
-	log.Debugf(log.Webserver, "Websocket Hub | Coinbasepro %v subscription service starting ...", client.ID)
+	log.Debugf(log.Webserver, "Websocket Hub | %v subscription service starting ...", client.ID)
 
 	e := models.CryptoExchange{}
-	err := e.GetCryptoExchangeByName(h.db, "coinbasepro")
+	err := e.GetCryptoExchangeByName(h.db, exchange)
 	if err != nil {
 		log.Error(log.TraderLogger, err)
 		return
 	}
 
 	//Create a client instance
-	sub.ExchangeClient, err = qsx.NewExchange("coinbasepro", &core.Config{
+	sub.ExchangeClient, err = qsx.NewExchange(core.ExchangeName(exchange), &core.Config{
 		Auth: &core.Auth{
 			Key:        e.AuthKey,
 			Passphrase: e.AuthPassphrase,
@@ -220,14 +216,14 @@ func (h *Hub) RunSubscriptionService(sub *Subscription, product string, client *
 	}
 
 	// create a new subscription request
-
+	// todo: feed needs to be analogous to exchange (common feed)
 	feed := coinbasepro.NewFeed()
 
 	wg := sync.WaitGroup{}
 	wg.Add(4)
 
 	// Start api client feed
-	err = sub.ExchangeClient.WatchFeed(sub.Shutdown, &wg, product, feed)
+	_, err = sub.ExchangeClient.WatchFeed(sub.Shutdown, &wg, product, feed)
 	if err != nil {
 		return
 	}
@@ -311,12 +307,12 @@ func (h *Hub) RunSubscriptionService(sub *Subscription, product string, client *
 			}
 		}
 	}()
-	log.Debugf(log.Webserver, "Websocket Hub | Coinbasepro %v subscription service started.", client.ID)
+
 	// Wait for all go-routines to finish
+	log.Debugf(log.Webserver, "Websocket Hub | %v subscription service started.", client.ID)
 	wg.Wait()
 	<-sub.Shutdown
-
-	log.Debugf(log.Webserver, "Websocket Hub | Coinbasepro %v subscription service shutdown.", client.ID)
+	log.Debugf(log.Webserver, "Websocket Hub | %v subscription service shutdown.", client.ID)
 }
 
 var upgrader = websocket.Upgrader{
