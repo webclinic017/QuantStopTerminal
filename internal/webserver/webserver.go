@@ -112,7 +112,6 @@ func (s *Webserver) ListenAndServe(tls bool, configDir string) (err error) {
 		}
 	}
 
-	log.Infoln(log.Webserver, "Webserver waiting for shutdown finishing...")
 	<-s.shutdownFinished
 	log.Infoln(log.Webserver, "Webserver shutdown finished.")
 
