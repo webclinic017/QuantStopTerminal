@@ -20,7 +20,7 @@
         <span>a</span>
         <span>l</span>
       </div>
-      <div class="qst-login-version">{{version.version}}</div>
+      <div class="qst-login-version">{{this.versionStore.version.version}}</div>
     </div>
 
     <div id="qst-login-form">
@@ -56,7 +56,9 @@
 <script>
 import { Form, Field, ErrorMessage } from "vee-validate";
 import * as yup from "yup";
-import { mapActions, mapGetters, } from "vuex";
+import {userStore} from "../store/userStore";
+import {versionStore} from "../store/versionStore";
+
 export default {
   name: "Login",
   components: {
@@ -71,42 +73,23 @@ export default {
     });
 
     return {
+      userStore,
+      versionStore,
       loading: false,
       message: "",
       schema,
     };
   },
-  computed: {
-    ...mapGetters("auth", {
-      getLoginApiStatus: "getLoginApiStatus",
-    }),
-    ...mapGetters("public", {
-      version: "getVersion",
-    }),
-  },
+
   methods: {
-    ...mapActions("auth", {
-      actionLoginApi: "loginApi",
-    }),
-    ...mapActions("public", {
-      actionGetVersion: "getVersion",
-    }),
-    async getVersion() {
-      await this.actionGetVersion().then(
-          () => {
-          },
-          (error) => {
-            this.message = error.toString() + " | " + error.response.status;
-          }
-      );
-    },
+
     async login(user) {
       this.loading = true;
       const payload = {
         username: user.username,
         password: user.password
       };
-      await this.actionLoginApi(payload).then(
+      await this.userStore.actionLogin(payload).then(
         () => {
           this.loading = false;
           this.$router.push("/home");
@@ -120,7 +103,7 @@ export default {
 
   },
   beforeMount() {
-    this.getVersion();
+    this.versionStore.actionGetVersion()
   },
 };
 </script>

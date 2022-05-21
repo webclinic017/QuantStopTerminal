@@ -12,22 +12,20 @@
 </template>
 
 <script>
-import {mapActions, mapGetters} from "vuex";
+import {GetVersion} from "../shared/api";
 
 export default {
   name: "Footer",
-  computed: {
-    ...mapGetters("public", {
-      version: "getVersion",
-    }),
+  data() {
+    return {
+
+    }
   },
   methods: {
-    ...mapActions("public", {
-      actionGetVersion: "getVersion",
-    }),
+
     async getAll() {
       this.loading = true;
-      await this.actionGetVersion().then(
+      await this.GetVersion().then(
           (res) => {
             //this.version = res
           },

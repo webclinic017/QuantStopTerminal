@@ -9,7 +9,7 @@ import (
 	"os"
 )
 
-func GetFileSystem() fs.FS {
+func GetFileSystem() (fs.FS, error) {
 	fmt.Println("Filesystem served by os package")
-	return os.DirFS("web/dist")
+	return os.DirFS("web/dist"), nil
 }

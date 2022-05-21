@@ -1,12 +1,12 @@
 <template>
 
   <!--  Header / Navbar if logged in  -->
-  <div v-if="getUserProfile.id !== 0">
+  <div v-if="userStore.isAuthed">
     <Header @custom-change2="toggleTheme" />
   </div>
 
   <!--  Header / Navbar if not logged in (theme button only) -->
-  <div v-if="getUserProfile.id === 0" class="d-flex">
+  <div v-if="!userStore.isAuthed" class="d-flex">
     <div class="ms-auto p-3" style="height: 52px;">
       <ThemeButton @custom-change="toggleTheme" />
     </div>
@@ -17,12 +17,12 @@
     <div class="row h-100 m-0 p-0">
 
       <!--  Sidebar Navigation / Logged in only  -->
-      <div v-if="getUserProfile.id !== 0" class="sidebar-container">
+      <div v-if="userStore.isAuthed" class="sidebar-container">
         <SidebarNav></SidebarNav>
       </div>
 
       <!--  App View  -->
-      <div id="routerView" :class="getUserProfile.id !== 0 ? 'col-md-9 ms-sm-auto col-lg-10 p-0 m-0 h-100' : ''">
+      <div id="routerView" :class="userStore.isAuthed ? 'col-md-9 ms-sm-auto col-lg-10 p-0 m-0 h-100' : ''">
         <router-view />
       </div>
 
@@ -41,7 +41,7 @@
 import Header from "./components/Header.vue"
 import SidebarNav from "./components/SidebarNav";
 import Footer from "./components/Footer";
-import {mapGetters} from "vuex";
+import {userStore} from "./store/userStore";
 import ThemeButton from "./components/ThemeButton";
 export default {
   name: 'App',
@@ -51,11 +51,10 @@ export default {
     SidebarNav,
     Footer
   },
-  computed: {
-    ...mapGetters("auth", {
-      getUserProfile: "getUserProfile",
-    }),
-
+  data() {
+    return {
+      userStore
+    }
   },
   mounted() {
     /*document.body.classList.add('d-flex', 'flex-column', 'h-100')*/

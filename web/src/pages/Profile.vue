@@ -14,25 +14,21 @@
               class="profile-img-card"
               alt=""
           />
-          <span class="font-weight-bold">{{getUserProfile.username}}</span>
-          <span class="text-black-50">{{getUserProfile.email}}</span>
+          <span class="font-weight-bold">{{userStore.userProfile.username}}</span>
+
         </div>
       </div>
       <Form @submit="handleUpdateProfile" :validation-schema="schema">
         <div class="form-group">
           <label for="id"></label>
-          <Field name="id" type="hidden" class="form-control" v-model="getUserProfile.id" />
+          <Field name="id" type="hidden" class="form-control" v-model="userStore.userProfile.id" />
         </div>
         <div class="form-group">
           <label for="username">Username</label>
-          <Field name="username" type="text" class="form-control" v-model="getUserProfile.username" />
+          <Field name="username" type="text" class="form-control" v-model="userStore.userProfile.username" />
           <ErrorMessage name="username" class="error-feedback" />
         </div>
-        <div class="form-group">
-          <label for="email">Email</label>
-          <Field name="email" type="email" class="form-control" v-model="getUserProfile.email" />
-          <ErrorMessage name="email" class="error-feedback" />
-        </div>
+
 
         <div class="form-group">
           <button class="btn btn-primary btn-block" :disabled="loading">
@@ -57,7 +53,7 @@
 <script>
 import { Form, Field, ErrorMessage } from "vee-validate";
 import * as yup from "yup";
-import { mapGetters } from "vuex";
+import {userStore} from "../store/userStore";
 export default {
   components: {
     Form,
@@ -71,25 +67,17 @@ export default {
           .required("Username is required!")
           .min(3, "Must be at least 3 characters!")
           .max(20, "Must be maximum 20 characters!"),
-      email: yup
-          .string()
-          .required("Email is required!")
-          .email("Email is invalid!")
-          .max(50, "Must be maximum 50 characters!"),
     });
 
     return {
+      userStore,
       successful: false,
       loading: false,
       message: "",
       schema,
     };
   },
-  computed: {
-    ...mapGetters("auth", {
-      getUserProfile: "getUserProfile",
-    }),
-  },
+
   methods: {
     handleUpdateProfile(user) {
 
