@@ -5,8 +5,8 @@ import (
 	"github.com/quantstop/quantstopterminal/internal/database/models"
 )
 
-// SeedDB will create the database tables if they do not exist, and create the default admin user.
-func SeedDB(db *sql.DB, driver string) error {
+// DatabaseSeed will create the database tables if they do not exist, and create the default admin user.
+func DatabaseSeed(db *sql.DB, driver string) error {
 
 	// check/create users table - also creates default admin
 	if err := models.CreateUsersTable(db, driver); err != nil {
@@ -28,8 +28,8 @@ func SeedDB(db *sql.DB, driver string) error {
 		return err
 	}
 
-	// check/create crypto_exchanges table
-	if err := models.CreateCryptoExchangesTable(db, driver); err != nil {
+	// check/create exchanges table
+	if err := models.CreateExchangesTable(db, driver); err != nil {
 		return err
 	}
 

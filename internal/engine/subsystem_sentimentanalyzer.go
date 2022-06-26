@@ -13,12 +13,9 @@ type SentimentAnalyzerSubsystem struct {
 
 func (s *SentimentAnalyzerSubsystem) init(bot *Engine, name string) error {
 
-	if err := s.Subsystem.init(bot, name); err != nil {
+	if err := s.Subsystem.init(bot, name, true); err != nil {
 		return err
 	}
-	/*s.enabled = bot.Config*/
-
-	s.enabled = true
 	s.initialized = true
 	log.Debugln(log.SentimentAnalyzer, s.name+MsgSubsystemInitialized)
 	return nil

@@ -30,15 +30,15 @@ var (
 type Config struct {
 	ConfigDir       string
 	GoMaxProcessors int
-	Database        database.Config
+	FirstLoginSetup bool
+	CoreDB          database.Config
+	CoinbaseDB      database.Config
+	TDAmeritradeDB  database.Config
 	Webserver       *webserver.Config
 	NTP             ntpmonitor.Config
 	Internet        connectionmonitor.Config
 	Logger          log.Config
 }
-
-// DefaultFileMode controls the default permissions on any paths created by using MakePath.
-//var DefaultFileMode = os.FileMode(0755)
 
 func init() {
 	findPaths()
@@ -129,7 +129,10 @@ func (c *Config) SetupConfig() error {
 		// Setup default config
 		c.ConfigDir = configPath
 		c.GoMaxProcessors = -1
-		c.Database = *database.GenDefaultSettings()
+		c.FirstLoginSetup = true
+		c.CoreDB = *database.GenDefaultSettings("core")
+		c.CoinbaseDB = *database.GenDefaultSettings("coinbase")
+		c.TDAmeritradeDB = *database.GenDefaultSettings("tdameritrade")
 		c.Webserver = &webserver.Config{
 			Enabled:             true,
 			HttpListenAddr:      ":443",
@@ -286,30 +289,32 @@ func (c *Config) checkDatabaseConfig() error {
 	mutex.Lock()
 	defer mutex.Unlock()
 
-	if (c.Database == database.Config{}) {
-		c.Database.Driver = database.DBSQLite3
-		c.Database.Database = database.DefaultSQLiteDatabase
+	// todo: make work for all databases
+
+	if (c.CoreDB == database.Config{}) {
+		c.CoreDB.Driver = database.DBSQLite3
+		c.CoreDB.DSN.Database = database.DefaultCoreDatabase
 	}
 
-	if !c.Database.Enabled {
+	if !c.CoreDB.Enabled {
 		return nil
 	}
 
-	if !system.StringDataCompare(database.SupportedDrivers, c.Database.Driver) {
-		c.Database.Enabled = false
-		return fmt.Errorf("unsupported database driver %v, database disabled", c.Database.Driver)
+	if !system.StringDataCompare(database.SupportedDrivers, c.CoreDB.Driver) {
+		c.CoreDB.Enabled = false
+		return fmt.Errorf("unsupported database driver %v, database disabled", c.CoreDB.Driver)
 	}
 
-	if c.Database.Driver == database.DBSQLite || c.Database.Driver == database.DBSQLite3 {
+	if c.CoreDB.Driver == database.DBSQLite || c.CoreDB.Driver == database.DBSQLite3 {
 		databaseDir := c.GetDataPath("database")
 		err := system.CreateDir(databaseDir)
 		if err != nil {
 			return err
 		}
-		database.DB.DataPath = databaseDir
+		database.CoreDB.DataPath = databaseDir
 	}
 
-	return database.DB.SetConfig(&c.Database)
+	return database.CoreDB.SetConfig(&c.CoreDB)
 }
 
 // GetDataPath gets the data path for the given subpath

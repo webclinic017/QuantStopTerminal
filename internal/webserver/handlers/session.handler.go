@@ -19,9 +19,10 @@ type loginRequest struct {
 }
 
 type loginResponse struct {
-	ID       uint32   `json:"id"`
-	Username string   `json:"username"`
-	Roles    []string `json:"roles"`
+	ID           uint32   `json:"id"`
+	Username     string   `json:"username"`
+	Roles        []string `json:"roles"`
+	IsFirstLogin bool     `json:"is_first_login"`
 }
 
 type signupRequest struct {
@@ -31,8 +32,7 @@ type signupRequest struct {
 
 func Login(bot internal.IEngine, user *models.User, w http.ResponseWriter, r *http.Request) http.HandlerFunc {
 
-	db, _ := bot.GetSQL()
-
+	db, _ := bot.GetCoreSQL()
 	decoder := json.NewDecoder(r.Body)
 	req := loginRequest{}
 	err := decoder.Decode(&req)
@@ -60,10 +60,17 @@ func Login(bot internal.IEngine, user *models.User, w http.ResponseWriter, r *ht
 
 	jwt.WriteUserCookie(w, user)
 
+	// todo
+	//isFirstLogin :=
+
+	// todo ?
+	// checkUpdate :=
+
 	res := loginResponse{
-		ID:       user.ID,
-		Username: user.Username,
-		Roles:    user.Roles,
+		ID:           user.ID,
+		Username:     user.Username,
+		Roles:        user.Roles,
+		IsFirstLogin: false,
 	}
 	return write.JSON(res)
 }
@@ -80,7 +87,7 @@ func Logout(bot internal.IEngine, user *models.User, w http.ResponseWriter, r *h
 
 func Signup(bot internal.IEngine, user *models.User, w http.ResponseWriter, r *http.Request) http.HandlerFunc {
 
-	db, _ := bot.GetSQL()
+	db, _ := bot.GetCoreSQL()
 
 	decoder := json.NewDecoder(r.Body)
 	req := signupRequest{}

@@ -75,16 +75,17 @@ type Subsystem struct {
 	bot         *Engine
 }
 
-func (sub *Subsystem) init(bot *Engine, name string) error {
+// init The function to initialize the Subsystem struct fields with values
+func (sub *Subsystem) init(bot *Engine, name string, enabled bool) error {
 	if sub == nil {
 		return fmt.Errorf("%s subsystem %w", sub.name, ErrNilSubsystem)
 	}
 	if bot == nil {
 		return fmt.Errorf("%s subsystem %w", sub.name, errNilEngine)
 	}
-
 	log.Debugln(log.SubsystemLogger, name+MsgSubsystemInitializing)
 	sub.name = name
+	sub.enabled = enabled
 	sub.initialized = false
 	sub.started = false
 	sub.shutdown = make(chan struct{})
@@ -92,6 +93,7 @@ func (sub *Subsystem) init(bot *Engine, name string) error {
 	return nil
 }
 
+// start The function to start the subsystem
 func (sub *Subsystem) start(wg *sync.WaitGroup) error {
 	if sub == nil {
 		return fmt.Errorf("%s subsystem %w", sub.name, ErrNilSubsystem)
@@ -111,6 +113,7 @@ func (sub *Subsystem) start(wg *sync.WaitGroup) error {
 	return nil
 }
 
+// stop The function to stop the subsystem
 func (sub *Subsystem) stop() error {
 	if sub == nil {
 		return fmt.Errorf("%s subsystem %w", sub.name, ErrNilSubsystem)
@@ -124,6 +127,7 @@ func (sub *Subsystem) stop() error {
 	return nil
 }
 
+// isRunning checks whether the subsystem is initialized and running
 func (sub *Subsystem) isRunning() bool {
 	if sub == nil {
 		return false
@@ -131,14 +135,17 @@ func (sub *Subsystem) isRunning() bool {
 	return sub.started
 }
 
+// isEnabled checks whether the subsystem is enabled or not
 func (sub *Subsystem) isEnabled() bool {
 	return sub.enabled
 }
 
+// isInitialized checks whether the subsystem is initialized or not
 func (sub *Subsystem) isInitialized() bool {
 	return sub.initialized
 }
 
+// getName returns the subsystems name
 func (sub *Subsystem) getName() string {
 	return sub.name
 }

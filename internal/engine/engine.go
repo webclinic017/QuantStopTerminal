@@ -12,11 +12,43 @@ import (
 	"github.com/quantstop/quantstopterminal/internal/webserver"
 	"github.com/quantstop/quantstopterminal/pkg/system"
 	"github.com/quantstop/quantstopterminal/pkg/system/convert"
+	"os"
+	"os/exec"
 	"runtime"
 	"strconv"
 	"strings"
+	"sync"
+	"syscall"
 	"time"
 )
+
+type Engine struct {
+	*Version
+	Config              *config.Config
+	SubsystemRegistry   *SubsystemRegistry
+	DatabaseSubsystem   *DatabaseSubsystem
+	NTPCheckerSubsystem *NTPCheckerSubsystem
+	TraderSubsystem     *TraderSubsystem
+	InternetSubsystem   *ConnectionMonitor
+	SentimentAnalyzer   *SentimentAnalyzerSubsystem
+	Webserver           *webserver.Webserver
+	SubsystemWG         sync.WaitGroup
+	Uptime              time.Time
+	Exchanges           map[string]core.Qsx
+}
+
+const (
+	DatabaseSubsystemName string = "database"
+	NTPSubsystemName      string = "ntp_timekeeper"
+	TraderSubsystemName   string = "active_trader"
+	InternetCheckerName   string = "internet_monitor"
+	SentimentAnalyzerName string = "sentiment_analyzer"
+)
+
+// engineMutex only locks and unlocks on engine creation functions
+// as engine modifies global files, this protects the main bot creation
+// functions from interfering with each other
+var engineMutex sync.Mutex
 
 // Create creates a new instance of the engine
 func Create(config *config.Config, version *Version) (*Engine, error) {
@@ -94,13 +126,13 @@ func (bot *Engine) initDatabaseSubsystem() error {
 	// Create and init database subsystem
 	bot.DatabaseSubsystem = &DatabaseSubsystem{Subsystem: Subsystem{}}
 	if err := bot.DatabaseSubsystem.init(bot, DatabaseSubsystemName); err != nil {
-		log.Errorf(log.Global, "Database subsystem unable to initialize: %v", err)
+		log.Errorf(log.Global, "database subsystem unable to initialize: %v", err)
 		return err
 	}
 
 	// Register database subsystem
 	if err := bot.SubsystemRegistry.RegisterSubsystem(bot.DatabaseSubsystem); err != nil {
-		log.Errorf(log.Global, "Database subsystem unable to register: %v", err)
+		log.Errorf(log.Global, "database subsystem unable to register: %v", err)
 		return err
 	}
 
@@ -262,16 +294,42 @@ func (bot *Engine) Stop() {
 
 }
 
+// Restart the running instance of the engine
+func (bot *Engine) Restart() error {
+	self, err := os.Executable()
+	if err != nil {
+		return err
+	}
+	args := os.Args
+	env := os.Environ()
+	// Windows does not support exec syscall.
+	if runtime.GOOS == "windows" {
+		cmd := exec.Command(self, args[1:]...)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		cmd.Stdin = os.Stdin
+		cmd.Env = env
+		err := cmd.Run()
+		if err == nil {
+			os.Exit(0)
+		}
+		return err
+	}
+	return syscall.Exec(self, args, env)
+}
+
 func (bot *Engine) initExchanges() (err error) {
 
 	// todo: need to get all exchanges in db, then init each one, if any
 
-	e := models.CryptoExchange{}
-	err = e.GetCryptoExchangeByName(bot.DatabaseSubsystem.dbConn.SQL, "coinbasepro")
+	e := models.Exchange{}
+	err = e.GetExchangeByName(bot.DatabaseSubsystem.coreDatabase.SQL, "coinbasepro")
 	if err != nil {
 		log.Error(log.Global, err)
 		return err
 	}
+
+	//for name, exchange in qsx.SupportedExchanges
 
 	ex, err := qsx.NewExchange("coinbasepro", &core.Config{
 		Auth: &core.Auth{
@@ -295,6 +353,32 @@ func (bot *Engine) initExchanges() (err error) {
 func (bot *Engine) GetUptime() string {
 	//return time.Since(bot.Uptime).String()
 	return convert.RoundDuration(time.Since(bot.Uptime), 2).String()
+}
+
+/*func (bot *Engine) GetCoreConfig() map[string]string {
+
+}*/
+
+// todo: make into key, value parameters
+// SetConfig saves system configuration data
+func (bot *Engine) SetConfig(apiUrl string, maxProcs string) error {
+	intVar, err := strconv.Atoi(maxProcs)
+	if err != nil {
+		return err
+	}
+	bot.Config.GoMaxProcessors = intVar //todo: does this only take effect on restart?
+
+	err = bot.Config.SaveConfig()
+	if err != nil {
+		return err
+	}
+
+	err = bot.Restart()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // GetSubsystemsStatus returns the status of all engine subsystems
@@ -423,31 +507,34 @@ func (bot *Engine) GetVersion() map[string]string {
 
 }
 
-// GetSQL returns a pointer to the database connection
-func (bot *Engine) GetSQL() (*sql.DB, error) {
-
-	if bot.DatabaseSubsystem.dbConn.SQL != nil {
-		return bot.DatabaseSubsystem.dbConn.SQL, nil
+// GetCoreSQL returns a pointer to the core database connection
+func (bot *Engine) GetCoreSQL() (*sql.DB, error) {
+	if bot.DatabaseSubsystem.coreDatabase.SQL != nil {
+		return bot.DatabaseSubsystem.coreDatabase.SQL, nil
 	}
-	log.Errorln(log.Global, "GetSQL, database is nil!")
-	return nil, errors.New("engine cannot return nil database")
+	log.Errorln(log.Global, ErrNilCoreSQL)
+	return nil, ErrNilCoreSQL
 }
 
-// SetSystemConfig saves system configuration data
-func (bot *Engine) SetSystemConfig(apiUrl string, maxProcs string) error {
-	intVar, err := strconv.Atoi(maxProcs)
-	if err != nil {
-		return err
+// GetCoinbaseSQL returns a pointer to the coinbase database connection
+func (bot *Engine) GetCoinbaseSQL() (*sql.DB, error) {
+	if bot.DatabaseSubsystem.coinbaseDatabase.SQL != nil {
+		return bot.DatabaseSubsystem.coinbaseDatabase.SQL, nil
 	}
-	bot.Config.GoMaxProcessors = intVar //todo: does this only take effect on restart?
-
-	err = bot.Config.SaveConfig()
-	if err != nil {
-		return err
-	}
-	return nil
+	log.Errorln(log.Global, ErrNilCoinbaseSQL)
+	return nil, ErrNilCoinbaseSQL
 }
 
+// GetTDAmeritradeSQL returns a pointer to the td-ameritrade database connection
+func (bot *Engine) GetTDAmeritradeSQL() (*sql.DB, error) {
+	if bot.DatabaseSubsystem.tdameritradeDatabase.SQL != nil {
+		return bot.DatabaseSubsystem.tdameritradeDatabase.SQL, nil
+	}
+	log.Errorln(log.Global, ErrNilTDAmeritradeSQL)
+	return nil, ErrNilTDAmeritradeSQL
+}
+
+// GetExchange returns an exchange connection
 func (bot *Engine) GetExchange(name string) core.Qsx {
 	switch name {
 	case "coinbasepro":
@@ -456,6 +543,7 @@ func (bot *Engine) GetExchange(name string) core.Qsx {
 	return nil
 }
 
+// GetSupportedExchangesList returns a list of all supported exchanges
 func (bot *Engine) GetSupportedExchangesList() []string {
 	var list []string
 	for _, e := range bot.Exchanges {

@@ -62,7 +62,7 @@ type MessageResponse struct {
 }
 
 func NewHub(eng internal.IEngine, shutdown chan struct{}) (*Hub, error) {
-	db, err := eng.GetSQL()
+	db, err := eng.GetCoreSQL()
 	if err != nil {
 		return nil, err
 	}
@@ -192,8 +192,8 @@ func (h *Hub) RunSubscriptionService(sub *Subscription, exchange, product string
 
 	log.Debugf(log.Webserver, "Websocket Hub | %v subscription service starting ...", client.ID)
 
-	e := models.CryptoExchange{}
-	err := e.GetCryptoExchangeByName(h.db, exchange)
+	e := models.Exchange{}
+	err := e.GetExchangeByName(h.db, exchange)
 	if err != nil {
 		log.Error(log.TraderLogger, err)
 		return

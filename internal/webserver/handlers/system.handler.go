@@ -75,7 +75,7 @@ func SetSystemConfig(bot internal.IEngine, user *models.User, w http.ResponseWri
 	}
 
 	// set config
-	err = bot.SetSystemConfig(req.ApiUrl, req.GoMaxProcs)
+	err = bot.SetConfig(req.ApiUrl, req.GoMaxProcs)
 	if err != nil {
 		return nil
 	}
@@ -100,7 +100,7 @@ func isValidUrl(toTest string) bool {
 
 func SetExchange(bot internal.IEngine, user *models.User, w http.ResponseWriter, r *http.Request) http.HandlerFunc {
 
-	db, _ := bot.GetSQL()
+	db, _ := bot.GetCoreSQL()
 
 	decoder := json.NewDecoder(r.Body)
 	req := setExchangeRequest{}
@@ -113,7 +113,7 @@ func SetExchange(bot internal.IEngine, user *models.User, w http.ResponseWriter,
 		return write.Error(errors.InvalidInput)
 	}
 
-	exchange := &models.CryptoExchange{
+	exchange := &models.Exchange{
 		Name:           req.Name,
 		AuthKey:        req.AuthKey,
 		AuthPassphrase: req.AuthPassphrase,
@@ -130,7 +130,7 @@ func SetExchange(bot internal.IEngine, user *models.User, w http.ResponseWriter,
 		return write.Error(err)
 	}*/
 
-	err = exchange.CreateCryptoExchange(db)
+	err = exchange.CreateExchange(db)
 	if err != nil {
 		//todo: can we get more specific errors? do we even need to?
 		return write.Error(err)
