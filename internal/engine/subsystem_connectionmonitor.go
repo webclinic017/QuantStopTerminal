@@ -14,7 +14,7 @@ type ConnectionMonitor struct {
 
 func (s *ConnectionMonitor) init(bot *Engine, name string) error {
 
-	if err := s.Subsystem.init(bot, name); err != nil {
+	if err := s.Subsystem.init(bot, name, bot.Config.Internet.Enabled); err != nil {
 		return err
 	}
 
@@ -27,7 +27,6 @@ func (s *ConnectionMonitor) init(bot *Engine, name string) error {
 	if s.bot.Config.Internet.CheckInterval == 0 {
 		s.bot.Config.Internet.CheckInterval = connectionmonitor.DefaultCheckInterval
 	}
-	s.enabled = bot.Config.Internet.Enabled
 	s.initialized = true
 	log.Debugln(log.ConnMonitor, s.name+MsgSubsystemInitialized)
 	return nil

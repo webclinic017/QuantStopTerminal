@@ -22,12 +22,18 @@ type Config struct {
 	Enabled bool
 	Verbose bool
 	Driver  string
-	drivers.ConnectionDetails
+	DSN     drivers.ConnectionDetails
 }
 
 var (
-	// DB Global Database Connection
-	DB = &Instance{}
+	// CoreDB Global CoreDB Connection
+	CoreDB = &Instance{}
+
+	// CoinbaseDB Global CoreDB Connection
+	CoinbaseDB = &Instance{}
+
+	// TDAmeritradeDB Global CoreDB Connection
+	TDAmeritradeDB = &Instance{}
 
 	// MigrationDir which folder to look in for current migrations
 	//MigrationDir = filepath.Join("..", "..", "database", "migrations")
@@ -46,9 +52,6 @@ var (
 
 	// ErrDatabaseNotConnected for when a database is not connected
 	ErrDatabaseNotConnected = errors.New("database is not connected")
-
-	// DefaultSQLiteDatabase is the default sqlite3 database name to use
-	DefaultSQLiteDatabase = "qst.db"
 
 	// ErrNilInstance for when a database is nil
 	ErrNilInstance = errors.New("database instance is nil")
@@ -71,6 +74,15 @@ const (
 
 	// DBMySQL const string for MySQL across code base
 	DBMySQL = "mysql"
+
+	// DefaultCoreDatabase const string for name of core database (sqlite filename)
+	DefaultCoreDatabase = "qst.db"
+
+	// DefaultCoinbaseDatabase const string for name of coinbase database (sqlite filename)
+	DefaultCoinbaseDatabase = "qst_coinbase.db"
+
+	// DefaultTDAmeritradeDatabase const string for name of td-ameritrade database (sqlite filename)
+	DefaultTDAmeritradeDatabase = "qst_tdameritrade.db"
 )
 
 // IDatabase allows for the passing of a database struct
@@ -93,18 +105,65 @@ type ISQL interface {
 	QueryRowContext(context.Context, string, ...interface{}) *sql.Row
 }
 
-func GenDefaultSettings() *Config {
-	return &Config{
-		Enabled: true,
-		Verbose: true,
-		Driver:  "sqlite",
-		ConnectionDetails: drivers.ConnectionDetails{
-			Host:     "127.0.0.1",
-			Port:     3306,
-			Username: "docker",
-			Password: "docker",
-			Database: "qst.db",
-			SSLMode:  "false",
-		},
+func GenDefaultSettings(name string) *Config {
+
+	switch name {
+	case "core":
+		return &Config{
+			Enabled: true,
+			Verbose: true,
+			Driver:  "sqlite",
+			DSN: drivers.ConnectionDetails{
+				Host:     "127.0.0.1",
+				Port:     3306,
+				Username: "docker",
+				Password: "docker",
+				Database: DefaultCoreDatabase,
+				SSLMode:  "false",
+			},
+		}
+	case "coinbase":
+		return &Config{
+			Enabled: true,
+			Verbose: true,
+			Driver:  "sqlite",
+			DSN: drivers.ConnectionDetails{
+				Host:     "127.0.0.1",
+				Port:     3306,
+				Username: "docker",
+				Password: "docker",
+				Database: DefaultCoinbaseDatabase,
+				SSLMode:  "false",
+			},
+		}
+	case "tdameritrade":
+		return &Config{
+			Enabled: true,
+			Verbose: true,
+			Driver:  "sqlite",
+			DSN: drivers.ConnectionDetails{
+				Host:     "127.0.0.1",
+				Port:     3306,
+				Username: "docker",
+				Password: "docker",
+				Database: DefaultTDAmeritradeDatabase,
+				SSLMode:  "false",
+			},
+		}
+	default:
+		return &Config{
+			Enabled: true,
+			Verbose: true,
+			Driver:  "sqlite",
+			DSN: drivers.ConnectionDetails{
+				Host:     "127.0.0.1",
+				Port:     3306,
+				Username: "docker",
+				Password: "docker",
+				Database: DefaultCoreDatabase,
+				SSLMode:  "false",
+			},
+		}
 	}
+
 }

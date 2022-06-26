@@ -22,7 +22,7 @@ type NTPCheckerSubsystem struct {
 }
 
 func (s *NTPCheckerSubsystem) init(bot *Engine, name string) error {
-	if err := s.Subsystem.init(bot, name); err != nil {
+	if err := s.Subsystem.init(bot, name, bot.Config.NTP.Enabled); err != nil {
 		return err
 	}
 
@@ -37,7 +37,6 @@ func (s *NTPCheckerSubsystem) init(bot *Engine, name string) error {
 	s.pools = s.bot.Config.NTP.Pool
 	s.checkInterval = ntpmonitor.DefaultNTPCheckInterval
 	s.retryLimit = ntpmonitor.DefaultRetryLimit
-	s.enabled = bot.Config.NTP.Enabled
 	s.initialized = true
 	log.Debugln(log.NTPLogger, s.name+MsgSubsystemInitialized)
 	return nil

@@ -11,12 +11,9 @@ type TraderSubsystem struct {
 
 func (s *TraderSubsystem) init(bot *Engine, name string) error {
 
-	if err := s.Subsystem.init(bot, name); err != nil {
+	if err := s.Subsystem.init(bot, name, true); err != nil {
 		return err
 	}
-	/*s.enabled = bot.Config*/
-
-	s.enabled = true
 	s.initialized = true
 	log.Debugln(log.TraderLogger, s.name+MsgSubsystemInitialized)
 	return nil
@@ -50,7 +47,7 @@ func (s *TraderSubsystem) run() error {
 	}
 
 	e := models.CryptoExchange{}
-	err = e.GetCryptoExchangeByName(db, "coinbasepro")
+	err = e.GetExchangeByName(db, "coinbasepro")
 	if err != nil {
 		log.Error(log.TraderLogger, err)
 		return err

@@ -2,6 +2,7 @@ package models
 
 import (
 	"database/sql"
+	"github.com/quantstop/quantstopterminal/internal/database"
 	"github.com/quantstop/quantstopterminal/internal/log"
 )
 
@@ -18,11 +19,22 @@ var defaultRoles = []Role{
 
 func CreateRolesTable(db *sql.DB, driver string) error {
 
-	// todo: still only sqlite, dont like this too much as it is. could do a switch/case here with driver string parm ...
-
 	log.Debugln(log.DatabaseLogger, "Checking for roles table ...")
-	row := db.QueryRow("SELECT name FROM sqlite_master WHERE type='table' AND name='roles' LIMIT 1")
+	var row *sql.Row
 	var table interface{}
+
+	switch driver {
+	case database.DBPostgreSQL:
+		// todo: change to postgre
+		row = db.QueryRow("SELECT name FROM sqlite_master WHERE type='table' AND name='roles' LIMIT 1")
+	case database.DBSQLite, database.DBSQLite3:
+		row = db.QueryRow("SELECT name FROM sqlite_master WHERE type='table' AND name='roles' LIMIT 1")
+	case database.DBMySQL:
+		// todo: change to mysql
+		row = db.QueryRow("SELECT name FROM sqlite_master WHERE type='table' AND name='roles' LIMIT 1")
+	default:
+		row = db.QueryRow("SELECT name FROM sqlite_master WHERE type='table' AND name='roles' LIMIT 1")
+	}
 
 	// returns err if no table is round
 	if err := row.Scan(&table); err != nil {
